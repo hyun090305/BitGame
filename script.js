@@ -1591,7 +1591,10 @@ db.ref("guestbook").on("value", snapshot => {
   const list = document.getElementById("guestbookList");
   list.innerHTML = "";
   const entries = [];
-  snapshot.forEach(child => entries.push(child.val()));
+  snapshot.forEach(child => {
+    entries.push(child.val());
+    return false;  // 반드시 false를 리턴해야 계속 순회합니다
+  });
   entries.sort((a, b) => b.time - a.time);
 
   for (const e of entries) {
@@ -1602,7 +1605,7 @@ db.ref("guestbook").on("value", snapshot => {
   }
 });
 
-
+/*
 // 실시간 반영
 firebase.database().ref("guestbook").on("value", (snapshot) => {
   const list = document.getElementById("guestbookList");
@@ -1618,7 +1621,7 @@ firebase.database().ref("guestbook").on("value", (snapshot) => {
     list.appendChild(div);
   }
 });
-
+*/
 function showLevelIntro(level, callback) {
   const modal = document.getElementById("levelIntroModal");
   const title = document.getElementById("introTitle");
