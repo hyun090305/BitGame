@@ -37,7 +37,7 @@ const levelGridSizes = {
   8: [8, 10],
   9: [8, 10],
   10: [10, 10],
-  11: [12, 12],
+  11: [10, 10],
   12: [12, 12],
 };
 
@@ -142,8 +142,8 @@ const levelGridSizes = {
     { type: "INPUT", name: "IN2" },  // D1
     { type: "INPUT", name: "IN3" },  // D2
     { type: "INPUT", name: "IN4" },  // D3
-    { type: "INPUT", name: "IN5" },  // S1
-    { type: "INPUT", name: "IN6" },  // S0
+    { type: "INPUT", name: "S1" },  // S1
+    { type: "INPUT", name: "S0" },  // S0
     { type: "OUTPUT", name: "OUT1" },
     { type: "NOT" },
     { type: "AND" },
@@ -252,9 +252,70 @@ const chapterData = [
   { inputs: { IN1: 1, IN2: 1 }, expected: { OUT1: 0, OUT2: 0, OUT3: 0, OUT4: 1 } }
 ],
 12: [
-  { inputs: { IN1: 0, IN2: 1, IN3: 0, IN4: 1, IN5: 1, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 0, IN4: 0, IN5: 0, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 0, IN4: 0, IN5: 0, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 0, IN4: 0, IN5: 1, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 0, IN4: 0, IN5: 1, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 0, IN4: 1, IN5: 0, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 0, IN4: 1, IN5: 0, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 0, IN4: 1, IN5: 1, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 0, IN4: 1, IN5: 1, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 1, IN4: 0, IN5: 0, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 1, IN4: 0, IN5: 0, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 1, IN4: 0, IN5: 1, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 1, IN4: 0, IN5: 1, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 1, IN4: 1, IN5: 0, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 1, IN4: 1, IN5: 0, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 1, IN4: 1, IN5: 1, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 0, IN2: 0, IN3: 1, IN4: 1, IN5: 1, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 0, IN4: 0, IN5: 0, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 0, IN4: 0, IN5: 0, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 0, IN4: 0, IN5: 1, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 0, IN4: 0, IN5: 1, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 0, IN4: 1, IN5: 0, IN6: 0 }, expected: { OUT1: 0 } },
   { inputs: { IN1: 0, IN2: 1, IN3: 0, IN4: 1, IN5: 0, IN6: 1 }, expected: { OUT1: 1 } },
-  { inputs: { IN1: 1, IN2: 0, IN3: 0, IN4: 1, IN5: 1, IN6: 1 }, expected: { OUT1: 1 } }
+  { inputs: { IN1: 0, IN2: 1, IN3: 0, IN4: 1, IN5: 1, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 0, IN4: 1, IN5: 1, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 1, IN4: 0, IN5: 0, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 1, IN4: 0, IN5: 0, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 1, IN4: 0, IN5: 1, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 1, IN4: 0, IN5: 1, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 1, IN4: 1, IN5: 0, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 1, IN4: 1, IN5: 0, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 1, IN4: 1, IN5: 1, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 0, IN2: 1, IN3: 1, IN4: 1, IN5: 1, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 0, IN4: 0, IN5: 0, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 0, IN4: 0, IN5: 0, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 0, IN4: 0, IN5: 1, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 0, IN4: 0, IN5: 1, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 0, IN4: 1, IN5: 0, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 0, IN4: 1, IN5: 0, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 0, IN4: 1, IN5: 1, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 0, IN4: 1, IN5: 1, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 1, IN4: 0, IN5: 0, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 1, IN4: 0, IN5: 0, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 1, IN4: 0, IN5: 1, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 1, IN4: 0, IN5: 1, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 1, IN4: 1, IN5: 0, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 1, IN4: 1, IN5: 0, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 1, IN4: 1, IN5: 1, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 0, IN3: 1, IN4: 1, IN5: 1, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 0, IN4: 0, IN5: 0, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 0, IN4: 0, IN5: 0, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 0, IN4: 0, IN5: 1, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 0, IN4: 0, IN5: 1, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 0, IN4: 1, IN5: 0, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 0, IN4: 1, IN5: 0, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 0, IN4: 1, IN5: 1, IN6: 0 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 0, IN4: 1, IN5: 1, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 1, IN4: 0, IN5: 0, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 1, IN4: 0, IN5: 0, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 1, IN4: 0, IN5: 1, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 1, IN4: 0, IN5: 1, IN6: 1 }, expected: { OUT1: 0 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 1, IN4: 1, IN5: 0, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 1, IN4: 1, IN5: 0, IN6: 1 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 1, IN4: 1, IN5: 1, IN6: 0 }, expected: { OUT1: 1 } },
+  { inputs: { IN1: 1, IN2: 1, IN3: 1, IN4: 1, IN5: 1, IN6: 1 }, expected: { OUT1: 1 } },
 ],
   };
 
@@ -1583,7 +1644,7 @@ function showLevelIntro(level, callback) {
   `;
 
   modal.style.display = "flex";
-
+  modal.style.backgroundColor = "white";
   document.getElementById("startLevelBtn").onclick = () => {
     modal.style.display = "none";
     callback();  // 실제 레벨 시작
@@ -1763,4 +1824,47 @@ function resetCell(cell) {
   delete cell.dataset.value;
   delete cell.dataset.directionLocked;
   cell.removeAttribute("draggable");
+}
+
+document.getElementById("showIntroBtn").addEventListener("click", () => {
+  if (currentLevel != null) {
+    showIntroModal(currentLevel);
+  }
+});
+
+
+// 기존 안내 닫기 버튼 그대로 사용
+document.getElementById("startLevelBtn").innerText = "닫기";
+document.getElementById("startLevelBtn").onclick = () => {
+  document.getElementById("levelIntroModal").style.display = "none";
+};
+
+
+function showIntroModal(level) {
+  const modal = document.getElementById("levelIntroModal");
+  const title = document.getElementById("introTitle");
+  const desc  = document.getElementById("introDesc");
+  const table = document.getElementById("truthTable");
+
+  const data = levelDescriptions[level];
+  if (!data) return;
+
+  title.textContent = data.title;
+  desc.textContent  = data.desc;
+
+  // 진리표 다시 렌더링
+  const keys = Object.keys(data.table[0]);
+  table.innerHTML = `
+    <tr>${keys.map(k => `<th>${k}</th>`).join("")}</tr>
+    ${data.table.map(row =>
+      `<tr>${keys.map(k => `<td>${row[k]}</td>`).join("")}</tr>`
+    ).join("")}
+  `;
+
+  modal.style.display = "flex";
+  modal.style.backgroundColor = "rgba(0, 0, 0, 0.4)";
+  document.getElementById("startLevelBtn").innerText = "닫기";
+  document.getElementById("startLevelBtn").onclick = () => {
+    modal.style.display = "none";
+  };
 }
