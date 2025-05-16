@@ -69,6 +69,22 @@
     font-size: 1.2rem;
   }
 
+  #guestbookArea button {
+    margin: 10px;
+    padding: 12px 20px;
+    font-size: 1.2rem;
+  }
+
+
+  #guestbookList {
+    max-height: 200px;
+    /* 원하는 최대 높이로 조정 */
+    overflow-y: auto;
+    /* y축 스크롤 허용 */
+    padding-right: 0.5rem;
+    /* 스크롤바와 내용이 붙지 않도록 여유 */
+  }
+
   #menuBar {
     width: 100%;
     background-color: #ddd;
@@ -833,6 +849,18 @@
     text-align: center;
   }
 
+  .modal-content h3 {
+  margin-top: 0;
+}
+#shareText {
+  font-family: monospace;
+  resize: none;
+}
+#copyShareBtn, #closeShareBtn {
+  margin-left: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+}
   /* style.css 맨 아래에 추가 */
 
   /* 튜토리얼 모달 배경을 살짝 더 어둡게 */
@@ -912,4 +940,16 @@
     padding: 0 !important;
     background-image: none !important;
     background-color: #f0f0f0 !important;
+  }
+
+  .container {
+    display: flex;
+    gap: 5rem;
+  }
+
+  .item {
+    width: 100px;
+    height: 100px;
+    background-color: lightblue;
+    margin: 5px;
   }

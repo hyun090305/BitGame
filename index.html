@@ -18,10 +18,14 @@
   </head>
   <body>
     <!-- 메인 화면 -->
-    <div id="mainScreen">
-      <h1>🧠 Bit Game</h1>
-      <button id="startBtn">시작하기</button>
-      <button id="tutorialBtn">📖 튜토리얼</button>
+    <div class="container" id="firstScreen">
+      <div id="mainScreen">
+        <h1>🧠 Bit Game</h1>
+        <button id="startBtn">시작하기</button>
+        <button id="tutorialBtn">📖 튜토리얼</button>
+        <div></div>
+        <button id="copyStatusBtn">📋 공유하기</button>
+      </div>
       <div id="guestbookArea">
         <h3>📝 개발자(이현준)한테 글 남기기</h3>
         <input type="text" id="guestName" placeholder="닉네임 (선택)" />
@@ -32,11 +36,22 @@
         <button onclick="submitGuestEntry()">등록</button>
 
         <div id="guestbookList"></div>
-
+        <button id="coffeeBtn" style="margin-top:16px;">
+          ☕ 개발자(이현준)한테 커피 사주기
+        </button>
+        <div id="shareModal" class="modal" style="display:none;">
+          <div class="modal-content">
+            <h3>🔗 공유할 내용</h3>
+            <textarea id="shareText" readonly rows="20"
+              style="width:100%;"></textarea>
+            <div style="margin-top:1rem; text-align:right;">
+              <button id="copyShareBtn">복사하기</button>
+              <button id="closeShareBtn">닫기</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <button id="coffeeBtn" style="margin-top:16px;">
-        ☕ 개발자(이현준)한테 커피 사주기
-      </button>
+
     </div>
     <div id="chapterScreen" style="display:none; padding: 2rem;">
       <h1>📚 챕터 선택</h1>
@@ -107,7 +122,7 @@
             </div>
             <div id="wireDeleteInfo"
               style="color: crimson; font-weight: bold; ">
-              [Shift] 키를 누르면 배선 삭제 모드가 켜집니다
+              [Shift] 키를 누르면 삭제 모드가 켜집니다
             </div>
             <div id="wireDeleteMsg"
               style="display: none; color: crimson; font-weight: bold;">

@@ -1118,19 +1118,19 @@ function computeBlock(node, values) {
 
 
 
-const mainScreen = document.getElementById("mainScreen");
+const mainScreen = document.getElementById("firstScreen");
 const levelScreen = document.getElementById("levelScreen");
 const gameScreen = document.getElementById("gameScreen");
 
 document.getElementById("startBtn").onclick = () => {
   renderChapterGrid();
-  document.getElementById("mainScreen").style.display = "none";
+  document.getElementById("firstScreen").style.display = "none";
   document.getElementById("chapterScreen").style.display = "block";
 };
 
 document.getElementById("backToMainFromChapter").onclick = () => {
   document.getElementById("chapterScreen").style.display = "none";
-  document.getElementById("mainScreen").style.display = "block";
+  document.getElementById("firstScreen").style.display = "flex";
 };
 
 document.getElementById("backToMainBtn").onclick = () => {
@@ -1274,18 +1274,21 @@ function getIncomingBlocks(node) {
   const col = node.col;
   const incoming = [];
 
-  const check = (r, c, expectedFlow) => {
-    const wire = getCell(r, c);
-    if (wire?.classList.contains(expectedFlow)) {
+  // wireDir: static wire 클래스, flowDir: flow 클래스
+  const check = (r, c, wireDir, flowDir) => {
+    const cell = getCell(r, c);
+    if (cell?.classList.contains(wireDir)
+      && cell.classList.contains(flowDir)) {
       const src = getBlockNodeFlow(r, c, node);
       if (src) incoming.push(src);
     }
   };
 
-  check(row - 1, col, "flow-down");
-  check(row + 1, col, "flow-up");
-  check(row, col - 1, "flow-right");
-  check(row, col + 1, "flow-left");
+  // 위↓, 아래↑, 왼→, 오←
+  check(row - 1, col, 'wire-down', 'flow-down');
+  check(row + 1, col, 'wire-up', 'flow-up');
+  check(row, col - 1, 'wire-right', 'flow-right');
+  check(row, col + 1, 'wire-left', 'flow-left');
 
   return incoming;
 }
@@ -1734,59 +1737,73 @@ function setupGrid(rows, cols) {
     /* drop */
     cell.addEventListener("drop", e => {
       e.preventDefault();
-      if (cell.dataset.type) return;
 
+      // --- 1) 기존 블록이 있으면 “블록”만 제거 (전선은 그대로) ---
+      const oldType = cell.dataset.type;
+      const oldName = cell.dataset.name;
+      if (oldType) {
+        // 1-1) 셀에서 block 관련 클래스·데이터만 초기화
+        resetCell(cell)
+        // 1-2) INPUT/OUTPUT 이었다면, 패널 아이콘 재노출
+        if (oldType === "INPUT" || oldType === "OUTPUT") {
+          const icon = document.querySelector(
+            `#blockPanel .blockIcon[data-type="${oldType}"][data-name="${oldName}"]`
+          );
+          if (icon) icon.style.display = "inline-flex";
+        }
+      }
+
+      // --- 2) 드래그된 블록 타입 가져오기 ---
       const type = e.dataTransfer.getData("text/plain");
-      if (!["AND", "OR", "NOT", "INPUT", "OUTPUT", "WIRE", "JUNCTION"].includes(type)) return;
+      // 유효 타입이면 배치 로직 실행
+      if (!["AND", "OR", "NOT", "INPUT", "OUTPUT", "WIRE", "JUNCTION"].includes(type))
+        return;
+
+      // --- 3) 새 블록 배치 (기존 drop 코드와 동일) ---
       if (type === "INPUT" || type === "OUTPUT") {
-        // 이름(name)과 초기값(value) 세팅
         cell.classList.add("block");
         cell.dataset.type = type;
-        cell.dataset.name = lastDraggedName || lastDraggedIcon?.dataset.name;
-        if (type === 'INPUT') {
-          cell.dataset.value = '0';
-          cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
-          // 드롭 시점에 바로 click 리스너 등록
+        cell.dataset.name = lastDraggedName || lastDraggedIcon.dataset.name;
+        cell.draggable = true;
+
+        if (type === "INPUT") {
+          cell.dataset.value = "0";
+          cell.textContent = `${cell.dataset.name}(0)`;
           cell.onclick = () => {
-            cell.dataset.value = cell.dataset.value === '0' ? '1' : '0';
+            cell.dataset.value = cell.dataset.value === "0" ? "1" : "0";
             cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
-            cell.classList.toggle('active', cell.dataset.value === '1');
+            cell.classList.toggle("active", cell.dataset.value === "1");
             evaluateCircuit();
           };
         } else {
-          // OUTPUT 초기 표시 (값 미정)
           cell.textContent = `${cell.dataset.name}(-)`;
         }
-        cell.draggable = true;
-        // 배치된 아이콘 하나만 사라지도록 유지 (다른 INPUT 아이콘엔 영향 없음)
+
+        // 드래그해 온 아이콘 숨기기
         if (lastDraggedIcon) lastDraggedIcon.style.display = "none";
-      }
-      else if (type === "WIRE") {
+
+      } else if (type === "WIRE") {
+        // wire 드롭 처리
         cell.classList.add("wire");
         cell.dataset.type = "WIRE";
+
       } else {
+        // AND, OR, NOT, JUNCTION 등
         cell.classList.add("block");
         cell.textContent = type;
         cell.dataset.type = type;
         cell.draggable = true;
       }
 
-      if (["INPUT", "OUTPUT"].includes(type) && lastDraggedIcon)
-        lastDraggedIcon.style.display = "none";
-
-      /* 원래 셀 비우기 */
+      // --- 4) (옵션) 출처 셀 비우는 로직 ---
       if (lastDraggedFromCell && lastDraggedFromCell !== cell) {
-        // ─── 수정: cascade delete 호출 ───
-        disconnectWiresCascade(lastDraggedFromCell);
+        // 블록만 지우고 전선은 유지하려면 resetCell 말고 위 방법을 쓰세요.
         resetCell(lastDraggedFromCell);
-        // 기존 셀 초기화 로직
-        lastDraggedFromCell.classList.remove("block", "wire");
-        lastDraggedFromCell.textContent = "";
-        delete lastDraggedFromCell.dataset.type;
-        lastDraggedFromCell.removeAttribute("draggable");
       }
       lastDraggedType = lastDraggedIcon = lastDraggedFromCell = null;
     });
+
+
 
     /* 셀 dragstart (wire 모드면 차단) */
     cell.addEventListener("dragstart", e => {
@@ -1829,13 +1846,15 @@ function setupGrid(rows, cols) {
 }
 
 function resetCell(cell) {
-  cell.className = "cell";  // 모든 기존 클래스 제거 후 기본 클래스만 유지
+  cell.className = "cell";
   cell.textContent = "";
   delete cell.dataset.type;
   delete cell.dataset.name;
   delete cell.dataset.value;
   delete cell.dataset.directionLocked;
   cell.removeAttribute("draggable");
+  // 클릭 이벤트 프로퍼티 초기화
+  cell.onclick = null;
 }
 
 document.getElementById("showIntroBtn").addEventListener("click", () => {
@@ -1903,18 +1922,18 @@ const tutorialSteps = [
     title: "스테이지 안내 보기",
     desc: "하단 메뉴의 ℹ️ 버튼을 눌러 스테이지별 진리표와 설명을 확인할 수 있습니다.",
     img: "assets/tutorial-see-info.gif"
-  } 
+  }
 ];
 
 // 2) 모달 관련 변수
 let tutIndex = 0;
 const tutModal = document.getElementById("tutorialModal");
 const tutTitle = document.getElementById("tutTitle");
-const tutDesc  = document.getElementById("tutDesc");
-const tutPrev  = document.getElementById("tutPrevBtn");
-const tutNext  = document.getElementById("tutNextBtn");
+const tutDesc = document.getElementById("tutDesc");
+const tutPrev = document.getElementById("tutPrevBtn");
+const tutNext = document.getElementById("tutNextBtn");
 const tutClose = document.getElementById("tutCloseBtn");
-const tutBtn   = document.getElementById("tutorialBtn");
+const tutBtn = document.getElementById("tutorialBtn");
 const tutImg = document.getElementById("tutImg");
 
 // 3) 모달 표시 함수
@@ -1922,7 +1941,7 @@ function showTutorial(idx) {
   tutIndex = idx;
   const step = tutorialSteps[idx];
   tutTitle.textContent = step.title;
-  tutDesc.textContent  = step.desc;
+  tutDesc.textContent = step.desc;
 
   // 이미지가 있으면 보이게, 없으면 숨기기
   if (step.img) {
@@ -1950,4 +1969,119 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape" && tutModal.style.display === "flex") {
     tutModal.style.display = "none";
   }
+});
+
+// ─────────── 삭제 모드 기능 추가 ───────────
+
+// 삭제 모드 상태값
+let isWireDeleting = false;
+const statusDeleteInfo = document.getElementById('wireDeleteInfo');
+const statusDeleteMsg = document.getElementById('wireDeleteMsg');
+
+// 키 입력에 따라 모드 전환
+document.addEventListener('keydown', e => {
+  if (e.key === 'Control') {
+    isWireDrawing = true;
+    statusInfo.style.display = 'none';
+    statusMsg.style.display = 'block';
+  }
+  if (e.key === 'Shift') {
+    isWireDeleting = true;
+    statusDeleteInfo.style.display = 'none';
+    statusDeleteMsg.style.display = 'block';
+  }
+});
+
+document.addEventListener('keyup', e => {
+  if (e.key === 'Control') {
+    isWireDrawing = false;
+    statusMsg.style.display = 'none';
+    statusInfo.style.display = 'block';
+    clearWirePreview();            // 반쯤 그려진 미리보기 제거
+  }
+  if (e.key === 'Shift') {
+    isWireDeleting = false;
+    statusDeleteMsg.style.display = 'none';
+    statusDeleteInfo.style.display = 'block';
+  }
+});
+
+
+grid.addEventListener('click', e => {
+  if (!isWireDeleting) return;
+  const cell = e.target.closest('.cell');
+  if (!cell) return;
+
+  if (cell.classList.contains('block')) {
+    // ① 연결된 전선 전체 삭제
+    disconnectWiresCascade(cell);             // ← 추가 :contentReference[oaicite:2]{index=2}:contentReference[oaicite:3]{index=3}
+
+    const type = cell.dataset.type;
+    const name = cell.dataset.name;
+    // ② INPUT/OUTPUT이면 아이콘 복원
+    if (["INPUT", "OUTPUT"].includes(type)) {
+      const icon = document.querySelector(
+        `.blockIcon[data-type="${type}"][data-name="${name}"]`
+      );
+      if (icon) icon.style.display = "inline-flex";
+    }
+
+    // ③ 셀 초기화
+    resetCell(cell);                          // ← 모든 data-* 제거까지 한 번에
+  }
+  else if (cell.classList.contains('wire')) {
+    // wire 셀만 지울 땐 기존 로직 유지
+    cell.className = 'cell';
+    delete cell.dataset.type;
+    delete cell.dataset.directions;
+  }
+});
+
+
+// 1) 필요한 엘리먼트 가져오기
+const shareModal = document.getElementById('shareModal');
+const shareTextEl = document.getElementById('shareText');
+const copyShareBtn = document.getElementById('copyShareBtn');
+const closeShareBtn = document.getElementById('closeShareBtn');
+const copyStatusBtn = document.getElementById('copyStatusBtn');
+
+// 2) 공유할 “텍스트” 생성 함수 (예: 현재 그리드 상태 직렬화)
+function buildShareString() {
+  // 예시: JSON.stringify(gridData) 같은 실제 공유 데이터로 바꿔주세요
+  const lines = [];
+  lines.push("I played " + location.origin + location.pathname);
+  lines.push("");
+  const cleared = JSON.parse(localStorage.getItem("clearedLevels") || "[]");
+  const totalStages = Object.keys(levelTitles).length;  // 총 스테이지 수 (필요 시 갱신)
+
+
+
+  for (let i = 1; i <= totalStages; i++) {
+    const title = levelTitles[i] || '';
+    const mark = cleared.includes(i) ? "✅" : "❌";
+    lines.push(`Stage ${i} (${title}): ${mark}`);
+  }
+
+
+  const text = lines.join("\n");
+  return text;
+}
+
+// 3) 공유하기 버튼 클릭 → 모달 열기
+copyStatusBtn.addEventListener('click', () => {
+  shareTextEl.value = buildShareString();
+  shareModal.style.display = 'flex';
+  shareTextEl.select();
+});
+
+// 4) 복사 버튼
+copyShareBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(shareTextEl.value)
+    .then(() => alert('클립보드에 복사되었습니다!'))
+    .catch(err => alert('복사에 실패했습니다: ' + err));
+});
+
+// 5) 닫기 버튼
+closeShareBtn.addEventListener('click', () => {
+  shareModal.style.display = 'none';
 });
