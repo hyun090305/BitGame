@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>Bit Game</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
+  <head>
+    <meta charset="UTF-8">
+    <title>Bit Game</title>
+    <link rel="stylesheet" href="style.v1.1.css">
+    <style>
     html {
       -webkit-user-select: none;
       -moz-user-select: none;
@@ -12,111 +12,143 @@
       user-select: none;
     }
   </style>
-</head>
-<body>
-  <!-- 메인 화면 -->
-  <div id="mainScreen">
-    <h1>🧠 Bit Game</h1>
-    <button id="startBtn">시작하기</button>
-    <div id="guestbookArea">
-  <h3>📝 개발자(이현준)한테 글 남기기</h3>
-  <input type="text" id="guestName" placeholder="닉네임 (선택)" />
-  <br>
-  <textarea id="guestMessage" rows="4" placeholder="남기고 싶은 말..."></textarea>
-  <br>
-  <button onclick="submitGuestEntry()">등록</button>
-  
-  <div id="guestbookList"></div>
-  
-</div>
-<button id="coffeeBtn" style="margin-top:16px;">
-    ☕ 개발자(이현준)한테 커피 사주기
-  </button> 
-  </div>
-  <div id="chapterScreen" style="display:none; padding: 2rem;">
-  <h1>📚 챕터 선택</h1>
-  <div id="chapterGrid"></div>
-  <button id="backToMainFromChapter">← 메인으로</button>
-</div>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap"
+      rel="stylesheet" />
+  </head>
+  <body>
+    <!-- 메인 화면 -->
+    <div id="mainScreen">
+      <h1>🧠 Bit Game</h1>
+      <button id="startBtn">시작하기</button>
+      <button id="tutorialBtn">📖 튜토리얼</button>
+      <div id="guestbookArea">
+        <h3>📝 개발자(이현준)한테 글 남기기</h3>
+        <input type="text" id="guestName" placeholder="닉네임 (선택)" />
+        <br>
+        <textarea id="guestMessage" rows="4"
+          placeholder="남기고 싶은 말..."></textarea>
+        <br>
+        <button onclick="submitGuestEntry()">등록</button>
 
-  <!-- 레벨 선택 화면 -->
-  <div id="levelScreen" style="display:none">
-    <h2>레벨을 선택하세요</h2>
-    <div class="levelGrid">
-      <button class="levelBtn" data-level="1"></button>
-      <button class="levelBtn" data-level="2"></button>
-      <button class="levelBtn" data-level="3"></button>
-      <button class="levelBtn" data-level="4"></button>
-      <button class="levelBtn" data-level="5"></button>
-      <button class="levelBtn" data-level="6"></button>
+        <div id="guestbookList"></div>
+
+      </div>
+      <button id="coffeeBtn" style="margin-top:16px;">
+        ☕ 개발자(이현준)한테 커피 사주기
+      </button>
     </div>
-    <br><br>
-    <button id="backToMainBtn">← 메인으로</button>
-  </div>
+    <div id="chapterScreen" style="display:none; padding: 2rem;">
+      <h1>📚 챕터 선택</h1>
+      <div id="chapterGrid"></div>
+      <button id="backToMainFromChapter">← 메인으로</button>
+    </div>
 
-  <!-- 게임 화면 -->
-  <div id="gameScreen" style="display:none">
-    <h1 id="gameTitle">🧠 Bit Game</h1>
-
-    <!-- 전체 게임 영역: 좌측 메뉴 + 중앙 그리드 + 우측 안내 -->
-    <div id="gameLayout">
-
-      <!-- 블록 패널 -->
-      <div id="blockPanel" style="width: 120px;">
-        <div class="blockIcon" draggable="true" data-type="AND">AND</div>
-        <div class="blockIcon" draggable="true" data-type="OR">OR</div>
-        <div class="blockIcon" draggable="true" data-type="NOT">NOT</div>
-        <div class="blockIcon" draggable="true" data-type="INPUT" data-name="IN1">IN1</div>
-        <div class="blockIcon" draggable="true" data-type="INPUT" data-name="IN2">IN2</div>
-        <div class="blockIcon" draggable="true" data-type="INPUT" data-name="IN3">IN3</div>
-        <div class="blockIcon" draggable="true" data-type="OUTPUT" data-name="OUT1">OUT1</div>
-        <div class="blockIcon" draggable="true" data-type="OUTPUT" data-name="OUT2">OUT2</div>
-        <div class="blockIcon" draggable="true" data-type="OUTPUT" data-name="OUT3">OUT3</div>
-        <div class="blockIcon" draggable="true" data-type="WIRE" style="display: none;">WIRE</div>
+    <!-- 레벨 선택 화면 -->
+    <div id="levelScreen" style="display:none">
+      <h2>레벨을 선택하세요</h2>
+      <div class="levelGrid">
+        <button class="levelBtn" data-level="1"></button>
+        <button class="levelBtn" data-level="2"></button>
+        <button class="levelBtn" data-level="3"></button>
+        <button class="levelBtn" data-level="4"></button>
+        <button class="levelBtn" data-level="5"></button>
+        <button class="levelBtn" data-level="6"></button>
       </div>
+      <br><br>
+      <button id="backToMainBtn">← 메인으로</button>
+    </div>
 
-      <!-- 회로 그리드 -->
-      <div id="gridContainer">
-        <div id="grid"></div>
-      </div>
+    <!-- 게임 화면 -->
+    <div id="gameScreen" style="display:none">
+      <h1 id="gameTitle">🧠 Bit Game</h1>
 
-      <!-- 우측: 시뮬레이트 + 안내 + 삭제 -->
-      <div class="rightPanel" id="rightPanel" style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
-        <button id="gradeButton" class="green">채점하기</button>
-        <div style="text-align: center; line-height: 1.6;">
-          <div id="wireStatusInfo" style="color: darkgreen; font-weight: bold;">
-            [Ctrl] 키를 누르면 배선 드로잉 모드가 켜집니다
-          </div>
-          <div id="wireStatusMsg" style="display: none; color: darkgreen; font-weight: bold;">
-            🧵 드로잉 모드 활성화 중... (Ctrl 키에서 손 떼면 종료)
-          </div>
-          <div id="wireDeleteInfo" style="color: crimson; font-weight: bold; ">
-            [Shift] 키를 누르면 배선 삭제 모드가 켜집니다
-          </div>
-          <div id="wireDeleteMsg" style="display: none; color: crimson; font-weight: bold;">  
-            🧹 삭제 모드 활성화 중... (Shift 키에서 손 떼면 종료)
-          </div>
+      <!-- 전체 게임 영역: 좌측 메뉴 + 중앙 그리드 + 우측 안내 -->
+      <div id="gameLayout">
+
+        <!-- 블록 패널 -->
+        <div id="blockPanel" style="width: 120px;">
+          <div class="blockIcon" draggable="true" data-type="AND">AND</div>
+          <div class="blockIcon" draggable="true" data-type="OR">OR</div>
+          <div class="blockIcon" draggable="true" data-type="NOT">NOT</div>
+          <div class="blockIcon" draggable="true" data-type="INPUT"
+            data-name="IN1">IN1</div>
+          <div class="blockIcon" draggable="true" data-type="INPUT"
+            data-name="IN2">IN2</div>
+          <div class="blockIcon" draggable="true" data-type="INPUT"
+            data-name="IN3">IN3</div>
+          <div class="blockIcon" draggable="true" data-type="OUTPUT"
+            data-name="OUT1">OUT1</div>
+          <div class="blockIcon" draggable="true" data-type="OUTPUT"
+            data-name="OUT2">OUT2</div>
+          <div class="blockIcon" draggable="true" data-type="OUTPUT"
+            data-name="OUT3">OUT3</div>
+          <div class="blockIcon" draggable="true" data-type="WIRE"
+            style="display: none;">WIRE</div>
         </div>
 
-        <div id="trash" style="margin-top: 20px;">🗑️ Drag here to delete</div>
+        <!-- 회로 그리드 -->
+        <div id="gridContainer">
+          <div id="grid"></div>
+        </div>
+
+        <!-- 우측: 시뮬레이트 + 안내 + 삭제 -->
+        <div class="rightPanel" id="rightPanel"
+          style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+          <button id="gradeButton" class="green">채점하기</button>
+          <div style="text-align: center; line-height: 1.6;">
+            <div id="wireStatusInfo"
+              style="color: darkgreen; font-weight: bold;">
+              [Ctrl] 키를 누르면 배선 드로잉 모드가 켜집니다
+            </div>
+            <div id="wireStatusMsg"
+              style="display: none; color: darkgreen; font-weight: bold;">
+              🧵 드로잉 모드 활성화 중... (Ctrl 키에서 손 떼면 종료)
+            </div>
+            <div id="wireDeleteInfo"
+              style="color: crimson; font-weight: bold; ">
+              [Shift] 키를 누르면 배선 삭제 모드가 켜집니다
+            </div>
+            <div id="wireDeleteMsg"
+              style="display: none; color: crimson; font-weight: bold;">
+              🧹 삭제 모드 활성화 중... (Shift 키에서 손 떼면 종료)
+            </div>
+          </div>
+
+          <div id="trash" style="margin-top: 20px;">🗑️ Drag here to
+            delete</div>
+        </div>
+        <div id="gradingArea" style="display:none">
+          <button id="returnToEditBtn">🛠 편집으로 돌아가기</button>
+        </div>
       </div>
-      <div id="gradingArea" style="display:none">
-        <button id="returnToEditBtn">🛠 편집으로 돌아가기</button>
+
+      <!-- 메뉴바 -->
+      <div id="menuBar" style="margin-top: 30px; text-align: center;">
+        <button id="showIntroBtn">ℹ️ 스테이지 안내</button>
+        <button id="backToLevelsBtn">← 레벨 선택으로</button>
       </div>
     </div>
-
-    <!-- 메뉴바 -->
-    <div id="menuBar" style="margin-top: 30px; text-align: center;">
-      <button id="showIntroBtn">ℹ️ 스테이지 안내</button>
-      <button id="backToLevelsBtn">← 레벨 선택으로</button>
+    <div id="tutorialModal" class="modal tutorial-modal" style="display:none;">
+      <div class="modal-content tutorial-content">
+        <h2 id="tutTitle"></h2>
+        <!-- 여기 이미지 자리 -->
+        <img id="tutImg" class="tutorial-img" src alt="튜토리얼 이미지"
+          style="display:none;">
+        <p id="tutDesc"></p>
+        <div class="tut-controls">
+          <button id="tutPrevBtn">이전</button>
+          <button id="tutNextBtn">다음</button>
+          <button id="tutCloseBtn">닫기</button>
+        </div>
+      </div>
     </div>
-  </div>
+    <script
+      src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script
+      src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
-  
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
-  <script>
+    <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAbpyXETtBChmh6vKpHCyaqpmPIm-lzAkI",
       authDomain: "bitgame-70394.firebaseapp.com",
@@ -131,15 +163,16 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
   </script>
-  <script src="script.v1.0.js"></script>
+    <script src="script.v1.1.js"></script>
 
-  <div id="levelIntroModal" style="display:none" class="modal">
-  <div class="modal-content">
-    <h2 id="introTitle"></h2>
-    <p id="introDesc"></p>
-    <table id="truthTable" border="1" style="margin: 10px auto;"></table>
-    <button id="startLevelBtn">시작하기</button>
-  </div>
-</div>
-</body>
+    <div id="levelIntroModal" style="display:none" class="modal">
+      <div class="modal-content">
+        <h2 id="introTitle"></h2>
+        <p id="introDesc"></p>
+        <table id="truthTable" border="1" style="margin: 10px auto;"></table>
+        <button id="startLevelBtn">시작하기</button>
+      </div>
+    </div>
+
+  </body>
 </html>
