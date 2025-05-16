@@ -1238,6 +1238,12 @@ function attachDragHandlersToBlockIcons() {
 }
 
 document.addEventListener("keydown", (e) => {
+  if (e.key === "r") {
+    const confirmed = confirm("⚠️ 모든 블록과 배선을 삭제하시겠습니까?");
+    if (confirmed) {
+      clearGrid(); // 실제 삭제 함수 호출
+    }
+  }
   if (e.key === "Control") {
     isWireDrawing = true;
     document.getElementById("wireStatusMsg").style.display = "block";
@@ -1897,7 +1903,7 @@ const tutorialSteps = [
     title: "스테이지 안내 보기",
     desc: "하단 메뉴의 ℹ️ 버튼을 눌러 스테이지별 진리표와 설명을 확인할 수 있습니다.",
     img: "assets/tutorial-see-info.gif"
-  }
+  } 
 ];
 
 // 2) 모달 관련 변수
