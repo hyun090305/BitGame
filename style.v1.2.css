@@ -871,3 +871,45 @@
     margin: 1rem 0;
     border-radius: 4px;
   }
+
+  /* ── ① 공통: 페이지 전체 배경 (비게임·게임 모두) ── */
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    /* assets/background.png 파일을 프로젝트 루트 기준으로 불러옵니다 */
+    font-family: 'Noto Sans KR', sans-serif;
+    text-align: center;
+  }
+
+  body:not(.game-active) {
+    background: url('assets/background.png') center center / cover no-repeat fixed;
+  }
+
+  /* ── ② 비게임 화면에만 “흰 배경 + 블러” 오버레이 적용 ── */
+  /* ── 비게임 화면에만 오버레이 적용 ── */
+  body:not(.game-active) #mainScreen,
+  body:not(.game-active) #chapterScreen,
+  body:not(.game-active) #levelScreen {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 600px;
+    box-sizing: border-box;
+  }
+
+  /* ── 게임 화면에서는 오버레이 완전 해제 ── */
+  body.game-active #gameScreen {
+    background: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-image: none !important;
+    background-color: #f0f0f0 !important;
+  }

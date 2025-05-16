@@ -1139,6 +1139,7 @@ document.getElementById("backToMainBtn").onclick = () => {
 };
 
 document.getElementById("backToLevelsBtn").onclick = () => {
+  document.body.classList.remove('game-active');
   gameScreen.style.display = "none";
   levelScreen.style.display = "block";
 };
@@ -1149,6 +1150,7 @@ document.querySelectorAll(".levelBtn").forEach(btn => {
     const level = btn.dataset.level;
     console.log(`레벨 ${level} 시작`);
     startLevel(level);  // 그 다음 레벨 시작
+    document.body.classList.add('game-active');
     levelScreen.style.display = "none";
     gameScreen.style.display = "flex";
   };
@@ -1694,6 +1696,7 @@ function renderLevelGrid(stageList) {
       // ✅ level 화면 닫고 game 화면 열기
       document.getElementById("levelScreen").style.display = "none";
       document.getElementById("gameScreen").style.display = "flex";
+      document.body.classList.add('game-active');
     };
     levelGrid.appendChild(btn);
   });
