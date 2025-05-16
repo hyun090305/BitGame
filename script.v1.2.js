@@ -38,7 +38,7 @@ const levelGridSizes = {
   9: [8, 10],
   10: [10, 10],
   11: [10, 10],
-  12: [12, 12],
+  12: [12, 12]
 };
 
 const levelBlockSets = {
