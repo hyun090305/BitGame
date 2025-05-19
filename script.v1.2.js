@@ -2569,11 +2569,11 @@ function updateUsedCounts(blockCount, wireCount) {
 }
 
 function attachInputClickHandlers(cell) {
-  cell.addEventListener('click', () => {
+  cell.onclick = () => {
     const val = cell.dataset.value === '1' ? '0' : '1';
     cell.dataset.value = val;
     cell.textContent = `${cell.dataset.name}(${val})`;
     cell.classList.toggle('active', val === '1');
     evaluateCircuit();
-  });
+  };
 }
