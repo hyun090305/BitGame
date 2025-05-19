@@ -2455,8 +2455,6 @@ function loadCircuit(key) {
   }
 
   updateUsedCounts(data.usedBlocks, data.usedWires);
-  document.getElementById('gameTitle').textContent =
-    `Stage ${data.stageId} (불러옴)`;
 }
 
 
