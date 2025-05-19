@@ -11,7 +11,7 @@ let wireTrace = [];     // 드래그 경로
 let GRID_ROWS = 6;
 let GRID_COLS = 6;
 let wires = [];  // { path, start, end } 객체를 저장할 배열
-
+const FLOW_DURATION = 2000;
 
 
 const levelTitles = {
@@ -668,6 +668,7 @@ function disconnectWiresCascade(startBlock) {
           "h", "v", "corner"
         );
         delete c.dataset.type;
+        delete c.dataset.directionLocked;
       }
     });
 
@@ -796,8 +797,18 @@ trash.addEventListener("drop", () => {
   lastDraggedFromCell = null;
 });
 
+// 아래 함수들은 wire 방향 처리
+function updateWireDirections() {
+  const cells = document.querySelectorAll(".cell");
 
+  cells.forEach(cell => {
+    if (cell.dataset.type !== "WIRE") return;
+    if (cell.dataset.directionLocked === "true") return;
 
+    cell.classList.remove("wire-up", "wire-down", "wire-left", "wire-right");
+    updateOneWireDirection(cell);
+  });
+}
 
 function updateOneWireDirection(cell) {
   const index = parseInt(cell.dataset.index);
@@ -806,27 +817,36 @@ function updateOneWireDirection(cell) {
 
   const row = Math.floor(index / gridSize);
   const col = index % gridSize;
-  const dirs = [];
 
-  const dirOffsets = [
-    { dir: "wire-up", r: -1, c: 0 },
-    { dir: "wire-down", r: +1, c: 0 },
-    { dir: "wire-left", r: 0, c: -1 },
-    { dir: "wire-right", r: 0, c: +1 },
+  // ① 사방 이웃을 셀 참조로 모으기
+  const neighborOffsets = [
+    { r: 0, c: -1 },  // left
+    { r: 0, c: 1 },  // right
+    { r: -1, c: 0 },  // up
+    { r: 1, c: 0 },  // down
   ];
+  const neighborCells = [];
 
-  for (const { dir, r, c } of dirOffsets) {
+  for (const { r, c } of neighborOffsets) {
     const newRow = row + r;
     const newCol = col + c;
     if (newRow < 0 || newRow >= gridSize || newCol < 0 || newCol >= gridSize) continue;
 
     const neighborIndex = newRow * gridSize + newCol;
     const neighbor = cells[neighborIndex];
-    if (neighbor.dataset.type === "WIRE") dirs.push(dir);
+    // ← 여기만 바꿨습니다!
+    if (neighbor.dataset.type === "WIRE"
+      || neighbor.classList.contains("block")) {
+      neighborCells.push(neighbor);
+    }
   }
 
-  applyWireDirection(cell, dirs);
+  // ② 첫 두 개 이웃을 prev/next 로 전달
+  const prevCell = neighborCells[0] || null;
+  const nextCell = neighborCells[1] || null;
+  applyWireDirection(cell, prevCell, nextCell);
 }
+
 
 function drawWirePath(path) {
   path.forEach(c => c.classList.remove("wire-preview"));
@@ -840,23 +860,10 @@ function drawWirePath(path) {
   const total = path.length;
   for (let i = 0; i < total; i++) {
     const cell = path[i];
-    const dirs = new Set();
+    const prevCell = i > 0 ? path[i - 1] : null;
+    const nextCell = i < total - 1 ? path[i + 1] : null;
 
-    // 시작 셀: 다음 셀 기준으로 방향 지정
-    if (i === 0 && total > 1) {
-      getDirectionBetween(cell, path[1]).forEach(d => dirs.add(d));
-    }
-    // 끝 셀: 이전 셀 기준으로 방향 지정
-    else if (i === total - 1 && total > 1) {
-      getDirectionBetween(cell, path[total - 2]).forEach(d => dirs.add(d));
-    }
-    // 중간 셀: 앞뒤 기준으로 방향 지정
-    else {
-      if (i > 0) getDirectionBetween(cell, path[i - 1]).forEach(d => dirs.add(d));
-      if (i < total - 1) getDirectionBetween(cell, path[i + 1]).forEach(d => dirs.add(d));
-    }
-
-    applyWireDirection(cell, Array.from(dirs));
+    applyWireDirection(cell, prevCell, nextCell);
   }
   // ▶ 시작·끝 블록이 draggable이어야만 이동 가능
   const start = path[0], end = path[path.length - 1];
@@ -864,27 +871,40 @@ function drawWirePath(path) {
   if (end.dataset.type && end.dataset.type !== "WIRE") end.draggable = true;
 
   wires.push({
-    path: [...path],       // Array<cell> 복사
-    start: path[0],        // 시작 블록 cell
-    end: path[path.length - 1]  // 끝 블록 cell
+    pathCells: path.slice(),              // 드래그된 셀 DOM 요소 배열
+    start: path[0],
+    end: path[path.length - 1],
+    _frame: 0                             // 초기 프레임 인덱스
   });
 
-  for (let i = 0; i < path.length; i++) {
-    const cell = path[i];
-    cell.classList.remove("flow-left", "flow-right", "flow-up", "flow-down"); // 혹시 남아있을 때 대비
 
-    // (1) 이전 셀 → 현재 셀 방향
-    if (i > 0) {
-      const prev = path[i - 1];
-      cell.classList.add(getFlowClass(prev, cell));
-    }
-    // (2) 현재 셀 → 다음 셀 방향
-    if (i < path.length - 1) {
-      const next = path[i + 1];
-      cell.classList.add(getFlowClass(cell, next));
-    }
-  }
+  path.forEach((cell, idx) => {
+    // 이전에 남아 있을 수 있는 모든 flow-* 클래스 제거
+    cell.classList.remove(
+      "flow-in-up", "flow-out-up",
+      "flow-in-down", "flow-out-down",
+      "flow-in-left", "flow-out-left",
+      "flow-in-right", "flow-out-right"
+    );
 
+    // in/out 클래스 결정
+    const prev = path[idx - 1], next = path[idx + 1];
+    const inCls = prev && getFlowInClass(prev, cell);
+    const outCls = next && getFlowOutClass(cell, next);
+    if (inCls) cell.classList.add(inCls);
+    if (outCls) cell.classList.add(outCls);
+
+    const now = Date.now()/4 % FLOW_DURATION;
+    const half = FLOW_DURATION / 2;
+
+    // 1) 첫 애니메이션 오프셋
+    cell.style.setProperty('--flow-delay_in', `-${now}ms`);
+    cell.style.setProperty('--flow-delay_out', `-${(now + half) % FLOW_DURATION}ms`);
+    // 2) 반주기(half-period) 만큼 뒤에서 시작할 새 세그먼트
+    //cell.style.setProperty('--flow-delay2', `-${(now + half) % FLOW_DURATION}ms`);
+  });
+
+  updateWireDirections();
   evaluateCircuit();
 }
 function getNeighbourWireDirs(cell) {
@@ -930,52 +950,54 @@ function getDirectionBetween(fromCell, toCell) {
 }
 
 // 수정 후:
-function applyWireDirection(cell, dirs) {
-  /* ▼▼▼ ① 교차 방지 필터  ▼▼▼ */
-  if (dirs.length > 2) {
-    const keep = [];
-    if (dirs.includes("wire-left") || dirs.includes("wire-right")) {
-      keep.push(dirs.includes("wire-left") ? "wire-left" : "wire-right");
-    }
-    if (dirs.includes("wire-up") || dirs.includes("wire-down")) {
-      keep.push(dirs.includes("wire-up") ? "wire-up" : "wire-down");
-    }
-    dirs = keep;   // 세 방향 이상일 때만 L자(두 방향)로 축소
-  }
-  /* ▲▲▲ ① 끝  ▲▲▲ */
-
-  /* ② 기존 코드: 클래스 리셋 및 재적용 */
+function applyWireDirection(cell, prevCell, nextCell) {
+  // 1) 이전 wire/in/out, corner/h/v 모두 제거
   cell.classList.remove(
-    'wire-up', 'wire-down', 'wire-left', 'wire-right',
+    'in-up', 'in-down', 'in-left', 'in-right',
+    'out-up', 'out-down', 'out-left', 'out-right',
     'h', 'v', 'corner'
   );
-  cell.classList.add(...dirs);
 
-  const plain = dirs.map(d => d.replace('wire-', ''));
-
-  /* ③ 애니메이션용 클래스 유지 로직(변경 없음) */
-  const horiz = plain.some(p => p === 'left' || p === 'right');
-  const vert = plain.some(p => p === 'up' || p === 'down');
-
-  if (horiz && vert) {
-    cell.classList.add('corner');     // ㄱ 셀
-  } else if (horiz) {
-    cell.classList.add('h');          // 가로 직선
-  } else if (vert) {
-    cell.classList.add('v');          // 세로 직선
+  // 2) in- 방향 계산
+  const inClasses = [];
+  if (prevCell) {
+    getDirectionBetween(prevCell, cell).forEach(d => {
+      inClasses.push(`in-${d.replace('wire-', '')}`);
+    });
   }
+
+  // 3) out- 방향 계산
+  const outClasses = [];
+  if (nextCell) {
+    getDirectionBetween(cell, nextCell).forEach(d => {
+      outClasses.push(`out-${d.replace('wire-', '')}`);
+    });
+  }
+
+  // 4) 클래스 부착
+  cell.classList.add(...inClasses, ...outClasses);
+
+  // 5) 애니메이션용 corner/h/v 유지 로직
+  const dirs = [
+    ...inClasses.map(d => d.replace('in-', '')),
+    ...outClasses.map(d => d.replace('out-', ''))
+  ];
+  const horiz = dirs.some(dir => dir === 'left' || dir === 'right');
+  const vert = dirs.some(dir => dir === 'up' || dir === 'down');
+/*
+  if (horiz && vert) cell.classList.add('corner');
+  else if (horiz) cell.classList.add('h');
+  else if (vert) cell.classList.add('v');*/
 }
 
 
-
-// 새로 추가
-function getFlowClass(curr, next) {
-  const c = +curr.dataset.index, n = +next.dataset.index;
-  const g = GRID_COLS;
-  if (n === c + 1) return "flow-right";
-  if (n === c - 1) return "flow-left";
-  if (n === c + g) return "flow-down";
-  return "flow-up";   // n === c - g
+function getFlowInClass(prev, cell) {
+  const d = getDirectionBetween(prev, cell)[0]?.replace('wire-', '');
+  return d ? `flow-in-${d}` : null;
+}
+function getFlowOutClass(cell, next) {
+  const d = getDirectionBetween(cell, next)[0]?.replace('wire-', '');
+  return d ? `flow-out-${d}` : null;
 }
 
 /* 2) INPUT 블록 토글 설정 (0 ↔ 1) */
@@ -1175,6 +1197,7 @@ function clearGrid() {
     cell.removeAttribute("data-name");
     cell.removeAttribute("data-value");
     cell.removeAttribute("draggable");
+    delete cell.dataset.directionLocked;
   });
   wires = [];  // 전선도 초기화
 }
@@ -1250,13 +1273,11 @@ function attachDragHandlersToBlockIcons() {
 }
 
 
-
 document.addEventListener("keydown", (e) => {
   if (e.key === "r") {
     const confirmed = confirm("⚠️ 모든 블록과 배선을 삭제하시겠습니까?");
     if (confirmed) {
       clearGrid(); // 실제 삭제 함수 호출
-      setupBlockPanel(currentLevel);
     }
   }
   if (e.key === "Control") {
@@ -1908,6 +1929,7 @@ function setupGrid(rows, cols) {
             if (c.dataset.type === "WIRE") {
               c.className = "cell";
               c.removeAttribute("data-type");
+              delete c.dataset.directionLocked;
             }
           });
         });
@@ -1932,6 +1954,7 @@ function resetCell(cell) {
   delete cell.dataset.type;
   delete cell.dataset.name;
   delete cell.dataset.value;
+  delete cell.dataset.directionLocked;
   cell.removeAttribute("draggable");
   // 클릭 이벤트 프로퍼티 초기화
   cell.onclick = null;
@@ -2341,15 +2364,9 @@ saveCircuitBtn.addEventListener('click', () => {
 
 // 2) 저장된 회로 키들 읽어오기
 function getSavedKeys() {
-  const prefix = `bit_saved_stage_${String(currentLevel).padStart(2,'0')}_`;
   return Object.keys(localStorage)
-    .filter(k => k.startsWith(prefix))
-    .sort((a, b) => {
-      // 키 뒤에 붙은 timestamp(ms) 비교 — 내림차순(최신순)
-      const tA = parseInt(a.slice(prefix.length), 10);
-      const tB = parseInt(b.slice(prefix.length), 10);
-      return tB - tA;
-    });
+    .filter(k => k.startsWith('bit_saved_stage_'))
+    .sort();  // stage 번호 순
 }
 
 // 3) 리스트 그리기
@@ -2406,59 +2423,24 @@ function loadCircuit(key) {
   const data = JSON.parse(localStorage.getItem(key));
   if (!data) return alert('불러오기 실패: 데이터가 없습니다');
 
+  currentStage = data.stageId;
   clearGrid();
   clearWires();
 
-  // ① 셀 상태 복원
-  const cells = document.querySelectorAll('#grid .cell');
-  data.grid.forEach(state => {
-    const cell = cells[state.index];
-    // 클래스 초기화 후
-    cell.className = 'cell';
-    // dataset 복원
-    if (state.type)  cell.dataset.type  = state.type;
-    if (state.name)  cell.dataset.name  = state.name;
-    if (state.value) cell.dataset.value = state.value;
-    // CSS 클래스 복원
-    state.classes.forEach(c => cell.classList.add(c));
-    // 블록/입력값 텍스트, 핸들러 바인딩
-    if (state.type === 'INPUT' || state.type === 'OUTPUT') {
-      attachInputClickHandlers(cell);
-    }
-    if (state.type && state.type !== 'WIRE') {
-      cell.classList.add('block');
-      if (state.type === 'INPUT')
-        cell.textContent = `${state.name}(${state.value})`;
-      else if (state.type === 'OUTPUT')
-        cell.textContent = `${state.name}(-)`;
-      else
-        cell.textContent = state.type;
-      cell.draggable = true;
-    }
-  });
-
-    // ② DOM wire 복원
-  data.wires.forEach(w => {
-    placeWireAt(w.x, w.y, w.dir);
-    const idx  = w.y * GRID_COLS + w.x;
-    const cell = cells[idx];
-    cell.dataset.directionLocked = 'false';
-  });
-
-  // ── 여기서 wires 배열 복원 ──
-  if (data.wiresObj) {
-    wires = data.wiresObj.map(obj => ({
-      start: cells[obj.startIdx],
-      end:   cells[obj.endIdx],
-      path:  obj.pathIdxs.map(i => cells[i])
-    }));
-  }
+  data.grid.forEach((row, y) =>
+    row.forEach((type, x) => type && placeBlockAt(x, y, type))
+  );
+  data.wires.forEach(w => placeWireAt(w.x, w.y, w.dir));
 
   updateUsedCounts(data.usedBlocks, data.usedWires);
   document.getElementById('gameTitle').textContent =
-    `Stage ${data.stageId} (불러옴)`;
+    `Stage ${currentStage} (불러옴)`;
+  document.querySelectorAll('#grid .cell.wire').forEach(cell => {
+    cell.style.animation = 'none';
+    void cell.offsetWidth;      // 강제 reflow
+    cell.style.animation = '';  // 원래 CSS 애니메이션 복원
+  });
 }
-
 
 function saveCircuit() {
   const data = {
@@ -2469,9 +2451,7 @@ function saveCircuit() {
     usedBlocks: countUsedBlocks(),
     usedWires: countUsedWires()
   };
-  // ↓ 추가: 현재 시간(밀리초) 기반 타임스탬프
-  const timestamp = Date.now();
-  const key = `bit_saved_stage_${String(currentLevel).padStart(2, '0')}_${timestamp}`;
+  const key = `bit_saved_stage_${String(currentLevel).padStart(2, '0')}`;
   try {
     localStorage.setItem(key, JSON.stringify(data));
     console.log(`Circuit saved: ${key}`, data);
@@ -2481,15 +2461,19 @@ function saveCircuit() {
   }
 }
 function getGridData() {
-  return Array.from(document.querySelectorAll('#grid .cell')).map(cell => ({
-    index: +cell.dataset.index,
-    type: cell.dataset.type || null,
-    name: cell.dataset.name || null,
-    value: cell.dataset.value || null,
-    classes: Array.from(cell.classList).filter(c => c !== 'cell'),
-  }));
+  const cells = Array.from(document.querySelectorAll('#grid .cell'));
+  const rows = [];
+  for (let y = 0; y < GRID_ROWS; y++) {
+    const row = [];
+    for (let x = 0; x < GRID_COLS; x++) {
+      const cell = cells[y * GRID_COLS + x];
+      const t = cell.dataset.type;
+      row.push(t && t !== 'WIRE' ? t : null);
+    }
+    rows.push(row);
+  }
+  return rows;
 }
-
 function getWireData() {
   return Array.from(document.querySelectorAll('#grid .cell.wire')).map(cell => {
     const dir = Array.from(cell.classList)
@@ -2513,7 +2497,6 @@ function clearGrid() {
     cell.className = 'cell';
     delete cell.dataset.type;
     cell.textContent = '';
-    delete cell.onclick;
   });
 }
 
@@ -2557,8 +2540,20 @@ function attachInputClickHandlers(cell) {
   cell.addEventListener('click', () => {
     const val = cell.dataset.value === '1' ? '0' : '1';
     cell.dataset.value = val;
-    cell.textContent = `${cell.dataset.name}(${val})`;
-    cell.classList.toggle('active', val === '1');
-    evaluateCircuit();
+    cell.textContent = `${cell.dataset.name || cell.dataset.type}(${val})`;
   });
+}
+function getSavedKeys() {
+  return Object.keys(localStorage)
+    .filter(k => k.startsWith('bit_saved_stage_'))
+    .sort();
+}
+
+function getFlowInClass(prev, cell) {
+  const dir = getDirectionBetween(prev, cell)[0]?.replace('wire-', '');
+  return dir ? `flow-in-${dir}` : null;
+}
+function getFlowOutClass(cell, next) {
+  const dir = getDirectionBetween(cell, next)[0]?.replace('wire-', '');
+  return dir ? `flow-out-${dir}` : null;
 }

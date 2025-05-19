@@ -205,58 +205,6 @@
     background-color: #ffe;
   }
 
-  /* ── 수직선 (│) 은 ::before 에만 그리기 ── */
-  .cell.wire.wire-up::before,
-  .cell.wire.wire-down::before {
-    content: '';
-    position: absolute;
-    left: 50%;
-    background-color: black;
-    transform: translateX(-50%);
-  }
-
-  .cell.wire.wire-up::before {
-    top: 0;
-    height: 50%;
-  }
-
-  .cell.wire.wire-down::before {
-    bottom: 0;
-    height: 50%;
-  }
-
-  /* ── 수평선 (─) 은 ::after 에만 그리기 ── */
-  .cell.wire.wire-left::after,
-  .cell.wire.wire-right::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    background-color: black;
-    transform: translateY(-50%);
-  }
-
-  .cell.wire.wire-left::after {
-    left: 0;
-    width: 50%;
-  }
-
-  .cell.wire.wire-right::after {
-    right: 0;
-    width: 50%;
-  }
-
-  /* ── 두 방향이 동시에 있을 땐 전체 길이로 ── */
-  /* 세로 전체 (│) */
-  .cell.wire.wire-up.wire-down::before {
-    top: 0;
-    height: 100%;
-  }
-
-  /* 가로 전체 (─) */
-  .cell.wire.wire-left.wire-right::after {
-    left: 0;
-    width: 100%;
-  }
 
   /* ── 배선 미리보기 강조 ── */
   .cell.wire-preview {
@@ -289,346 +237,6 @@
     align-items: center;
   }
 
-  /* ── 4가지 코너 모양(ㄱ, ┐, └, ┘) 강제 반쪽 길이 ── */
-  /* 세로선(│) – width만 4 ➜ 2 로 */
-  /* 세로선(│) – 굵기만 2 px */
-  .cell.wire.wire-up::before,
-  .cell.wire.wire-down::before {
-    width: 2px;
-    /* ▽ 세로 점선 + 애니메이션 */
-    background-image: repeating-linear-gradient(0deg, #000 0 26px, transparent 26px var(--unit));
-    background-size: 100% var(--unit);
-    animation: dash-down 1s linear infinite;
-  }
-
-  /* 가로선(─) – 굵기를 height 로만 통일 */
-  .cell.wire.wire-left::after,
-  .cell.wire.wire-right::after {
-    height: 2px;
-    /* ▽ 가로 점선 + 애니메이션 */
-    background-image: repeating-linear-gradient(90deg, #000 0 26px, transparent 26px var(--unit));
-    background-size: var(--unit) 100%;
-    animation: dash-right 1s linear infinite;
-  }
-
-  /* ① 수평 흐름용 --------------------------------------------------- */
-
-  /* 셀 크기 변수(선택) */
-  :root {
-    --unit: 52px;
-    /* 셀 한 칸 간격 */
-    /* 아래 네 값만 바꿔가며 테스트하세요 */
-    --phase-right: 26px;
-    /* →  흐름 */
-    --phase-left: 0px;
-    /* ←  흐름 (반 주기 만큼 밀어 예시) */
-    --phase-down: 0px;
-    /* ↓  흐름 */
-    --phase-up: 26px;
-    /* ↑  흐름 */
-    /* shape: down+right (┌) */
-    --corner-offset-dr-right: 0px;
-    --corner-offset-dr-down: 0px;
-
-    /* shape: down+left  (┐) */
-    --corner-offset-dl-left: 26px;
-    --corner-offset-dl-down: 26px;
-
-    /* shape: up+right   (└) */
-    --corner-offset-ur-right: 26px;
-    --corner-offset-ur-up: 26px;
-
-    /* shape: up+left    (┘) */
-    --corner-offset-ul-left: 0px;
-    --corner-offset-ul-up: 0px;
-
-    /* fallback */
-    --corner-offset: 0px;
-    --half-unit: calc(var(--unit) / 2);
-  }
-
-  /* ── 가로 기본선(h) ───────────────────────── */
-  .cell.wire.h:not(.corner)::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 100%;
-    height: 2px;
-
-    /* 검정 26px → 투명 26px = 총 52px */
-    background-image: repeating-linear-gradient(90deg, #000 0 26px, transparent 26px var(--unit));
-    background-size: var(--unit) 100%;
-    /* 열 번호(col)만큼 -52px씩 당겨 패턴 이어붙이기 */
-    background-position:
-      calc(-1 * var(--unit) * var(--col) + var(--phase-right)) 0;
-  }
-
-  /* ── 세로 기본선(v) ───────────────────────── */
-  .cell.wire.v:not(.corner)::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 2px;
-    height: 100%;
-
-    background-image: repeating-linear-gradient(0deg, #000 0 26px, transparent 26px var(--unit));
-    background-size: 100% var(--unit);
-    /* 행 번호(row)만큼 -52px씩 당겨 패턴 이어붙이기 */
-    background-position:
-      0 calc(-1 * var(--unit) * var(--row) + var(--phase-down));
-  }
-
-
-
-
-  @keyframes dash-right {
-    from {
-      background-position: calc(-1 * var(--unit) * var(--col) + var(--phase-right)) 0;
-    }
-
-    to {
-      background-position: calc(-1 * var(--unit) * var(--col) + var(--phase-right) + var(--unit)) 0;
-    }
-  }
-
-  @keyframes dash-left {
-    from {
-      background-position: calc(-1 * var(--unit) * var(--col) + var(--phase-left)) 0;
-    }
-
-    to {
-      background-position: calc(-1 * var(--unit) * var(--col) + var(--phase-left) - var(--unit)) 0;
-    }
-  }
-
-  @keyframes dash-down {
-    from {
-      background-position: 0 calc(-1 * var(--unit) * var(--row) + var(--phase-down));
-    }
-
-    to {
-      background-position: 0 calc(-1 * var(--unit) * var(--row) + var(--phase-down) + var(--unit));
-    }
-  }
-
-  @keyframes dash-up {
-    from {
-      background-position: 0 calc(-1 * var(--unit) * var(--row) + var(--phase-up));
-    }
-
-    to {
-      background-position: 0 calc(-1 * var(--unit) * var(--row) + var(--phase-up) - var(--unit));
-    }
-  }
-
-
-
-
-
-  /* 1) 애니메이션이 적용될 직선 셀은 배경색을 투명으로 */
-  .cell.wire.h::after,
-  .cell.wire.v::before {
-    background-color: transparent;
-    /* ≤ 점선 배경만 보이게 */
-  }
-
-  /* 2) 흐름 방향(flow-*)이 붙은 셀도 동일 */
-  /* 코너엔 투명 처리하지 않는다 */
-  .cell.wire.flow-right:not(.corner)::after,
-  .cell.wire.flow-left:not(.corner)::after,
-  .cell.wire.flow-down:not(.corner)::before,
-  .cell.wire.flow-up:not(.corner)::before {
-    background-color: transparent;
-  }
-
-
-  .cell.wire.h::after,
-  .cell.wire.v::before {
-    background-color: transparent;
-  }
-
-  .cell.wire.wire-up::before,
-  .cell.wire.wire-down::before,
-  .cell.wire.wire-left::after,
-  .cell.wire.wire-right::after {
-    background-color: transparent;
-  }
-
-  /* → 흐름 */
-  .cell.wire.flow-right::after {
-    /* 기존 */
-    animation: dash-right 1s linear infinite;
-    /* 위상 */
-    background-position:
-      calc(-1 * var(--unit) * var(--col) + var(--phase-right)) 0;
-  }
-
-  /* ← 흐름 */
-  .cell.wire.flow-left::after {
-    animation: dash-left 1s linear infinite;
-    background-position:
-      calc(-1 * var(--unit) * var(--col) + var(--phase-left)) 0;
-  }
-
-  /* ↓ 흐름 */
-  .cell.wire.flow-down::before {
-    animation: dash-down 1s linear infinite;
-    background-position:
-      0 calc(-1 * var(--unit) * var(--row) + var(--phase-down));
-  }
-
-  /* ↑ 흐름 */
-  .cell.wire.flow-up::before {
-    animation: dash-up 1s linear infinite;
-    background-position:
-      0 calc(-1 * var(--unit) * var(--row) + var(--phase-up));
-  }
-
-  .cell.wire.wire-up::before {
-    background-position:
-      0 calc(-1 * var(--unit) * var(--row) + var(--phase-up));
-  }
-
-  .cell.wire.wire-down::before {
-    background-position:
-      0 calc(-1 * var(--unit) * var(--row) + var(--phase-down));
-  }
-
-  .cell.wire.wire-left::after {
-    background-position:
-      calc(-1 * var(--unit) * var(--col) + var(--phase-left)) 0;
-  }
-
-  .cell.wire.wire-right::after {
-    background-position:
-      calc(-1 * var(--unit) * var(--col) + var(--phase-right)) 0;
-  }
-
-  /* ── 드래그된 state 에 따라 corner-offset 덮어쓰기 ── */
-  /* shape down+right (┌) + flow-right */
-  .cell.wire.corner.wire-down.wire-right.flow-right {
-    --corner-offset: var(--corner-offset-dr-right);
-  }
-
-  /* shape down+right (┌) + flow-down */
-  .cell.wire.corner.wire-down.wire-right.flow-down {
-    --corner-offset: var(--corner-offset-dr-down);
-  }
-
-  /* shape down+left (┐) + flow-left */
-  .cell.wire.corner.wire-down.wire-left.flow-left {
-    --corner-offset: var(--corner-offset-dl-left);
-  }
-
-  /* shape down+left (┐) + flow-down */
-  .cell.wire.corner.wire-down.wire-left.flow-down {
-    --corner-offset: var(--corner-offset-dl-down);
-  }
-
-  /* shape up+right (└) + flow-right */
-  .cell.wire.corner.wire-up.wire-right.flow-right {
-    --corner-offset: var(--corner-offset-ur-right);
-  }
-
-  /* shape up+right (└) + flow-up */
-  .cell.wire.corner.wire-up.wire-right.flow-up {
-    --corner-offset: var(--corner-offset-ur-up);
-  }
-
-  /* shape up+left (┘) + flow-left */
-  .cell.wire.corner.wire-up.wire-left.flow-left {
-    --corner-offset: var(--corner-offset-ul-left);
-  }
-
-  /* shape up+left (┘) + flow-up */
-  .cell.wire.corner.wire-up.wire-left.flow-up {
-    --corner-offset: var(--corner-offset-ul-up);
-  }
-
-  /* ── 코너 셀 전용 keyframes ── */
-  @keyframes dash-right-corner {
-    from {
-      background-position:
-        calc(-1 * var(--unit) * var(--col) + var(--phase-right) - var(--corner-offset)) 0;
-    }
-
-    to {
-      background-position:
-        calc(-1 * var(--unit) * var(--col) + var(--phase-right) - var(--corner-offset) + var(--unit)) 0;
-    }
-  }
-
-  @keyframes dash-left-corner {
-    from {
-      background-position:
-        calc(-1 * var(--unit) * var(--col) + var(--phase-left) - var(--corner-offset)) 0;
-    }
-
-    to {
-      background-position:
-        calc(-1 * var(--unit) * var(--col) + var(--phase-left) - var(--corner-offset) - var(--unit)) 0;
-    }
-  }
-
-  @keyframes dash-down-corner {
-    from {
-      background-position:
-        0 calc(-1 * var(--unit) * var(--row) + var(--phase-down) - var(--corner-offset));
-    }
-
-    to {
-      background-position:
-        0 calc(-1 * var(--unit) * var(--row) + var(--phase-down) - var(--corner-offset) + var(--unit));
-    }
-  }
-
-  @keyframes dash-up-corner {
-    from {
-      background-position:
-        0 calc(-1 * var(--unit) * var(--row) + var(--phase-up) - var(--corner-offset));
-    }
-
-    to {
-      background-position:
-        0 calc(-1 * var(--unit) * var(--row) + var(--phase-up) - var(--corner-offset) - var(--unit));
-    }
-  }
-
-  /* ── override: corner 에 새 keyframes 와 함께 animation 재정의 ── */
-
-  /* ── 코너 셀 전용 override (흐름+모양 모두 체크) ── */
-  /* → 흐름이면서 오른쪽 분기 코너 */
-  .cell.wire.flow-right.corner.wire-right::after {
-    animation: dash-right-corner 1s linear infinite;
-    background-position:
-      calc(-1 * var(--unit) * var(--col) + var(--phase-right) - var(--corner-offset)) 0;
-  }
-
-  /* ← 흐름이면서 왼쪽 분기 코너 */
-  .cell.wire.flow-left.corner.wire-left::after {
-    animation: dash-left-corner 1s linear infinite;
-    background-position:
-      calc(-1 * var(--unit) * var(--col) + var(--phase-left) - var(--corner-offset)) 0;
-  }
-
-  /* ↓ 흐름이면서 아래 분기 코너 */
-  .cell.wire.flow-down.corner.wire-down::before {
-    animation: dash-down-corner 1s linear infinite;
-    background-position:
-      0 calc(-1 * var(--unit) * var(--row) + var(--phase-down) - var(--corner-offset));
-  }
-
-  /* ↑ 흐름이면서 위 분기 코너 */
-  .cell.wire.flow-up.corner.wire-up::before {
-    animation: dash-up-corner 1s linear infinite;
-    background-position:
-      0 calc(-1 * var(--unit) * var(--row) + var(--phase-up) - var(--corner-offset));
-  }
-
   #simulateButton {
     margin: 10px;
     padding: 8px 12px;
@@ -659,6 +267,11 @@
     outline: 2px dashed currentColor;
     outline-offset: -2px;
   }
+
+  .cell.flow-active {
+  background-color: #ffd;      /* 흐름이 지나간 셀 하이라이트 */
+  transition: background-color 0.2s;
+}
 
   #gradingTable {
     width: 100%;
@@ -1148,3 +761,214 @@
   .modal.active {
     display: flex !important;
   }
+/* style.v1.2.css */
+
+/* ── Flow-in (in-flow) 강조 pseudoelements ── */
+.in-up::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  width: 2px; height: 50%;
+  background: rgba(255, 165, 0, 0.6);
+  transform: translateX(-50%);
+  transition: background 0.1s;
+}
+.in-right::before {
+  content: '';
+  position: absolute;
+  top: 50%; right: 0;
+  width: 50%; height: 2px;
+  background: rgba(255, 165, 0, 0.6);
+  transform: translateY(-50%);
+  transition: background 0.1s;
+}
+.in-down::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%;
+  width: 2px; height: 50%;
+  background: rgba(255, 165, 0, 0.6);
+  transform: translateX(-50%);
+  transition: background 0.1s;
+}
+.in-left::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0;
+  width: 50%; height: 2px;
+  background: rgba(255, 165, 0, 0.6);
+  transform: translateY(-50%);
+  transition: background 0.1s;
+}
+
+/* ── Flow-out (out-flow) 강조 pseudoelements ── */
+.out-up::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  width: 2px; height: 50%;
+  background: rgba(255, 165, 0, 0.6);
+  transform: translateX(-50%);
+  transition: background 0.1s;
+}
+.out-right::after {
+  content: '';
+  position: absolute;
+  top: 50%; right: 0;
+  width: 50%; height: 2px;
+  background: rgba(255, 165, 0, 0.6);
+  transform: translateY(-50%);
+  transition: background 0.1s;
+}
+.out-down::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%;
+  width: 2px; height: 50%;
+  background: rgba(255, 165, 0, 0.6);
+  transform: translateX(-50%);
+  transition: background 0.1s;
+}
+.out-left::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0;
+  width: 50%; height: 2px;
+  background: rgba(255, 165, 0, 0.6);
+  transform: translateY(-50%);
+  transition: background 0.1s;
+}
+
+/* 공통 셀 설정 */
+.cell.wire {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── flow-out (::after) ── */
+/* 오른쪽으로 흘러나감 */
+.cell.wire.flow-out-right::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: 0;
+  width: 50%;  /* 칸 너비의 절반 */
+  height: 2px; /* 선 두께 */
+  background: currentColor;
+  transform: translateY(-50%);
+  animation:
+    flow-out-right 600ms linear infinite;
+  animation-delay:
+    var(--flow-delay_out, 0ms),
+}
+/* 왼쪽으로 흘러나감 */
+.cell.wire.flow-out-left::after {
+  content: "";
+  position: absolute;
+  top: 50%; right: 0;
+  width: 50%;
+  height: 2px;
+  background: currentColor;
+  transform: translateY(-50%);
+  animation:
+    flow-out-left 600ms linear infinite;
+  animation-delay:
+    var(--flow-delay_out, 0ms),
+}
+/* 아래로 흘러나감 */
+.cell.wire.flow-out-down::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 0;
+  width: 2px;
+  height: 50%;
+  background: currentColor;
+  transform: translateX(-50%);
+  animation:
+    flow-out-down 600ms linear infinite;
+  animation-delay:
+    var(--flow-delay_out, 0ms);
+}
+/* 위로 흘러나감 */
+.cell.wire.flow-out-up::after {
+  content: "";
+  position: absolute;
+  left: 50%; bottom: 0;
+  width: 2px;
+  height: 50%;
+  background: currentColor;
+  transform: translateX(-50%);
+  animation:
+    flow-out-up 600ms linear infinite;
+  animation-delay:
+    var(--flow-delay_in, 0ms);
+}
+
+/* ── flow-in (::before) ── */
+/* 오른쪽에서 흘러들어옴 */
+.cell.wire.flow-in-right::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 0;
+  width: 50%;
+  height: 2px;
+  background: currentColor;
+  transform: translateY(-50%);
+  animation:
+    flow-in-right 600ms linear infinite;
+  animation-delay:
+    var(--flow-delay_in, 0ms);
+}
+/* 왼쪽에서 흘러들어옴 */
+.cell.wire.flow-in-left::before {
+  content: "";
+  position: absolute;
+  top: 50%; right: 0;
+  width: 50%;
+  height: 2px;
+  background: currentColor;
+  transform: translateY(-50%);
+  animation:
+    flow-in-left 600ms linear infinite;
+  animation-delay:
+    var(--flow-delay_in, 0ms);
+}
+/* 아래에서 흘러들어옴 */
+.cell.wire.flow-in-down::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 0;
+  width: 2px;
+  height: 50%;
+  background: currentColor;
+  transform: translateX(-50%);
+  animation:
+    flow-in-down 600ms linear infinite;
+  animation-delay:
+    var(--flow-delay_in, 0ms);
+}
+/* 위에서 흘러들어옴 */
+.cell.wire.flow-in-up::before {
+  content: "";
+  position: absolute;
+  left: 50%; bottom: 0;
+  width: 2px;
+  height: 50%;
+  background: currentColor;
+  transform: translateX(-50%);
+  animation:
+    flow-in-up 600ms linear infinite;
+  animation-delay:
+    var(--flow-delay_in, 0ms);
+}
+
+
+
+@keyframes flow-out-right { from { left:   -50%; } to { left: 150%; } }
+@keyframes flow-out-left  { from { right:  -50%; } to { right:150%; } }
+@keyframes flow-out-down  { from { top:    -50%; } to { top: 150%; } }
+@keyframes flow-out-up    { from { bottom: -50%; } to { bottom:150%; } }
+
+@keyframes flow-in-right  { from { left:   -50%; } to { left: 150%; } }
+@keyframes flow-in-left   { from { right:  -50%; } to { right: 150%; } }
+@keyframes flow-in-down   { from { top:    -50%; } to { top: 150%; } }
+@keyframes flow-in-up     { from { bottom: -50%; } to { bottom: 150%; } }

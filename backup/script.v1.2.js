@@ -668,6 +668,7 @@ function disconnectWiresCascade(startBlock) {
           "h", "v", "corner"
         );
         delete c.dataset.type;
+        delete c.dataset.directionLocked;
       }
     });
 
@@ -796,8 +797,18 @@ trash.addEventListener("drop", () => {
   lastDraggedFromCell = null;
 });
 
+// 아래 함수들은 wire 방향 처리
+function updateWireDirections() {
+  const cells = document.querySelectorAll(".cell");
 
+  cells.forEach(cell => {
+    if (cell.dataset.type !== "WIRE") return;
+    if (cell.dataset.directionLocked === "true") return;
 
+    cell.classList.remove("wire-up", "wire-down", "wire-left", "wire-right");
+    updateOneWireDirection(cell);
+  });
+}
 
 function updateOneWireDirection(cell) {
   const index = parseInt(cell.dataset.index);
@@ -857,6 +868,7 @@ function drawWirePath(path) {
     }
 
     applyWireDirection(cell, Array.from(dirs));
+    cell.dataset.directionLocked = "true";
   }
   // ▶ 시작·끝 블록이 draggable이어야만 이동 가능
   const start = path[0], end = path[path.length - 1];
@@ -885,6 +897,7 @@ function drawWirePath(path) {
     }
   }
 
+  updateWireDirections();
   evaluateCircuit();
 }
 function getNeighbourWireDirs(cell) {
@@ -1175,6 +1188,7 @@ function clearGrid() {
     cell.removeAttribute("data-name");
     cell.removeAttribute("data-value");
     cell.removeAttribute("draggable");
+    delete cell.dataset.directionLocked;
   });
   wires = [];  // 전선도 초기화
 }
@@ -1250,13 +1264,11 @@ function attachDragHandlersToBlockIcons() {
 }
 
 
-
 document.addEventListener("keydown", (e) => {
   if (e.key === "r") {
     const confirmed = confirm("⚠️ 모든 블록과 배선을 삭제하시겠습니까?");
     if (confirmed) {
       clearGrid(); // 실제 삭제 함수 호출
-      setupBlockPanel(currentLevel);
     }
   }
   if (e.key === "Control") {
@@ -1908,6 +1920,7 @@ function setupGrid(rows, cols) {
             if (c.dataset.type === "WIRE") {
               c.className = "cell";
               c.removeAttribute("data-type");
+              delete c.dataset.directionLocked;
             }
           });
         });
@@ -1932,6 +1945,7 @@ function resetCell(cell) {
   delete cell.dataset.type;
   delete cell.dataset.name;
   delete cell.dataset.value;
+  delete cell.dataset.directionLocked;
   cell.removeAttribute("draggable");
   // 클릭 이벤트 프로퍼티 초기화
   cell.onclick = null;
@@ -2341,15 +2355,9 @@ saveCircuitBtn.addEventListener('click', () => {
 
 // 2) 저장된 회로 키들 읽어오기
 function getSavedKeys() {
-  const prefix = `bit_saved_stage_${String(currentLevel).padStart(2,'0')}_`;
   return Object.keys(localStorage)
-    .filter(k => k.startsWith(prefix))
-    .sort((a, b) => {
-      // 키 뒤에 붙은 timestamp(ms) 비교 — 내림차순(최신순)
-      const tA = parseInt(a.slice(prefix.length), 10);
-      const tB = parseInt(b.slice(prefix.length), 10);
-      return tB - tA;
-    });
+    .filter(k => k.startsWith('bit_saved_stage_'))
+    .sort();  // stage 번호 순
 }
 
 // 3) 리스트 그리기
@@ -2406,59 +2414,24 @@ function loadCircuit(key) {
   const data = JSON.parse(localStorage.getItem(key));
   if (!data) return alert('불러오기 실패: 데이터가 없습니다');
 
+  currentStage = data.stageId;
   clearGrid();
   clearWires();
 
-  // ① 셀 상태 복원
-  const cells = document.querySelectorAll('#grid .cell');
-  data.grid.forEach(state => {
-    const cell = cells[state.index];
-    // 클래스 초기화 후
-    cell.className = 'cell';
-    // dataset 복원
-    if (state.type)  cell.dataset.type  = state.type;
-    if (state.name)  cell.dataset.name  = state.name;
-    if (state.value) cell.dataset.value = state.value;
-    // CSS 클래스 복원
-    state.classes.forEach(c => cell.classList.add(c));
-    // 블록/입력값 텍스트, 핸들러 바인딩
-    if (state.type === 'INPUT' || state.type === 'OUTPUT') {
-      attachInputClickHandlers(cell);
-    }
-    if (state.type && state.type !== 'WIRE') {
-      cell.classList.add('block');
-      if (state.type === 'INPUT')
-        cell.textContent = `${state.name}(${state.value})`;
-      else if (state.type === 'OUTPUT')
-        cell.textContent = `${state.name}(-)`;
-      else
-        cell.textContent = state.type;
-      cell.draggable = true;
-    }
-  });
-
-    // ② DOM wire 복원
-  data.wires.forEach(w => {
-    placeWireAt(w.x, w.y, w.dir);
-    const idx  = w.y * GRID_COLS + w.x;
-    const cell = cells[idx];
-    cell.dataset.directionLocked = 'false';
-  });
-
-  // ── 여기서 wires 배열 복원 ──
-  if (data.wiresObj) {
-    wires = data.wiresObj.map(obj => ({
-      start: cells[obj.startIdx],
-      end:   cells[obj.endIdx],
-      path:  obj.pathIdxs.map(i => cells[i])
-    }));
-  }
+  data.grid.forEach((row, y) =>
+    row.forEach((type, x) => type && placeBlockAt(x, y, type))
+  );
+  data.wires.forEach(w => placeWireAt(w.x, w.y, w.dir));
 
   updateUsedCounts(data.usedBlocks, data.usedWires);
   document.getElementById('gameTitle').textContent =
-    `Stage ${data.stageId} (불러옴)`;
+    `Stage ${currentStage} (불러옴)`;
+  document.querySelectorAll('#grid .cell.wire').forEach(cell => {
+    cell.style.animation = 'none';
+    void cell.offsetWidth;      // 강제 reflow
+    cell.style.animation = '';  // 원래 CSS 애니메이션 복원
+  });
 }
-
 
 function saveCircuit() {
   const data = {
@@ -2469,9 +2442,7 @@ function saveCircuit() {
     usedBlocks: countUsedBlocks(),
     usedWires: countUsedWires()
   };
-  // ↓ 추가: 현재 시간(밀리초) 기반 타임스탬프
-  const timestamp = Date.now();
-  const key = `bit_saved_stage_${String(currentLevel).padStart(2, '0')}_${timestamp}`;
+  const key = `bit_saved_stage_${String(currentLevel).padStart(2, '0')}`;
   try {
     localStorage.setItem(key, JSON.stringify(data));
     console.log(`Circuit saved: ${key}`, data);
@@ -2481,15 +2452,19 @@ function saveCircuit() {
   }
 }
 function getGridData() {
-  return Array.from(document.querySelectorAll('#grid .cell')).map(cell => ({
-    index: +cell.dataset.index,
-    type: cell.dataset.type || null,
-    name: cell.dataset.name || null,
-    value: cell.dataset.value || null,
-    classes: Array.from(cell.classList).filter(c => c !== 'cell'),
-  }));
+  const cells = Array.from(document.querySelectorAll('#grid .cell'));
+  const rows = [];
+  for (let y = 0; y < GRID_ROWS; y++) {
+    const row = [];
+    for (let x = 0; x < GRID_COLS; x++) {
+      const cell = cells[y * GRID_COLS + x];
+      const t = cell.dataset.type;
+      row.push(t && t !== 'WIRE' ? t : null);
+    }
+    rows.push(row);
+  }
+  return rows;
 }
-
 function getWireData() {
   return Array.from(document.querySelectorAll('#grid .cell.wire')).map(cell => {
     const dir = Array.from(cell.classList)
@@ -2513,7 +2488,6 @@ function clearGrid() {
     cell.className = 'cell';
     delete cell.dataset.type;
     cell.textContent = '';
-    delete cell.onclick;
   });
 }
 
@@ -2557,8 +2531,11 @@ function attachInputClickHandlers(cell) {
   cell.addEventListener('click', () => {
     const val = cell.dataset.value === '1' ? '0' : '1';
     cell.dataset.value = val;
-    cell.textContent = `${cell.dataset.name}(${val})`;
-    cell.classList.toggle('active', val === '1');
-    evaluateCircuit();
+    cell.textContent = `${cell.dataset.name || cell.dataset.type}(${val})`;
   });
+}
+function getSavedKeys() {
+  return Object.keys(localStorage)
+    .filter(k => k.startsWith('bit_saved_stage_'))
+    .sort();
 }
