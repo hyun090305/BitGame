@@ -609,7 +609,16 @@ function finish(e) {
   document.removeEventListener("mousemove", track);
   document.removeEventListener("mouseup", finish);
   isMouseDown = false;
-
+  const middle = wireTrace.slice(1, -1);
+  if (middle.some(c => c.dataset.type)) {
+    // 미리보기 지우고 원상복구
+    wireTrace.forEach(c => c.classList.remove("wire-preview"));
+    wireTrace = [];
+    isWireDrawing = false;
+    statusMsg.style.display = "none";
+    document.getElementById("wireStatusInfo").style.display = "block";
+    return;
+  }
   // 2) 드롭한 셀 확인 & 마지막에 추가
   let dropCell = e.target.closest(".cell");
   if (!dropCell || !grid.contains(dropCell)) dropCell = null;
@@ -1463,25 +1472,28 @@ async function gradeLevelAnimated(level) {
           return;
         }
 
-        // ② 이미 기록된 항목 중 가장 “나은” 값 찾기
         let best = null;
         snapshot.forEach(child => {
           const e = child.val();
-          // 예: 블록 개수 합계가 더 적거나, 같으면 도선 개수가 더 적으면 개선
+          // 기존/새 블록 개수 합계
           const oldBlocks = Object.values(e.blockCounts || {}).reduce((a, b) => a + b, 0);
           const newBlocks = Object.values(blockCounts).reduce((a, b) => a + b, 0);
+          // 기존/새 도선 개수
           const oldWires = e.usedWires;
           const newWires = usedWires;
 
-          if (!best
-            || newBlocks < oldBlocks
+          // ✅ 수정: 오직 성능이 엄격히 개선된 경우에만 best 할당
+          if (
+            newBlocks < oldBlocks
             || (newBlocks === oldBlocks && newWires < oldWires)
           ) {
-            best = { key: child.key, oldBlocks, oldWires };
+            best = { key: child.key };
+            // nickname 당 보통 한 건만 있으므로, 더 돌 필요 없으면 false 리턴
+            return false;
           }
         });
 
-        // ③ 개선된 경우에만 업데이트
+        // ③ 개선된 경우에만 업데이트 (동일 성능이라면 best가 null이므로 건너뜀)
         if (best) {
           rankingsRef.child(best.key).update({
             blockCounts,
@@ -1814,72 +1826,56 @@ function setupGrid(rows, cols) {
     /* drop */
     cell.addEventListener("drop", e => {
       e.preventDefault();
-      if (lastDraggedFromCell === cell) {
-        // 상태만 초기화하고 즉시 반환
-        lastDraggedType = lastDraggedIcon = lastDraggedFromCell = null;
-        return;
-      }
-      // --- 1) 기존 블록이 있으면 “블록”만 제거 (전선은 그대로) ---
-      const oldType = cell.dataset.type;
-      const oldName = cell.dataset.name;
-      if (oldType) {
-        // 1-1) 셀에서 block 관련 클래스·데이터만 초기화
-        resetCell(cell)
-        // 1-2) INPUT/OUTPUT 이었다면, 패널 아이콘 재노출
-        if (oldType === "INPUT" || oldType === "OUTPUT") {
-          const icon = document.querySelector(
-            `#blockPanel .blockIcon[data-type="${oldType}"][data-name="${oldName}"]`
-          );
-          if (icon) icon.style.display = "inline-flex";
-        }
-      }
+      if (cell.dataset.type) return;
 
-      // --- 2) 드래그된 블록 타입 가져오기 ---
       const type = e.dataTransfer.getData("text/plain");
-      // 유효 타입이면 배치 로직 실행
-      if (!["AND", "OR", "NOT", "INPUT", "OUTPUT", "WIRE", "JUNCTION"].includes(type))
-        return;
-
-      // --- 3) 새 블록 배치 (기존 drop 코드와 동일) ---
+      if (!["AND", "OR", "NOT", "INPUT", "OUTPUT", "WIRE", "JUNCTION"].includes(type)) return;
       if (type === "INPUT" || type === "OUTPUT") {
+        // 이름(name)과 초기값(value) 세팅
         cell.classList.add("block");
         cell.dataset.type = type;
-        cell.dataset.name = lastDraggedName || lastDraggedIcon.dataset.name;
-        cell.draggable = true;
-
-        if (type === "INPUT") {
-          cell.dataset.value = "0";
-          cell.textContent = `${cell.dataset.name}(0)`;
+        cell.dataset.name = lastDraggedName || lastDraggedIcon?.dataset.name;
+        if (type === 'INPUT') {
+          cell.dataset.value = '0';
+          cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
+          // 드롭 시점에 바로 click 리스너 등록
           cell.onclick = () => {
-            cell.dataset.value = cell.dataset.value === "0" ? "1" : "0";
+            cell.dataset.value = cell.dataset.value === '0' ? '1' : '0';
             cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
-            cell.classList.toggle("active", cell.dataset.value === "1");
+            cell.classList.toggle('active', cell.dataset.value === '1');
             evaluateCircuit();
           };
         } else {
+          // OUTPUT 초기 표시 (값 미정)
           cell.textContent = `${cell.dataset.name}(-)`;
         }
-
-        // 드래그해 온 아이콘 숨기기
+        cell.draggable = true;
+        // 배치된 아이콘 하나만 사라지도록 유지 (다른 INPUT 아이콘엔 영향 없음)
         if (lastDraggedIcon) lastDraggedIcon.style.display = "none";
-
-      } else if (type === "WIRE") {
-        // wire 드롭 처리
+      }
+      else if (type === "WIRE") {
         cell.classList.add("wire");
         cell.dataset.type = "WIRE";
-
       } else {
-        // AND, OR, NOT, JUNCTION 등
         cell.classList.add("block");
         cell.textContent = type;
         cell.dataset.type = type;
         cell.draggable = true;
       }
 
-      // --- 4) (옵션) 출처 셀 비우는 로직 ---
+      if (["INPUT", "OUTPUT"].includes(type) && lastDraggedIcon)
+        lastDraggedIcon.style.display = "none";
+
+      /* 원래 셀 비우기 */
       if (lastDraggedFromCell && lastDraggedFromCell !== cell) {
-        // 블록만 지우고 전선은 유지하려면 resetCell 말고 위 방법을 쓰세요.
+        // ─── 수정: cascade delete 호출 ───
+        disconnectWiresCascade(lastDraggedFromCell);
         resetCell(lastDraggedFromCell);
+        // 기존 셀 초기화 로직
+        lastDraggedFromCell.classList.remove("block", "wire");
+        lastDraggedFromCell.textContent = "";
+        delete lastDraggedFromCell.dataset.type;
+        lastDraggedFromCell.removeAttribute("draggable");
       }
       lastDraggedType = lastDraggedIcon = lastDraggedFromCell = null;
     });
@@ -2227,14 +2223,19 @@ function showRanking(levelId) {
   listEl.innerHTML = "로딩 중…";
 
   // ① 이 스테이지에서 허용된 블록 타입 목록
-  const allowedTypes = levelBlockSets[levelId].map(b => b.type);
+  const allowedTypes = Array.from(
+    new Set(levelBlockSets[levelId].map(b => b.type))
+  );
 
   db.ref(`rankings/${levelId}`)
     .orderByChild("timestamp")
     .limitToFirst(10)
     .once("value", snap => {
       const entries = [];
-      snap.forEach(ch => entries.push(ch.val()));
+      snap.forEach(ch => {
+        entries.push(ch.val());
+        // 반환(return) 문이 없으므로 undefined가 반환되고, forEach는 계속 진행됩니다.
+      });
 
       if (entries.length === 0) {
         listEl.innerHTML = `
@@ -2253,6 +2254,15 @@ function showRanking(levelId) {
           );
         return;
       }
+
+      // ③ 클라이언트에서 다중 기준 정렬
+      const sumBlocks = e => Object.values(e.blockCounts || {}).reduce((s, x) => s + x, 0);
+      entries.sort((a, b) => {
+        const aBlocks = sumBlocks(a), bBlocks = sumBlocks(b);
+        if (aBlocks !== bBlocks) return aBlocks - bBlocks;            // 블록 합계 오름차순
+        if (a.usedWires !== b.usedWires) return a.usedWires - b.usedWires; // 도선 오름차순
+        return new Date(a.timestamp) - new Date(b.timestamp);         // 제출 시간 오름차순
+      });
 
       // ② 테이블 헤더 구성
       const headerCols = [
@@ -2282,7 +2292,6 @@ function showRanking(levelId) {
             <td>${timeStr}</td>
           </tr>`;
       }).join("");
-
       listEl.innerHTML = `
         <table>
           <thead><tr>${headerCols}</tr></thead>
@@ -2293,7 +2302,6 @@ function showRanking(levelId) {
           <button id="closeRankingBtn">닫기</button>
         </div>
       `;
-
       document.getElementById("refreshRankingBtn")
         .addEventListener("click", () => showRanking(levelId));
       document.getElementById("closeRankingBtn")
@@ -2341,7 +2349,7 @@ saveCircuitBtn.addEventListener('click', () => {
 
 // 2) 저장된 회로 키들 읽어오기
 function getSavedKeys() {
-  const prefix = `bit_saved_stage_${String(currentLevel).padStart(2,'0')}_`;
+  const prefix = `bit_saved_stage_${String(currentLevel).padStart(2, '0')}_`;
   return Object.keys(localStorage)
     .filter(k => k.startsWith(prefix))
     .sort((a, b) => {
@@ -2416,8 +2424,8 @@ function loadCircuit(key) {
     // 클래스 초기화 후
     cell.className = 'cell';
     // dataset 복원
-    if (state.type)  cell.dataset.type  = state.type;
-    if (state.name)  cell.dataset.name  = state.name;
+    if (state.type) cell.dataset.type = state.type;
+    if (state.name) cell.dataset.name = state.name;
     if (state.value) cell.dataset.value = state.value;
     // CSS 클래스 복원
     state.classes.forEach(c => cell.classList.add(c));
@@ -2437,20 +2445,19 @@ function loadCircuit(key) {
     }
   });
 
-    // ② DOM wire 복원
+  // ② DOM wire 복원
   data.wires.forEach(w => {
     placeWireAt(w.x, w.y, w.dir);
-    const idx  = w.y * GRID_COLS + w.x;
+    const idx = w.y * GRID_COLS + w.x;
     const cell = cells[idx];
-    cell.dataset.directionLocked = 'false';
   });
 
   // ── 여기서 wires 배열 복원 ──
   if (data.wiresObj) {
     wires = data.wiresObj.map(obj => ({
       start: cells[obj.startIdx],
-      end:   cells[obj.endIdx],
-      path:  obj.pathIdxs.map(i => cells[i])
+      end: cells[obj.endIdx],
+      path: obj.pathIdxs.map(i => cells[i])
     }));
   }
 
@@ -2464,12 +2471,21 @@ function saveCircuit() {
     timestamp: new Date().toISOString(),
     grid: getGridData(),
     wires: getWireData(),
+
+    // 이전: wiresObj 프로퍼티가 없었습니다
+    // 추가: 실제 런타임 wires 배열을 저장해서 나중에 그대로 복원
+    wiresObj: wires.map(w => ({
+      startIdx: Number(w.start.dataset.index),
+      endIdx: Number(w.end.dataset.index),
+      pathIdxs: w.path.map(c => Number(c.dataset.index))
+    })),
+
     usedBlocks: countUsedBlocks(),
     usedWires: countUsedWires()
   };
-  // ↓ 추가: 현재 시간(밀리초) 기반 타임스탬프
-  const timestamp = Date.now();
-  const key = `bit_saved_stage_${String(currentLevel).padStart(2, '0')}_${timestamp}`;
+
+  const timestampMs = Date.now();
+  const key = `bit_saved_stage_${String(currentLevel).padStart(2, '0')}_${timestampMs}`;
   try {
     localStorage.setItem(key, JSON.stringify(data));
     console.log(`Circuit saved: ${key}`, data);
@@ -2478,6 +2494,7 @@ function saveCircuit() {
     alert('회로 저장 중 오류가 발생했습니다.');
   }
 }
+
 function getGridData() {
   return Array.from(document.querySelectorAll('#grid .cell')).map(cell => ({
     index: +cell.dataset.index,

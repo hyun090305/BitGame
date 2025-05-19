@@ -1013,10 +1013,17 @@
   }
 
   #rankingModal .modal-content {
+    /* 내용 크기에 맞춰 자동 조절 */
+    display: inline-block !important;
     margin: auto !important;
-    /* flex-center가 안 먹을 때 안전장치 */
-    max-width: 600px !important;
-    width: 90% !important;
+    /* 뷰포트 기준 최대 폭/높이 설정 */
+    max-width: 90vw !important;
+    max-height: 80vh !important;
+    width: auto !important;
+    padding: 1.5rem !important;
+    box-sizing: border-box !important;
+    /* 세로 overflow 시 스크롤 */
+    overflow-y: auto !important;
   }
 
   /* ── Username Modal: input & button 디자인 개선 ── */
