@@ -1048,6 +1048,7 @@ function evaluateCircuit() {
         junction.classList.remove("error");
       }
     });
+  highlightOutputErrors();
 }
 
 
@@ -1338,9 +1339,27 @@ async function gradeLevelAnimated(level) {
 
   if (junctionError) {
     alert("❌ JUNCTION 블록에 여러 입력이 연결되어 있습니다. 회로를 수정해주세요.");
+    overlay.style.display = "none";
+    isScoring = false;
     return;
   }
-
+  let outputError = false;
+  Array.from(document.querySelectorAll('.cell.block[data-type="OUTPUT"]'))
+    .forEach(output => {
+      const inputs = getIncomingBlocks(output);
+      if (inputs.length > 1) {
+        output.classList.add("error");
+        outputError = true;
+      } else {
+        output.classList.remove("error");
+      }
+    });
+  if (outputError) {
+    alert("❌ OUTPUT 블록에 여러 입력이 연결되어 있습니다. 회로를 수정해주세요.");
+    overlay.style.display = "none";
+    isScoring = false;
+    return;
+  }
   // 🔒 [1] 현재 레벨에 필요한 OUTPUT 블록 이름 확인
   const requiredOutputs = levelBlockSets[level]
     .filter(block => block.type === "OUTPUT")
@@ -1354,6 +1373,8 @@ async function gradeLevelAnimated(level) {
   const missingOutputs = requiredOutputs.filter(name => !actualOutputNames.includes(name));
   if (missingOutputs.length > 0) {
     alert(`❌ 다음 출력 블록이 배치되지 않았습니다: ${missingOutputs.join(", ")}`);
+    overlay.style.display = "none";
+    isScoring = false;
     return;
   }
 
@@ -2483,6 +2504,20 @@ function loadCircuit(key) {
   });
 }
 
+function highlightOutputErrors() {
+  // 1) 기존 에러 표시 제거
+  document.querySelectorAll('.cell[data-type="OUTPUT"].error')
+    .forEach(el => el.classList.remove('error'));
+
+  // 2) 각 OUTPUT 블록에 들어오는 전선 수 세기
+  document.querySelectorAll('.cell[data-type="OUTPUT"]')
+    .forEach(block => {
+      const incomingCount = wires.filter(w => w.end === block).length;
+      if (incomingCount >= 2) {
+        block.classList.add('error');
+      }
+    });
+}
 
 function saveCircuit() {
   const data = {

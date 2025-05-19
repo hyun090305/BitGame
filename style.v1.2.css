@@ -1155,3 +1155,8 @@
   .modal.active {
     display: flex !important;
   }
+
+  .cell[data-type="OUTPUT"].error {
+    border: 2px solid red;
+    box-shadow: 0 0 6px red;
+  }
