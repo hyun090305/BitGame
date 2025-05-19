@@ -452,7 +452,7 @@ const levelDescriptions = {
 
   12: {
     title: "Stage 12: 4-to-1 MUX",
-    desc: "선택신호(S1, S0)에 따라 입력 신호 하나를 그대로 출력합니다.",
+    desc: "선택신호(S1, S0)에 따라 입력 신호 하나를 선택하여 그대로 출력합니다.",
     table: [
       { IN1: 0, IN2: 0, IN3: 0, IN4: 0, S1: 0, S0: 0, OUT1: 0 },
       { IN1: 1, IN2: 0, IN3: 0, IN4: 0, S1: 0, S0: 0, OUT1: 1 },
