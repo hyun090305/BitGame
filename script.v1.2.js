@@ -648,7 +648,7 @@ function finish(e) {
   const hasOldWire = wireTrace.some(c => c.dataset.type === "WIRE");
 
   // 5) 실제 그리기 or 취소
-  if (startIsBlock && endIsBlock && wireTrace.length > 1 && !hasOldWire) {
+  if (startIsBlock && endIsBlock && wireTrace.length > 2 && !hasOldWire) {
     drawWirePath(wireTrace);
   } else {
     // 조건 하나라도 만족 못 하면 전부 취소
@@ -2459,9 +2459,28 @@ function loadCircuit(key) {
       end: cells[obj.endIdx],
       path: obj.pathIdxs.map(i => cells[i])
     }));
+    if (wires.some(w => w.path.length <= 2)) {
+      clearGrid();
+      clearWires();
+      alert('invalid circuit!');
+      return;
+    }
   }
-
   updateUsedCounts(data.usedBlocks, data.usedWires);
+  // ▼ circuit 불러올 때 사용된 INPUT/OUTPUT 블록 아이콘 숨기기
+  const panel = document.getElementById('blockPanel');
+  // data.grid 에 복원된 셀 상태 중 INPUT/OUTPUT 타입만 골라 이름(name) 리스트 생성
+  const usedNames = data.grid
+    .filter(state => state.type === 'INPUT' || state.type === 'OUTPUT')
+    .map(state => state.name);
+  panel.querySelectorAll('.blockIcon').forEach(icon => {
+    const type = icon.dataset.type;
+    const name = icon.dataset.name;
+    // 같은 이름의 INPUT/OUTPUT 아이콘이 있으면 숨김 처리
+    if ((type === 'INPUT' || type === 'OUTPUT') && usedNames.includes(name)) {
+      icon.style.display = 'none';
+    }
+  });
 }
 
 
