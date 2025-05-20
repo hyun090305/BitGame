@@ -1267,6 +1267,9 @@ document.addEventListener("keydown", (e) => {
     if (confirmed) {
       clearGrid(); // 실제 삭제 함수 호출
       setupBlockPanel(currentLevel);
+      document.querySelectorAll('.cell').forEach(cell => {
+        delete cell.onclick;
+      });
     }
   }
   if (e.key === "Control") {
@@ -1775,25 +1778,51 @@ function showLevelIntro(level, callback) {
   };
 }
 
+
 function renderChapterGrid() {
   const grid = document.getElementById("chapterGrid");
   grid.innerHTML = "";
 
-  chapterData.forEach(chapter => {
+  // 클리어된 레벨 정보 로드
+  const cleared = JSON.parse(localStorage.getItem("clearedLevels") || "[]");
+
+  chapterData.forEach((chapter, idx) => {
     const card = document.createElement("div");
     card.className = "chapterCard";
-    card.innerHTML = `
-      <h3>${chapter.name}</h3>
-      <p>${chapter.desc}</p>
-    `;
-    card.onclick = () => {
-      renderLevelGrid(chapter.stages);
-      document.getElementById("chapterScreen").style.display = "none";
-      document.getElementById("levelScreen").style.display = "block";
-    };
+
+    // 1단계 챕터(basic)는 항상 잠금 해제, 이후 챕터는 이전 챕터 스테이지 전부 클리어되어야 해제
+    let unlocked = true;
+    if (idx > 0) {
+      const prevStages = chapterData[idx - 1].stages;
+      unlocked = prevStages.every(s => cleared.includes(s));
+    }
+
+    if (!unlocked) {
+      // 잠금 상태: 회색 처리 및 클릭 금지
+      card.classList.add("locked");
+      card.innerHTML = `
+        <h3>${chapter.name} 🔒</h3>
+        <p>챕터 ${idx}의 모든 스테이지를 완료해야 열립니다.</p>
+      `;
+      card.onclick = () => {
+        alert(`챕터 ${idx}의 스테이지를 모두 완료해야 다음 챕터가 열립니다.`);
+      };
+    } else {
+      // 해제 상태: 기존 동작 유지
+      card.innerHTML = `
+        <h3>${chapter.name}</h3>
+        <p>${chapter.desc}</p>
+      `;
+      card.onclick = () => {
+        renderLevelGrid(chapter.stages);
+        document.getElementById("chapterScreen").style.display = "none";
+        document.getElementById("levelScreen").style.display = "block";
+      };
+    }
+
     grid.appendChild(card);
   });
-}
+}  
 
 function renderLevelGrid(stageList) {
   const levelGrid = document.querySelector(".levelGrid");

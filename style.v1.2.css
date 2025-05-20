@@ -1160,3 +1160,14 @@
     border: 2px solid red;
     box-shadow: 0 0 6px red;
   }
+
+  .chapterCard.locked {
+  opacity: 0.5;         /* 흐릿하게 보여줌 */
+  cursor: not-allowed;  /* 클릭 불가 커서 */
+}
+
+/* hover 효과 비활성화 */
+.chapterCard.locked:hover {
+  transform: none;
+  background-color: white;
+}
