@@ -1724,7 +1724,9 @@ db.ref("guestbook").on("value", snapshot => {
   for (const e of entries) {
     const div = document.createElement("div");
     div.style.margin = "10px 0";
-    div.innerHTML = `<b>${e.name}</b> (${new Date(e.time).toLocaleString()}):<br>${e.message}`;
+    const name = e.name;
+    const displayName = name.length > 20 ? name.slice(0, 20) + '...' : name;
+    div.innerHTML = `<b>${displayName}</b> (${new Date(e.time).toLocaleString()}):<br>${e.message}`;
     list.appendChild(div);
   }
 });
@@ -1822,7 +1824,7 @@ function renderChapterGrid() {
 
     grid.appendChild(card);
   });
-}  
+}
 
 function renderLevelGrid(stageList) {
   const levelGrid = document.querySelector(".levelGrid");
@@ -2333,14 +2335,16 @@ function showRanking(levelId) {
           .join("");
 
         const timeStr = new Date(e.timestamp).toLocaleString();
+        const nickname = e.nickname;
+        const displayNickname = nickname.length > 20 ? nickname.slice(0, 20) + '...' : nickname;
         return `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${e.nickname}</td>
-            ${counts}
-            <td>${e.usedWires}</td>
-            <td>${timeStr}</td>
-          </tr>`;
+  <tr>
+    <td>${i + 1}</td>
+    <td>${displayNickname}</td>
+    ${counts}
+    <td>${e.usedWires}</td>
+    <td>${timeStr}</td>
+  </tr>`;
       }).join("");
       listEl.innerHTML = `
         <table>
