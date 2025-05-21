@@ -2382,6 +2382,8 @@ document.addEventListener("DOMContentLoaded", () => {
   promptForUsername();
   const uname = localStorage.getItem("username") || "익명";
   document.getElementById("guestUsername").textContent = uname;
+
+  showOverallRanking();  // 전체 랭킹 표시
 });
 
 // 1) 모달과 버튼 요소 참조
@@ -2663,4 +2665,80 @@ function attachInputClickHandlers(cell) {
     cell.classList.toggle('active', val === '1');
     evaluateCircuit();
   };
+}
+
+function showOverallRanking() {
+  const listEl = document.getElementById("overallRankingList");
+  listEl.innerHTML = "로딩 중…";
+
+  // rankings 아래 모든 레벨의 데이터를 한 번에 읽어옵니다.
+  db.ref("rankings").once("value", snap => {  // :contentReference[oaicite:1]{index=1}
+    const data = {};  // { nickname: { stages:Set, blocks:sum, wires:sum, lastTimestamp } }
+
+    snap.forEach(levelSnap => {
+      levelSnap.forEach(recSnap => {
+        const e = recSnap.val();
+        const name = e.nickname || "익명";
+
+        if (!data[name]) {
+          data[name] = {
+            stages: new Set(),
+            blocks: 0,
+            wires: 0,
+            lastTimestamp: e.timestamp
+          };
+        }
+
+        data[name].stages.add(levelSnap.key);
+
+        const sumBlocks = Object.values(e.blockCounts || {})
+          .reduce((s, x) => s + x, 0);
+        data[name].blocks += sumBlocks;
+        data[name].wires += e.usedWires || 0;
+
+        // 가장 늦은(=가장 큰) timestamp를 저장
+        if (new Date(e.timestamp) > new Date(data[name].lastTimestamp)) {
+          data[name].lastTimestamp = e.timestamp;
+        }
+      });
+    });
+
+    // 배열로 변환 후 다중 기준 정렬
+    const entries = Object.entries(data).map(([nickname, v]) => ({
+      nickname,
+      cleared: v.stages.size,
+      blocks: v.blocks,
+      wires: v.wires,
+      timestamp: v.lastTimestamp
+    }));
+    entries.sort((a, b) => {
+      if (a.cleared !== b.cleared) return b.cleared - a.cleared;
+      if (a.blocks !== b.blocks) return a.blocks - b.blocks;
+      if (a.wires !== b.wires) return a.wires - b.wires;
+      return new Date(a.timestamp) - new Date(b.timestamp);
+    });
+    
+    // HTML 테이블 생성
+    let html = `<table>
+  <thead><tr>
+    <th>순위</th><th>닉네임</th><th>스테이지</th><th>블럭</th><th>도선</th>
+  </tr></thead><tbody>`;
+
+    entries.forEach((e, i) => {
+      // 닉네임 잘라내기 로직은 그대로…
+      let displayName = e.nickname;
+      if (displayName.length > 20) displayName = displayName.slice(0, 20) + '...';
+
+      html += `<tr>
+    <td>${i + 1}</td>
+    <td>${displayName}</td>
+    <td>${e.cleared}</td>
+    <td>${e.blocks}</td>
+    <td>${e.wires}</td>
+  </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    listEl.innerHTML = html;
+  });
 }

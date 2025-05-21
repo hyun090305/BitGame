@@ -1162,12 +1162,76 @@
   }
 
   .chapterCard.locked {
-  opacity: 0.5;         /* 흐릿하게 보여줌 */
-  cursor: not-allowed;  /* 클릭 불가 커서 */
+    opacity: 0.5;
+    /* 흐릿하게 보여줌 */
+    cursor: not-allowed;
+    /* 클릭 불가 커서 */
+  }
+
+  /* hover 효과 비활성화 */
+  .chapterCard.locked:hover {
+    transform: none;
+    background-color: white;
+  }
+
+  #overallRankingArea {
+    width: 350px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    max-height: 600px;
+    /* 원하는 최대 높이로 조정 */
+    display: flex;
+    flex-direction: column;
+  }
+
+  #overallRankingArea h3 {
+    margin-bottom: 0.5rem;
+  }
+
+  #overallRankingList {
+    margin-top: 1rem;
+    flex: 1;
+    /* 남은 공간 전부 사용 */
+    overflow-y: auto;
+    /* 세로 스크롤 */
+  }
+
+  #overallRankingList table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  #overallRankingList th,
+  #overallRankingList td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+  }
+
+  #overallRankingList thead th {
+    background-color: #6B8CFF;
+    color: white;
+  }
+
+  #firstScreen {
+  /* 이전: .container { display:flex; gap:5rem; } 에서만 정의되어 있었음 */
+  justify-content: center;    /* 가로 중앙 정렬 */
+  align-items: flex-start;    /* 세 카드의 상단을 같은 높이에 맞춤 */
 }
 
-/* hover 효과 비활성화 */
-.chapterCard.locked:hover {
-  transform: none;
-  background-color: white;
+/* ② 메인 카드(#mainScreen) 가 가진 margin:auto 를 수직 여백만 남기도록 변경 */
+#firstScreen > #mainScreen {
+  /* 이전: body:not(.game-active) #mainScreen { margin: 2rem auto; } */
+  margin: 2rem 0;  /* 위아래 2rem, 좌우 0 */
+}
+
+/* ③ 전체 랭킹 카드도 위쪽 여백을 주어 높이를 맞춰 줌 */
+#firstScreen > #overallRankingArea {
+  /* 이전: margin-top 이 전혀 없었음 */
+  margin-top: 2rem;
 }
