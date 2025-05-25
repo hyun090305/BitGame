@@ -2281,7 +2281,6 @@ function showRanking(levelId) {
 
   db.ref(`rankings/${levelId}`)
     .orderByChild("timestamp")
-    .limitToFirst(10)
     .once("value", snap => {
       const entries = [];
       snap.forEach(ch => {
@@ -2346,16 +2345,19 @@ function showRanking(levelId) {
     <td>${timeStr}</td>
   </tr>`;
       }).join("");
+      
       listEl.innerHTML = `
-        <table>
-          <thead><tr>${headerCols}</tr></thead>
-          <tbody>${bodyRows}</tbody>
-        </table>
+        <div class="rankingTableWrapper">
+          <table>
+            <thead><tr>${headerCols}</tr></thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </div>
         <div class="modal-buttons">
           <button id="refreshRankingBtn">🔄 새로고침</button>
           <button id="closeRankingBtn">닫기</button>
         </div>
-      `;
+      `;  
       document.getElementById("refreshRankingBtn")
         .addEventListener("click", () => showRanking(levelId));
       document.getElementById("closeRankingBtn")
