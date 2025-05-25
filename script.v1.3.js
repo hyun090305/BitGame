@@ -1263,9 +1263,13 @@ function attachDragHandlersToBlockIcons() {
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "r") {
+    const gameScreen = document.getElementById("gameScreen");
+    // 게임 화면이 아니라면 동작 중단
+    if (gameScreen.style.display === "none") return;
+
     const confirmed = confirm("⚠️ 모든 블록과 배선을 삭제하시겠습니까?");
     if (confirmed) {
-      clearGrid(); // 실제 삭제 함수 호출
+      clearGrid();
       setupBlockPanel(currentLevel);
       document.querySelectorAll('.cell').forEach(cell => {
         delete cell.onclick;
@@ -2345,7 +2349,7 @@ function showRanking(levelId) {
     <td>${timeStr}</td>
   </tr>`;
       }).join("");
-      
+
       listEl.innerHTML = `
         <div class="rankingTableWrapper">
           <table>
@@ -2357,7 +2361,7 @@ function showRanking(levelId) {
           <button id="refreshRankingBtn">🔄 새로고침</button>
           <button id="closeRankingBtn">닫기</button>
         </div>
-      `;  
+      `;
       document.getElementById("refreshRankingBtn")
         .addEventListener("click", () => showRanking(levelId));
       document.getElementById("closeRankingBtn")
@@ -2719,7 +2723,7 @@ function showOverallRanking() {
       if (a.wires !== b.wires) return a.wires - b.wires;
       return new Date(a.timestamp) - new Date(b.timestamp);
     });
-    
+
     // HTML 테이블 생성
     let html = `<table>
   <thead><tr>
