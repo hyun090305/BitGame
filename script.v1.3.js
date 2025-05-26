@@ -1497,6 +1497,7 @@ async function gradeLevelAnimated(level) {
         if (!snapshot.exists()) {
           // 내 기록이 없으면 새로 저장
           saveRanking(level, blockCounts, usedWires);
+          showClearedModal(level);
           return;
         }
 
@@ -1528,6 +1529,7 @@ async function gradeLevelAnimated(level) {
             usedWires,
             timestamp: new Date().toISOString()
           });
+          showClearedModal(level);
         }
       });
 
@@ -2747,4 +2749,79 @@ function showOverallRanking() {
     html += `</tbody></table>`;
     listEl.innerHTML = html;
   });
+}
+
+function showClearedModal(level) {
+  const modal = document.getElementById('clearedModal');
+  document.getElementById('clearedStageNumber').textContent = level;
+  const container = document.getElementById('clearedRanking');
+
+  // 1) 현재 플레이어 닉네임 가져오기 (닉네임 설정 모달에서 localStorage에 저장했다고 가정)
+  const currentNickname = localStorage.getItem('username') || localStorage.getItem('nickname') || '';
+
+  // 수정:
+  const prevBtn = document.getElementById('prevStageBtn');
+  const nextBtn = document.getElementById('nextStageBtn');
+
+  // levelTitles에 이전/다음 스테이지가 정의되어 있지 않으면 버튼 비활성화
+  prevBtn.disabled = !levelTitles[level - 1];
+  nextBtn.disabled = !levelTitles[level + 1];
+
+  // 2) Firebase Realtime Database에서 랭킹 불러오기
+  firebase.database().ref(`rankings/${level}`)
+    .orderByChild('timestamp')
+    .once('value')
+    .then(snapshot => {
+      // 데이터가 없으면 안내 메시지
+      if (!snapshot.exists()) {
+        container.innerHTML = `
+          <p>랭킹이 없습니다.</p>
+        `;
+      } else {
+        // 결과 배열로 추출
+        const entries = [];
+        snapshot.forEach(child => {
+          entries.push(child.val());
+        });
+
+        // 테이블 생성
+        let html = `
+          <table class="rankingTable">
+            <tr><th>순위</th><th>닉네임</th><th>시간</th></tr>
+        `;
+        entries.forEach((e, i) => {
+          // timestamp → 읽기 편한 문자열
+          const timeStr = new Date(e.timestamp).toLocaleString();
+          const cls = (e.nickname === currentNickname) ? 'highlight' : '';
+          html += `
+            <tr class="${cls}">
+              <td>${i + 1}</td>
+              <td>${e.nickname}</td>
+              <td>${timeStr}</td>
+            </tr>
+          `;
+        });
+        html += `</table>`;
+        container.innerHTML = html;
+      }
+
+      // 버튼 이벤트 바인딩
+      document.getElementById('prevStageBtn').onclick = () => {
+        modal.style.display = 'none';         // 모달 감추기
+        returnToEditScreen();
+        startLevel(level - 1);                   // 1보다 작아지지 않도록 클램핑
+      };
+      document.getElementById('nextStageBtn').onclick = () => {
+        modal.style.display = 'none';
+        returnToEditScreen();
+        startLevel(level + 1);
+      };
+      modal.querySelector('.closeBtn').onclick = () => {
+        modal.style.display = 'none';
+      };
+
+      // 모달 띄우기
+      modal.style.display = 'flex';
+    })
+    .catch(err => console.error('랭킹 로드 실패:', err));
 }
