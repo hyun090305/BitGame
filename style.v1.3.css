@@ -100,6 +100,7 @@
     padding: 6px 10px;
   }
 
+
   #grid {
     display: grid;
     gap: 2px;
@@ -1317,34 +1318,45 @@
     /* 비활성화 상태 */
     cursor: not-allowed;
   }
+
   #clearedModal .modal-content {
-  position: relative; /* closeBtn 절대 위치를 위해 추가 */
-}
+    position: relative;
+    /* closeBtn 절대 위치를 위해 추가 */
+  }
 
-#clearedModal .closeBtn {
-  position: absolute;
-  top: 0.75rem;             /* 모달 상단에서 */
-  right: 0.75rem;           /* 모달 우측에서 */
-  background: transparent;  
-  border: none;
-  font-size: 1.5rem;        /* 버튼 크기 */
-  line-height: 1;
-  width: 2.5rem;               /* 버튼 크기 조정 (가로) */
-  height: 2.5rem;              /* 버튼 크기 조정 (세로) */
-  padding: 0.25rem;
-  cursor: pointer;
-  border-radius: 50%;       /* 둥근 버튼 */
-  transition: background 0.2s, transform 0.1s, color 0.2s;
-}
+  #clearedModal .closeBtn {
+    position: absolute;
+    top: 0.75rem;
+    /* 모달 상단에서 */
+    right: 0.75rem;
+    /* 모달 우측에서 */
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    /* 버튼 크기 */
+    line-height: 1;
+    width: 2.5rem;
+    /* 버튼 크기 조정 (가로) */
+    height: 2.5rem;
+    /* 버튼 크기 조정 (세로) */
+    padding: 0.25rem;
+    cursor: pointer;
+    border-radius: 50%;
+    /* 둥근 버튼 */
+    transition: background 0.2s, transform 0.1s, color 0.2s;
+  }
 
-#clearedModal .closeBtn:hover {
-  background: rgba(0, 0, 0, 0.1); /* 호버 시 살짝 배경 */
-}
+  #clearedModal .closeBtn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    /* 호버 시 살짝 배경 */
+  }
 
-#clearedModal .closeBtn:active {
-  transform: scale(0.9);     /* 클릭 시 눌린 느낌 */
-}
+  #clearedModal .closeBtn:active {
+    transform: scale(0.9);
+    /* 클릭 시 눌린 느낌 */
+  }
 
-#clearedModal .closeBtn:focus {
-  outline: none;             /* 포커스 아웃라인 제거 */
-}
+  #clearedModal .closeBtn:focus {
+    outline: none;
+    /* 포커스 아웃라인 제거 */
+  }

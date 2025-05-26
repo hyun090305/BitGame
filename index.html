@@ -75,7 +75,7 @@
 
     <!-- 레벨 선택 화면 -->
     <div id="levelScreen" style="display:none">
-      <h2>레벨을 선택하세요</h2>
+      <h2>스테이지를를 선택하세요</h2>
       <div class="levelGrid">
         <button class="levelBtn" data-level="1"></button>
         <button class="levelBtn" data-level="2"></button>
@@ -149,12 +149,14 @@
         사용된 전선: <span id="usedWiresCount">0</span>
       </div>
       <!-- 메뉴바 -->
-      <div id="menuBar" style="margin-top: 30px; text-align: center;">
+      <div id="menuBar">
+        <button id="prevStageBtnMenu">← 이전 스테이지</button>
         <button id="saveCircuitBtn">💾 회로 저장</button>
         <button id="viewSavedBtn">💾 저장된 회로 보기</button>
         <button id="viewRankingBtn">🏆 랭킹 보기</button>
         <button id="showIntroBtn">ℹ️ 스테이지 안내</button>
         <button id="backToLevelsBtn">← 레벨 선택으로</button>
+        <button id="nextStageBtnMenu">다음 스테이지 →</button>
       </div>
     </div>
     <div id="tutorialModal" class="modal tutorial-modal" style="display:none;">

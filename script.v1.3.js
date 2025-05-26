@@ -865,7 +865,9 @@ function drawWirePath(path) {
       if (i < total - 1) getDirectionBetween(cell, path[i + 1]).forEach(d => dirs.add(d));
     }
 
-    applyWireDirection(cell, Array.from(dirs));
+    if (!cell.classList.contains('block')) {
+      applyWireDirection(cell, Array.from(dirs));
+    }
   }
   // ▶ 시작·끝 블록이 draggable이어야만 이동 가능
   const start = path[0], end = path[path.length - 1];
@@ -1136,6 +1138,7 @@ document.getElementById("backToMainFromChapter").onclick = () => {
 };
 
 document.getElementById("backToMainBtn").onclick = () => {
+  renderChapterGrid();
   document.getElementById("chapterScreen").style.display = "block";
   levelScreen.style.display = "none";
 };
@@ -1172,6 +1175,12 @@ function startLevel(level) {
     currentLevel = parseInt(level);
     const title = document.getElementById("gameTitle");
     title.textContent = levelTitles[level] ?? `Stage ${level}`;
+    const prevMenuBtn = document.getElementById('prevStageBtnMenu');
+    const nextMenuBtn = document.getElementById('nextStageBtnMenu');
+
+    prevMenuBtn.disabled = !(levelTitles[level - 1] && isLevelUnlocked(level - 1));
+    nextMenuBtn.disabled = !(levelTitles[level + 1] && isLevelUnlocked(level + 1));
+
   });
 }
 
@@ -1549,6 +1558,18 @@ function returnToEditScreen() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  const prevMenuBtn = document.getElementById('prevStageBtnMenu');
+  const nextMenuBtn = document.getElementById('nextStageBtnMenu');
+
+  prevMenuBtn.addEventListener('click', () => {
+    returnToEditScreen();           // 채점 모드 닫기
+    startLevel(currentLevel - 1);   // 이전 스테이지 시작
+  });
+
+  nextMenuBtn.addEventListener('click', () => {
+    returnToEditScreen();
+    startLevel(currentLevel + 1);   // 다음 스테이지 시작
+  });
   document.querySelectorAll(".levelBtn").forEach(btn => {
     const level = btn.dataset.level;
     btn.textContent = levelTitles[level] ?? `Stage ${level}`;
@@ -2759,13 +2780,11 @@ function showClearedModal(level) {
   // 1) 현재 플레이어 닉네임 가져오기 (닉네임 설정 모달에서 localStorage에 저장했다고 가정)
   const currentNickname = localStorage.getItem('username') || localStorage.getItem('nickname') || '';
 
-  // 수정:
   const prevBtn = document.getElementById('prevStageBtn');
   const nextBtn = document.getElementById('nextStageBtn');
 
-  // levelTitles에 이전/다음 스테이지가 정의되어 있지 않으면 버튼 비활성화
-  prevBtn.disabled = !levelTitles[level - 1];
-  nextBtn.disabled = !levelTitles[level + 1];
+  prevBtn.disabled = !(levelTitles[level - 1] && isLevelUnlocked(level - 1));
+  nextBtn.disabled = !(levelTitles[level + 1] && isLevelUnlocked(level + 1));
 
   // 2) Firebase Realtime Database에서 랭킹 불러오기
   firebase.database().ref(`rankings/${level}`)
@@ -2774,23 +2793,31 @@ function showClearedModal(level) {
     .then(snapshot => {
       // 데이터가 없으면 안내 메시지
       if (!snapshot.exists()) {
-        container.innerHTML = `
-          <p>랭킹이 없습니다.</p>
-        `;
+        // … 생략 …
       } else {
-        // 결과 배열로 추출
+        // 1) 결과 배열로 추출
         const entries = [];
         snapshot.forEach(child => {
           entries.push(child.val());
         });
 
-        // 테이블 생성
+        // ──────────────────────────────────────────────────────────────
+        // 2) viewRanking과 동일한 다중 기준 정렬 추가
+        const sumBlocks = e => Object.values(e.blockCounts || {}).reduce((s, x) => s + x, 0);
+        entries.sort((a, b) => {
+          const aBlocks = sumBlocks(a), bBlocks = sumBlocks(b);
+          if (aBlocks !== bBlocks) return aBlocks - bBlocks;              // 블록 합계 오름차순
+          if (a.usedWires !== b.usedWires) return a.usedWires - b.usedWires; // 도선 수 오름차순
+          return new Date(a.timestamp) - new Date(b.timestamp);           // 클리어 시각 오름차순
+        });
+        // ──────────────────────────────────────────────────────────────
+
+        // 3) 정렬된 entries로 테이블 생성
         let html = `
           <table class="rankingTable">
             <tr><th>순위</th><th>닉네임</th><th>시간</th></tr>
         `;
         entries.forEach((e, i) => {
-          // timestamp → 읽기 편한 문자열
           const timeStr = new Date(e.timestamp).toLocaleString();
           const cls = (e.nickname === currentNickname) ? 'highlight' : '';
           html += `
@@ -2824,4 +2851,19 @@ function showClearedModal(level) {
       modal.style.display = 'flex';
     })
     .catch(err => console.error('랭킹 로드 실패:', err));
+}
+
+
+function isLevelUnlocked(level) {
+  const cleared = JSON.parse(localStorage.getItem("clearedLevels") || "[]");
+  for (let idx = 0; idx < chapterData.length; idx++) {
+    const chap = chapterData[idx];
+    if (chap.stages.includes(level)) {
+      // 0번째 챕터는 항상 해금, 이후는 이전 챕터 모든 스테이지 클리어 시 해금
+      if (idx === 0) return true;
+      return chapterData[idx - 1].stages.every(s => cleared.includes(s));
+    }
+  }
+  // chapterData에 정의되지 않은 스테이지(사용자 정의 등)는 기본 허용
+  return true;
 }
