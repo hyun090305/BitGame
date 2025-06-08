@@ -12,6 +12,9 @@ let GRID_ROWS = 6;
 let GRID_COLS = 6;
 let wires = [];  // { path, start, end } 객체를 저장할 배열
 
+// CSS 애니메이션 한 주기(1초) 만큼 녹화하기 위해 사용
+const WIRE_ANIM_DURATION = 1000; // ms
+
 
 
 const levelTitles = {
@@ -2415,7 +2418,7 @@ document.addEventListener("DOMContentLoaded", () => {
   showOverallRanking();  // 전체 랭킹 표시
 
   const recordBtn = document.getElementById('recordBtn');
-  if (recordBtn) recordBtn.addEventListener('click', () => startRecording(5000));
+  if (recordBtn) recordBtn.addEventListener('click', () => startRecording(WIRE_ANIM_DURATION));
 });
 
 // 1) 모달과 버튼 요소 참조
@@ -2871,7 +2874,7 @@ function isLevelUnlocked(level) {
   return true;
 }
 
-async function startRecording(durationMs) {
+async function startRecording(durationMs = WIRE_ANIM_DURATION) {
   try {
     const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
     const recorder = new MediaRecorder(stream);
@@ -2895,7 +2898,11 @@ function convertVideoToGif(videoBlob, durationMs) {
   video.muted = true;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  const gif = new GIF({ workers: 2, quality: 10 });
+  const gif = new GIF({
+    workers: 2,
+    quality: 10,
+    workerScript: 'https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.worker.js'
+  });
 
   video.addEventListener('loadedmetadata', () => {
     canvas.width = video.videoWidth;
