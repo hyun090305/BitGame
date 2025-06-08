@@ -12,6 +12,9 @@ let GRID_ROWS = 6;
 let GRID_COLS = 6;
 let wires = [];  // { path, start, end } 객체를 저장할 배열
 
+// CSS 애니메이션 한 주기(1초) 만큼 녹화하기 위해 사용
+const WIRE_ANIM_DURATION = 1000; // ms
+
 
 
 const levelTitles = {
@@ -2413,6 +2416,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("guestUsername").textContent = uname;
 
   showOverallRanking();  // 전체 랭킹 표시
+
+  const recordBtn = document.getElementById('recordBtn');
+  if (recordBtn) recordBtn.addEventListener('click', () => startRecording(WIRE_ANIM_DURATION));
 });
 
 // 1) 모달과 버튼 요소 참조
@@ -2866,4 +2872,59 @@ function isLevelUnlocked(level) {
   }
   // chapterData에 정의되지 않은 스테이지(사용자 정의 등)는 기본 허용
   return true;
+}
+
+async function startRecording(durationMs = WIRE_ANIM_DURATION) {
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+    const recorder = new MediaRecorder(stream);
+    const chunks = [];
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.start();
+    setTimeout(() => recorder.stop(), durationMs);
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      convertVideoToGif(blob, durationMs);
+      stream.getTracks().forEach(t => t.stop());
+    };
+  } catch (err) {
+    console.error('녹화 실패:', err);
+  }
+}
+
+function convertVideoToGif(videoBlob, durationMs) {
+  const video = document.createElement('video');
+  video.src = URL.createObjectURL(videoBlob);
+  video.muted = true;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const gif = new GIF({
+    workers: 2,
+    quality: 10,
+    workerScript: 'https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.worker.js'
+  });
+
+  video.addEventListener('loadedmetadata', () => {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    video.play();
+    const frameInterval = 100;
+    const interval = setInterval(() => {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      gif.addFrame(ctx, { copy: true, delay: frameInterval });
+    }, frameInterval);
+    setTimeout(() => {
+      clearInterval(interval);
+      video.pause();
+      gif.on('finished', blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'grid_record.gif';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+      gif.render();
+    }, durationMs);
+  });
 }
