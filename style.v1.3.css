@@ -110,7 +110,6 @@
     grid-template-rows: repeat(var(--grid-rows, 6), 50px);
     /* 추가 */
   }
-
   #gridContainer {
     flex-shrink: 0;
     display: flex;
@@ -1360,3 +1359,222 @@
     outline: none;
     /* 포커스 아웃라인 제거 */
   }
+
+  #module-editor-screen {
+  display: none;
+  padding: 2rem;
+  background-color: #fff;
+  border: 2px solid #666;
+  max-width: 600px;
+  margin: 2rem auto;
+}
+
+#moduleGrid {
+  display: grid;
+  gap: 2px;
+  border: 2px solid black;
+  grid-template-columns: repeat(var(--grid-cols, 6), 50px);
+  grid-template-rows: repeat(var(--grid-rows, 6), 50px);
+}
+
+/* 공통: 게임 모드 · 모듈 모드 블록 패널 모두에 적용 */
+#blockPanel,
+#moduleBlockPanel {
+  display: flex;               /* 세로 정렬을 위해 flex 사용 */
+  flex-direction: column;      /* 수직 방향으로 블록 나열 */
+  align-items: stretch;        /* 폭을 부모에 맞춤 */
+  gap: 0.75rem;                /* 블록 간격: 원하시는 px/em 단위로 조정 가능 */
+  padding: 0.5rem 0;           /* 상하 여백(옵션) */
+}
+
+/* 블록 아이콘 크기·정렬 (필요시 조정) */
+#blockPanel .blockIcon,
+#moduleBlockPanel .blockIcon {
+  width: 100%;                 /* 패널 폭에 꽉 차도록 */
+  text-align: center;          /* 텍스트 중앙 정렬 */
+}
+
+/* ── 화면(.screen) 공통 ── */
+.screen {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* 뒤로가기 버튼 */
+.btn-back {
+  align-self: flex-start;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #999;
+  background: #fafafa;
+  cursor: pointer;
+}
+
+/* 화면 제목 */
+.module-management-screen .screen-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+}
+
+/* 모듈 목록 */
+.module-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  max-width: 360px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.module-list .module-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.module-list .module-item:last-child {
+  border-bottom: none;
+}
+
+.module-item .module-name {
+  font-size: 1rem;
+  color: #333;
+  word-break: break-all;
+}
+
+/* 불러오기 버튼 */
+.btn-load {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #008cba;
+  background: #00aaff;
+  color: white;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-load:hover {
+  background: #008cba;
+}
+
+/* 새 모듈 만들기 버튼 */
+.btn-primary {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: #28a745;
+  color: white;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #218838;
+}
+
+/* ────────────────────────────────
+   Modal (모달) 기본 스타일
+──────────────────────────────── */
+
+/* 모달 전체 컨테이너 */
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: none;             /* 처음엔 숨김 */
+  align-items: center;       /* 세로 중앙 정렬 */
+  justify-content: center;   /* 가로 중앙 정렬 */
+  z-index: 1000;             /* 다른 요소들 위에 */
+}
+
+/* 백드롭: 반투명 검정 */
+.modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* 다이얼로그 박스 */
+.modal-dialog {
+  position: relative;
+  background: #fff;
+  padding: 1.5rem;
+  width: 260px;
+  max-width: 90%;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1001; /* backdrop 위에 */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* 제목 */
+.modal-dialog h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+/* 입력창 스타일 */
+.modal-input,
+.modal-textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+/* 버튼 그룹 (가로 정렬) */
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* primary 버튼 (저장) */
+.btn-primary {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: #28a745;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.btn-primary:hover {
+  background: #218838;
+}
+
+/* secondary 버튼 (취소) */
+.btn-secondary {
+  padding: 0.5rem 1rem;
+  border: 1px solid #999;
+  background: #f5f5f5;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+}

@@ -38,6 +38,8 @@
         <button id="startBtn">시작하기</button>
         <button id="tutorialBtn">📖 튜토리얼</button>
         <div></div>
+        <button id="manageModulesBtn">모듈 관리</button>
+        <div></div>
         <button id="copyStatusBtn">📋 공유하기</button>
       </div>
       <div id="guestbookArea">
@@ -65,8 +67,120 @@
           </div>
         </div>
       </div>
-
     </div>
+    <div id="module-management-screen" class="screen module-management-screen"
+      style="display:none;">
+      <button id="backToMainFromManagement" class="btn-back">← 메인으로</button>
+      <h1 class="screen-title">📦 모듈 관리</h1>
+
+      <ul id="moduleList" class="module-list">
+        <!--
+      JS에서 이렇게 생성됩니다:
+      <li class="module-item">
+        <span class="module-name">모듈이름</span>
+        <button class="btn-load">불러오기</button>
+      </li>
+    -->
+      </ul>
+
+      <button id="createModuleBtn" class="btn-primary">+ 새 모듈 만들기</button>
+    </div>
+    <div id="module-editor-screen" style="display:none; padding:2rem;">
+      <!-- 제목 -->
+      <h1 id="moduleTitle">🛠 모듈 제작 모드</h1>
+
+      <!-- 전체 레이아웃: 좌측 블록 패널 + 중앙 그리드 + 우측 안내 -->
+      <div id="moduleLayout"
+        style="display:flex; gap:1rem; align-items:flex-start;">
+
+        <!-- 좌측: 블록 패널 -->
+        <div id="moduleBlockPanel" style="width: 120px;">
+          <!-- JS로 채워집니다 -->
+        </div>
+
+        <!-- 중앙: 회로 그리드 -->
+        <div id="moduleGridContainer" class="grid" style="position: relative;">
+          <div id="moduleGrid"></div>
+          <div id="moduleGridOverlay"></div>
+        </div>
+
+        <!-- 우측: 안내 + 삭제 -->
+        <div class="rightPanel" id="moduleRightPanel"
+          style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+
+          <!-- ※ gradeButton 제거 -->
+
+          <!-- 키 설명 & 상태 메시지 -->
+          <div style="text-align: center; line-height: 1.6;">
+            <div id="moduleWireStatusInfo"
+              style="color: darkgreen; font-weight: bold;">
+              [Ctrl] 키를 누르면 배선 드로잉 모드가 켜집니다
+            </div>
+            <div id="moduleWireStatusMsg"
+              style="display: none; color: darkgreen; font-weight: bold;">
+              🧵 드로잉 모드 활성화 중. (Ctrl 키에서 손 떼면 종료)
+            </div>
+            <div id="moduleWireDeleteInfo"
+              style="color: crimson; font-weight: bold;">
+              [Shift] 키를 누르면 삭제 모드가 켜집니다
+            </div>
+            <div id="moduleWireDeleteMsg"
+              style="display: none; color: crimson; font-weight: bold;">
+              🧹 삭제 모드 활성화 중. (Shift 키에서 손 떼면 종료)
+            </div>
+            <div id="moduleDeleteAllInfo"
+              style="color: crimson; font-weight: bold;">
+              [r] 키를 누르면 회로가 초기화됩니다
+            </div>
+          </div>
+
+          <!-- 휴지통 -->
+          <div id="trash" class="trash-area" style="margin-top: 20px;">
+            🗑️ Drag here to delete
+          </div>
+        </div>
+
+      </div>
+      <!-- (A) 모듈 저장하기 버튼 -->
+      <button id="saveModuleBtn">모듈 저장하기</button>
+
+      <!-- (B) 모달 전체 컨테이너: 초기에는 숨겨둡니다 -->
+      <div id="moduleSaveModal" class="modal" style="display: none;">
+        <!-- (B1) 백드롭: 모달 뒤 어두운 반투명 배경 -->
+        <div class="modal-backdrop"></div>
+
+        <!-- (B2) 실제 다이얼로그 박스 -->
+        <div class="modal-dialog">
+          <h3>모듈 정보 입력</h3>
+
+          <!-- 이름 입력 -->
+          <input
+            id="moduleNameInput"
+            type="text"
+            placeholder="모듈 이름 (영문/숫자, 최대 8자)"
+            maxlength="8"
+            pattern="[A-Za-z0-9]+"
+            title="영문자(A–Z, a–z)와 숫자(0–9)만 사용 가능합니다."
+            class="modal-input" />
+
+          <!-- 설명 입력 -->
+          <textarea
+            id="moduleDescInput"
+            placeholder="모듈 설명 (선택)"
+            rows="3"
+            class="modal-textarea"></textarea>
+
+          <!-- 버튼 그룹 -->
+          <div class="modal-buttons">
+            <button id="confirmSaveModuleBtn" class="btn-primary">저장하기</button>
+            <button id="cancelSaveModuleBtn" class="btn-secondary">취소</button>
+          </div>
+        </div>
+      </div>
+      <!-- 뒤로가기 -->
+      <button id="exit-module-mode">← 돌아가기</button>
+    </div>
+
     <div id="chapterScreen" style="display:none; padding: 2rem;">
       <h1>📚 챕터 선택</h1>
       <div id="chapterGrid"></div>
@@ -75,7 +189,7 @@
 
     <!-- 레벨 선택 화면 -->
     <div id="levelScreen" style="display:none">
-      <h2>스테이지를를 선택하세요</h2>
+      <h2>스테이지를 선택하세요</h2>
       <div class="levelGrid">
         <button class="levelBtn" data-level="1"></button>
         <button class="levelBtn" data-level="2"></button>
@@ -106,7 +220,7 @@
 
         <!-- 회로 그리드 -->
         <div id="gridContainer" style="position: relative;">
-          <div id="grid"></div>
+          <div id="grid" class="grid"></div>
           <div id="gridOverlay"></div>
         </div>
 
@@ -137,7 +251,8 @@
             </div>
           </div>
 
-          <div id="trash" style="margin-top: 20px;">🗑️ Drag here to
+          <div id="trash" class="trash-area" style="margin-top: 20px;">🗑️ Drag
+            here to
             delete</div>
         </div>
         <div id="gradingArea" style="display:none">
@@ -157,6 +272,9 @@
         <button id="showIntroBtn">ℹ️ 스테이지 안내</button>
         <button id="backToLevelsBtn">← 레벨 선택으로</button>
         <button id="nextStageBtnMenu">다음 스테이지 →</button>
+
+        <!-- 추가: 애니메이션 캡처(메인 그리드용) -->
+        <button id="captureGifBtnMain">🖼️ 애니메이션 캡처</button>
       </div>
     </div>
     <div id="tutorialModal" class="modal tutorial-modal" style="display:none;">
@@ -217,6 +335,13 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
   </script>
+    <!-- 추가: html2canvas (페이지를 캔버스로 스냅샷) -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- 추가: gif.js (canvas → GIF 변환) -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+    <!-- 기존 JS 로딩 -->
     <script src="script.v1.3.js"></script>
 
     <div id="levelIntroModal" style="display:none" class="modal">
