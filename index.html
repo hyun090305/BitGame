@@ -270,6 +270,7 @@
         <button id="viewSavedBtn">💾 저장된 회로 보기</button>
         <button id="viewRankingBtn">🏆 랭킹 보기</button>
         <button id="showIntroBtn">ℹ️ 스테이지 안내</button>
+        <button id="recordBtn">🔴 녹화</button>
         <button id="backToLevelsBtn">← 레벨 선택으로</button>
         <button id="nextStageBtnMenu">다음 스테이지 →</button>
 
@@ -335,13 +336,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
   </script>
-    <!-- 추가: html2canvas (페이지를 캔버스로 스냅샷) -->
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- 추가: gif.js (canvas → GIF 변환) -->
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
-    <!-- 기존 JS 로딩 -->
+    <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
     <script src="script.v1.3.js"></script>
 
     <div id="levelIntroModal" style="display:none" class="modal">
