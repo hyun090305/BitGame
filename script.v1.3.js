@@ -947,10 +947,12 @@ function setupInputToggles() {
   document.querySelectorAll('.cell.block').forEach(cell => {
     if (cell.dataset.type === 'INPUT') {
       cell.dataset.value = '0';
-      cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
+      cell.textContent = cell.dataset.name;
+      //cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
       cell.addEventListener('click', () => {
         cell.dataset.value = cell.dataset.value === '0' ? '1' : '0';
-        cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
+        cell.textContent = cell.dataset.name;
+        //cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
         cell.classList.toggle('active', cell.dataset.value === '1');
 
         evaluateCircuit();
@@ -989,7 +991,8 @@ function evaluateCircuit() {
     .filter(b => b.dataset.type === 'OUTPUT')
     .forEach(out => {
       const v = values.get(out) || false;
-      out.textContent = `${out.dataset.name}(${v ? 1 : 0})`;
+      out.textContent = out.dataset.name
+      out.dataset.val = v
       out.classList.toggle('active', v);
     });
   const allBlocks = Array.from(document.querySelectorAll('.cell.block'));
@@ -1360,7 +1363,7 @@ async function gradeLevelAnimated(level) {
       const name = input.dataset.name;
       const value = test.inputs[name] ?? 0;
       input.dataset.value = String(value);
-      input.textContent = `${name}(${value})`;
+      //input.textContent = `${name}(${value})`;
       input.classList.toggle('active', value === 1);
     });
     evaluateCircuit();
@@ -1373,8 +1376,8 @@ async function gradeLevelAnimated(level) {
     const actualText = Array.from(outputs)
       .map(out => {
         const name = out.dataset.name;
-        const actual = out.textContent.match(/\((0|1)\)/)?.[1] ?? "-";
-        const expected = String(test.expected[name]);
+        const actual = + JSON.parse(out.dataset.val);
+        const expected = test.expected[name];
         if (actual !== expected) correct = false;
         return `${name}=${actual}`;
       }).join(", ");
@@ -1879,17 +1882,18 @@ function setupGrid(containerId, rows, cols) {
         cell.dataset.name = lastDraggedName || lastDraggedIcon?.dataset.name;
         if (type === 'INPUT') {
           cell.dataset.value = '0';
-          cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
+          cell.textContent = cell.dataset.name;
+          //cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
           // 드롭 시점에 바로 click 리스너 등록
           cell.onclick = () => {
             cell.dataset.value = cell.dataset.value === '0' ? '1' : '0';
-            cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
+            cell.textContent = cell.dataset.name; 
+            //cell.textContent = `${cell.dataset.name}(${cell.dataset.value})`;
             cell.classList.toggle('active', cell.dataset.value === '1');
             evaluateCircuit();
           };
         } else {
-          // OUTPUT 초기 표시 (값 미정)
-          cell.textContent = `${cell.dataset.name}(-)`;
+          cell.textContent = cell.dataset.name;
         }
         cell.draggable = true;
         // 배치된 아이콘 하나만 사라지도록 유지 (다른 INPUT 아이콘엔 영향 없음)
@@ -1898,6 +1902,12 @@ function setupGrid(containerId, rows, cols) {
       else if (type === "WIRE") {
         cell.classList.add("wire");
         cell.dataset.type = "WIRE";
+      } 
+      else if (type === "JUNCTION") {
+        cell.classList.add("block");
+        cell.textContent = "JUNC";
+        cell.dataset.type = type;
+        cell.draggable = true;
       } else {
         cell.classList.add("block");
         cell.textContent = type;
@@ -2543,9 +2553,10 @@ function loadCircuit(key) {
     if (state.type && state.type !== 'WIRE') {
       cell.classList.add('block');
       if (state.type === 'INPUT')
-        cell.textContent = `${state.name}(${state.value})`;
+        cell.textContent = state.name;
+        //cell.textContent = `${state.name}(${state.value})`;
       else if (state.type === 'OUTPUT')
-        cell.textContent = `${state.name}(-)`;
+        cell.textContent = state.name;
       else
         cell.textContent = state.type;
       cell.draggable = true;
@@ -2693,7 +2704,8 @@ function placeBlockAt(x, y, type) {
   cell.dataset.type = type;
   if (type === 'INPUT' || type === 'OUTPUT') {
     attachInputClickHandlers(cell);
-    cell.textContent = `${cell.dataset.name || type}(0)`;
+    //cell.textContent = `${cell.dataset.name || type}(0)`;
+    cell.textContent = (cell.dataset.name || type);
   } else {
     cell.textContent = type;
   }
@@ -2717,7 +2729,7 @@ function attachInputClickHandlers(cell) {
   cell.onclick = () => {
     const val = cell.dataset.value === '1' ? '0' : '1';
     cell.dataset.value = val;
-    cell.textContent = `${cell.dataset.name}(${val})`;
+    cell.textContent = cell.dataset.name;
     cell.classList.toggle('active', val === '1');
     evaluateCircuit();
   };
@@ -3194,9 +3206,10 @@ function loadModule(moduleKey) {
     if (state.type && state.type !== 'WIRE') {
       cell.classList.add('block');
       if (state.type === 'INPUT')
-        cell.textContent = `${state.name}(${state.value})`;
+        cell.textContent = state.name;
+        //cell.textContent = `${state.name}(${state.value})`;
       else if (state.type === 'OUTPUT')
-        cell.textContent = `${state.name}(-)`;
+        cell.textContent = state.name;
       else
         cell.textContent = state.type;
       cell.draggable = true;
