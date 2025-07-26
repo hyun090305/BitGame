@@ -1,8 +1,9 @@
   body {
-    min-height: 101vh;
+    min-height: 250vh;
     margin: 0;
     flex-direction: column;
     justify-content: center;
+    display: flex;
     /* 기존 space-between 제거 */
     align-items: center;
     font-family: 'Noto Sans KR', sans-serif;
