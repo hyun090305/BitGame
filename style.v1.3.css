@@ -108,6 +108,7 @@
     grid-template-columns: repeat(var(--grid-cols, 6), 50px);
     /* 기존 */
     grid-template-rows: repeat(var(--grid-rows, 6), 50px);
+    touch-action: none;
     /* 추가 */
   }
   #gridContainer {
@@ -1375,6 +1376,7 @@
   border: 2px solid black;
   grid-template-columns: repeat(var(--grid-cols, 6), 50px);
   grid-template-rows: repeat(var(--grid-rows, 6), 50px);
+  touch-action: none;
 }
 
 /* 공통: 게임 모드 · 모듈 모드 블록 패널 모두에 적용 */
