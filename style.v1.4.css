@@ -174,11 +174,20 @@
     box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
   }
 
-  #wireStatusMsg,
-  #wireDeleteMsg {
+  .toggle-key {
     display: block;
     margin: 6px 0;
     text-align: center;
+    padding: 6px 8px;
+    border: 1px solid #999;
+    border-radius: 4px;
+    background: #fafafa;
+    cursor: pointer;
+  }
+
+  .toggle-key.active {
+    background: #666;
+    color: #fff;
   }
 
   .toggle-key {
