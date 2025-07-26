@@ -546,9 +546,66 @@ const validWireShapes = [
 
 /***** UI 요소 *****/
 
-const statusMsg = document.getElementById("wireStatusMsg");
-const statusInfo = document.getElementById("wireStatusInfo");
+const statusToggle  = document.getElementById("wireStatusInfo");
+const deleteToggle  = document.getElementById("wireDeleteInfo");
+const resetToggle   = document.getElementById("DeleteAllInfo");
+const moduleStatusToggle = document.getElementById('moduleWireStatusInfo');
+const moduleDeleteToggle = document.getElementById('moduleWireDeleteInfo');
+const moduleResetToggle  = document.getElementById('moduleDeleteAllInfo');
 let grid;
+
+function simulateKey(key, type = 'keydown') {
+  const ev = new KeyboardEvent(type, { key, bubbles: true });
+  document.dispatchEvent(ev);
+}
+
+function setupKeyToggles() {
+  const bindings = [
+    [statusToggle, 'Control'],
+    [deleteToggle, 'Shift'],
+    [resetToggle, 'r'],
+    [moduleStatusToggle, 'Control'],
+    [moduleDeleteToggle, 'Shift'],
+    [moduleResetToggle, 'r']
+  ];
+
+  bindings.forEach(([btn, key]) => {
+    if (!btn) return;
+    if (key.toLowerCase() === 'r') {
+      btn.addEventListener('click', () => {
+        btn.classList.add('active');
+        simulateKey(key, 'keydown');
+        simulateKey(key, 'keyup');
+        setTimeout(() => btn.classList.remove('active'), 150);
+      });
+    } else {
+      btn.addEventListener('click', () => {
+        const active = !btn.classList.contains('active');
+        btn.classList.toggle('active', active);
+        simulateKey(key, active ? 'keydown' : 'keyup');
+      });
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    bindings.forEach(([btn, key]) => {
+      if (e.key === key) {
+        btn.classList.add('active');
+        if (key.toLowerCase() === 'r') {
+          setTimeout(() => btn.classList.remove('active'), 150);
+        }
+      }
+    });
+  });
+
+  document.addEventListener('keyup', e => {
+    bindings.forEach(([btn, key]) => {
+      if (e.key === key && key.toLowerCase() !== 'r') {
+        btn.classList.remove('active');
+      }
+    });
+  });
+}
 
 // (2) 페이지 로드 시 INPUT 블록 클릭으로 0↔1 토글 준비
 //setupInputToggles();
@@ -676,8 +733,7 @@ function finish(e) {
     wireTrace.forEach(c => c.classList.remove("wire-preview"));
     wireTrace = [];
     isWireDrawing = false;
-    statusMsg.style.display = "none";
-    document.getElementById("wireStatusInfo").style.display = "block";
+    statusToggle.classList.remove("active");
     return;
   }
   // 2) 드롭한 셀 확인 & 마지막에 추가
@@ -695,8 +751,7 @@ function finish(e) {
       wireTrace.forEach(c => c.classList.remove("wire-preview"));
       wireTrace = [];
       isWireDrawing = false;
-      statusMsg.style.display = "none";
-      document.getElementById("wireStatusInfo").style.display = "block";
+      statusToggle.classList.remove("active");
       return;
     }
   }
@@ -719,8 +774,7 @@ function finish(e) {
   // 6) 리셋
   wireTrace = [];
   isWireDrawing = false;
-  statusMsg.style.display = "none";
-  document.getElementById("wireStatusInfo").style.display = "block";
+  statusToggle.classList.remove("active");
 }
 
 function disconnectWiresCascade(startBlock) {
@@ -816,10 +870,11 @@ function getInterpolatedIndices(fromIdx, toIdx) {
 
 
 // wire 모드 해제 (다른 곳 클릭 시)
-document.addEventListener("click", () => {
-  isWireDrawing = false;
-  document.getElementById("wireStatusMsg").style.display = "none";
-  document.getElementById("wireStatusInfo").style.display = "block";
+document.addEventListener("click", e => {
+  if (!e.target.closest('.toggle-key')) {
+    isWireDrawing = false;
+    statusToggle.classList.remove("active");
+  }
 });
 
 // 드래그 종료 시 INPUT/OUTPUT 복구
@@ -1349,26 +1404,22 @@ document.addEventListener("keydown", (e) => {
   }
   if (e.key === "Control") {
     isWireDrawing = true;
-    document.getElementById("wireStatusMsg").style.display = "block";
-    document.getElementById("wireStatusInfo").style.display = "none";
+    statusToggle.classList.add("active");
   }
   if (e.key === "Shift") {
-    document.getElementById("wireDeleteMsg").style.display = "block";
-    document.getElementById("wireDeleteInfo").style.display = "none";
+    deleteToggle.classList.add("active");
   }
 });
 
 document.addEventListener("keyup", (e) => {
   if (e.key === "Control") {
     isWireDrawing = false;
-    document.getElementById("wireStatusMsg").style.display = "none";
-    document.getElementById("wireStatusInfo").style.display = "block";
+    statusToggle.classList.remove("active");
     clearWirePreview();  // 드로잉 중 취소 시 미리보기 제거
     wireTrace = [];
   }
   if (e.key === "Shift") {
-    document.getElementById("wireDeleteMsg").style.display = "none";
-    document.getElementById("wireDeleteInfo").style.display = "block";
+    deleteToggle.classList.remove("active");
   }
 });
 
@@ -2315,34 +2366,28 @@ document.addEventListener("keydown", e => {
 
 // 삭제 모드 상태값
 let isWireDeleting = false;
-const statusDeleteInfo = document.getElementById('wireDeleteInfo');
-const statusDeleteMsg = document.getElementById('wireDeleteMsg');
 
 // 키 입력에 따라 모드 전환
 document.addEventListener('keydown', e => {
   if (e.key === 'Control') {
     isWireDrawing = true;
-    statusInfo.style.display = 'none';
-    statusMsg.style.display = 'block';
+    statusToggle.classList.add('active');
   }
   if (e.key === 'Shift') {
     isWireDeleting = true;
-    statusDeleteInfo.style.display = 'none';
-    statusDeleteMsg.style.display = 'block';
+    deleteToggle.classList.add('active');
   }
 });
 
 document.addEventListener('keyup', e => {
   if (e.key === 'Control') {
     isWireDrawing = false;
-    statusMsg.style.display = 'none';
-    statusInfo.style.display = 'block';
+    statusToggle.classList.remove('active');
     clearWirePreview();            // 반쯤 그려진 미리보기 제거
   }
   if (e.key === 'Shift') {
     isWireDeleting = false;
-    statusDeleteMsg.style.display = 'none';
-    statusDeleteInfo.style.display = 'block';
+    deleteToggle.classList.remove('active');
   }
 });
 
@@ -2573,6 +2618,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const recordBtn = document.getElementById('recordBtn');
   if (recordBtn) recordBtn.addEventListener('click', () => startRecording(WIRE_ANIM_DURATION));
+  setupKeyToggles();
 });
 
 // 1) 모달과 버튼 요소 참조
@@ -3060,14 +3106,12 @@ function handleModuleKeyDown(e) {
   // ── 2) Ctrl 키 누르면 wire 드로잉 모드 활성화 ──
   if (e.key === 'Control') {
     isWireDrawing = true;
-    document.getElementById('moduleWireStatusMsg').style.display  = 'block';
-    document.getElementById('moduleWireStatusInfo').style.display = 'none';
+    moduleStatusToggle.classList.add('active');
   }
   // ── 3) Shift 키 누르면 삭제 모드 활성화 ──
   else if (e.key === 'Shift') {
     isWireDeleting = true;
-    document.getElementById('moduleWireDeleteMsg').style.display  = 'block';
-    document.getElementById('moduleWireDeleteInfo').style.display = 'none';
+    moduleDeleteToggle.classList.add('active');
   }
   // ── 4) R 키 누르면 회로 초기화 ──
   else if (e.key.toLowerCase() === 'r') {
@@ -3081,15 +3125,13 @@ function handleModuleKeyDown(e) {
 function handleModuleKeyUp(e) {
   if (e.key === 'Control') {
     isWireDrawing = false;
-    document.getElementById('moduleWireStatusMsg').style.display = 'none';
-    document.getElementById('moduleWireStatusInfo').style.display = 'block';
+    moduleStatusToggle.classList.remove('active');
     clearWirePreview();         // 반쯤 그려진 wire preview 제거
     wireTrace = [];
   }
   if (e.key === 'Shift') {
     isWireDeleting = false;
-    document.getElementById('moduleWireDeleteMsg').style.display = 'none';
-    document.getElementById('moduleWireDeleteInfo').style.display = 'block';
+    moduleDeleteToggle.classList.remove('active');
   }
 }
 
@@ -3389,10 +3431,8 @@ function initModuleEditor() {
   nameInput.value = '';
 
   // 2) 상태 메시지 초기화
-  document.getElementById('moduleWireStatusMsg').style.display   = 'none';
-  document.getElementById('moduleWireStatusInfo').style.display  = 'block';
-  document.getElementById('moduleWireDeleteMsg').style.display   = 'none';
-  document.getElementById('moduleWireDeleteInfo').style.display  = 'block';
+  moduleStatusToggle.classList.remove('active');
+  moduleDeleteToggle.classList.remove('active');
 
   // 3) 그리드 초기화 (6×6 고정)
   setupGrid('moduleGrid', 6, 6);
