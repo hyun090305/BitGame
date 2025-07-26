@@ -3124,7 +3124,7 @@ function handleModuleKeyDown(e) {
 
 function handleModuleKeyUp(e) {
   if (e.key === 'Control') {
-    isWireDrawing = false;
+    isWireDrawing = false
     moduleStatusToggle.classList.remove('active');
     clearWirePreview();         // 반쯤 그려진 wire preview 제거
     wireTrace = [];
