@@ -12,8 +12,91 @@ let GRID_ROWS = 6;
 let GRID_COLS = 6;
 let wires = [];  // { path, start, end } 객체를 저장할 배열
 
+// 드래그 시 따라다니는 미리보기 요소
+let dragPreview = null;
+
 // CSS 애니메이션 한 주기(1초) 만큼 녹화하기 위해 사용
 const WIRE_ANIM_DURATION = 1000; // ms
+
+// --- 모바일 터치 기반 드래그 지원 폴리필 ---
+function enableTouchDrag() {
+  let dragEl = null;
+  const data = {};
+  const dt = {
+    setData: (t, v) => data[t] = v,
+    getData: t => data[t]
+  };
+
+  document.addEventListener('touchstart', e => {
+    const target = e.target.closest('[draggable="true"]');
+    if (!target) return;
+    dragEl = target;
+    data.text = '';
+    const t = e.touches[0];
+    startDragPreview(target, t.clientX, t.clientY);
+    const ev = new Event('dragstart', { bubbles: true });
+    ev.dataTransfer = dt;
+    target.dispatchEvent(ev);
+  });
+
+  document.addEventListener('touchmove', e => {
+    if (!dragEl) return;
+    const t = e.touches[0];
+    updateDragPreview(t.clientX, t.clientY);
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    if (el) {
+      const over = new Event('dragover', { bubbles: true });
+      over.dataTransfer = dt;
+      el.dispatchEvent(over);
+    }
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('touchend', e => {
+    if (!dragEl) return;
+    const t = e.changedTouches[0];
+    const dropTarget = document.elementFromPoint(t.clientX, t.clientY);
+    if (dropTarget) {
+      const dropEv = new Event('drop', { bubbles: true });
+      dropEv.dataTransfer = dt;
+      dropTarget.dispatchEvent(dropEv);
+    }
+    const endEv = new Event('dragend', { bubbles: true });
+    endEv.dataTransfer = dt;
+    dragEl.dispatchEvent(endEv);
+    dragEl = null;
+    removeDragPreview();
+  });
+}
+
+function startDragPreview(src, x, y) {
+  removeDragPreview();
+  const p = src.cloneNode(true);
+  p.classList.add('drag-preview');
+  p.style.position = 'fixed';
+  p.style.pointerEvents = 'none';
+  p.style.zIndex = '10000';
+  p.style.opacity = '0.8';
+  p.style.left = x + 'px';
+  p.style.top = y + 'px';
+  p.style.transform = 'translate(-50%, -50%)';
+  document.body.appendChild(p);
+  dragPreview = p;
+}
+
+function updateDragPreview(x, y) {
+  if (dragPreview) {
+    dragPreview.style.left = x + 'px';
+    dragPreview.style.top = y + 'px';
+  }
+}
+
+function removeDragPreview() {
+  if (dragPreview) {
+    dragPreview.remove();
+    dragPreview = null;
+  }
+}
 
 
 
@@ -542,6 +625,47 @@ function track(ev) {
   el.classList.add("wire-preview");
 }
 
+function trackTouch(e) {
+  const t = e.touches && e.touches[0];
+  if (!t) return;
+  track({ clientX: t.clientX, clientY: t.clientY });
+  e.preventDefault();
+}
+
+function finishTouch(e) {
+  document.removeEventListener("touchmove", trackTouch);
+  document.removeEventListener("touchend", finishTouch);
+  const t = e.changedTouches && e.changedTouches[0];
+  if (!t) return;
+  const target = document.elementFromPoint(t.clientX, t.clientY);
+  finish({ clientX: t.clientX, clientY: t.clientY, target });
+  e.preventDefault();
+}
+
+function gridTouchMove(e) {
+  if (!isWireDrawing) return;
+  if (wireTrace.length === 0) return;
+  const t = e.touches && e.touches[0];
+  if (!t) return;
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  const cell = el?.closest(".cell");
+  if (!cell) return;
+
+  const idx = parseInt(cell.dataset.index, 10);
+  const lastIdx = Number(wireTrace.at(-1).dataset.index);
+  if (idx === lastIdx) return;
+
+  const path = getInterpolatedIndices(lastIdx, idx);
+  path.forEach(i => {
+    const cellEl = grid.children[i];
+    if (!wireTrace.includes(cellEl)) {
+      cellEl.classList.add("wire-preview");
+      wireTrace.push(cellEl);
+    }
+  });
+  e.preventDefault();
+}
+
 // 셀 인덱스(문자열) → [row, col] 좌표
 function indexToCoord1(idx) {
   const i = +idx;
@@ -559,6 +683,8 @@ function finish(e) {
   // 1) 리스너 해제
   document.removeEventListener("mousemove", track);
   document.removeEventListener("mouseup", finish);
+  document.removeEventListener("touchmove", trackTouch);
+  document.removeEventListener("touchend", finishTouch);
   isMouseDown = false;
   const middle = wireTrace.slice(1, -1);
   if (middle.some(c => c.dataset.type)) {
@@ -1526,6 +1652,15 @@ window.addEventListener("DOMContentLoaded", () => {
     const level = btn.dataset.level;
     btn.textContent = levelTitles[level] ?? `Stage ${level}`;
   });
+  enableTouchDrag();
+  document.addEventListener('dragstart', e => {
+    const target = e.target.closest('.blockIcon, .cell.block');
+    if (target) startDragPreview(target, e.clientX, e.clientY);
+  });
+  document.addEventListener('dragover', e => {
+    updateDragPreview(e.clientX, e.clientY);
+  });
+  document.addEventListener('dragend', removeDragPreview);
   const clearedLevels = JSON.parse(localStorage.getItem("clearedLevels") || "[]");
   clearedLevels.forEach(level => {
     const btn = document.querySelector(`.levelBtn[data-level="${level}"]`);
@@ -1987,6 +2122,20 @@ function setupGrid(containerId, rows, cols) {
     document.addEventListener("mouseup", finish);
   });
 
+  grid.addEventListener("touchstart", e => {
+    const cell = e.target.closest('.cell');
+    if (!isWireDrawing || !cell) return;
+
+    const t = cell.dataset.type;
+    if (!t || t === "WIRE") return;
+
+    isMouseDown = true;
+    wireTrace = [cell];
+
+    document.addEventListener("touchmove", trackTouch, { passive: false });
+    document.addEventListener("touchend", finishTouch);
+  }, { passive: false });
+
   grid.addEventListener("mousemove", e => {
     if (!isWireDrawing) return;
     // 커서 바로 밑의 요소 찾기
@@ -2022,6 +2171,8 @@ function setupGrid(containerId, rows, cols) {
     // wire 미리보기 업데이트
     //drawWirePreview(wireTrace);
   });
+
+  grid.addEventListener("touchmove", gridTouchMove, { passive: false });
   grid.addEventListener('click', e => {
     if (!isWireDeleting) return;
     const cell = e.target.closest('.cell');
@@ -2056,6 +2207,7 @@ function setupGrid(containerId, rows, cols) {
   });
   // ——— 그리드 밖 마우스 탈출 시 취소 ———
   grid.addEventListener('mouseleave', cancelWireDrawing);
+  grid.addEventListener('touchcancel', cancelWireDrawing);
 }
 
 function resetCell(cell) {

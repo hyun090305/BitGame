@@ -108,6 +108,7 @@
     grid-template-columns: repeat(var(--grid-cols, 6), 50px);
     /* 기존 */
     grid-template-rows: repeat(var(--grid-rows, 6), 50px);
+    touch-action: none;
     /* 추가 */
   }
   #gridContainer {
@@ -1375,6 +1376,7 @@
   border: 2px solid black;
   grid-template-columns: repeat(var(--grid-cols, 6), 50px);
   grid-template-rows: repeat(var(--grid-rows, 6), 50px);
+  touch-action: none;
 }
 
 /* 공통: 게임 모드 · 모듈 모드 블록 패널 모두에 적용 */
@@ -1645,4 +1647,13 @@
     inset 0 1px 2px rgba(255, 255, 255, 0.7),
     inset 0 -1px 2px rgba(0, 0, 0, 0.05),
     0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* 드래그 중 마우스를 따라다니는 블록 미리보기 */
+.drag-preview {
+  pointer-events: none;
+  position: fixed;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+  opacity: 0.8;
 }
