@@ -1247,7 +1247,16 @@ const mainScreen = document.getElementById("firstScreen");
 const levelScreen = document.getElementById("levelScreen");
 const gameScreen = document.getElementById("gameScreen");
 
+function lockOrientationLandscape() {
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(err => {
+      console.warn('Orientation lock failed:', err);
+    });
+  }
+}
+
 document.getElementById("startBtn").onclick = () => {
+  lockOrientationLandscape();
   renderChapterGrid();
   document.getElementById("firstScreen").style.display = "none";
   document.getElementById("chapterScreen").style.display = "block";
