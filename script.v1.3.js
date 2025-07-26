@@ -12,9 +12,6 @@ let GRID_ROWS = 6;
 let GRID_COLS = 6;
 let wires = [];  // { path, start, end } 객체를 저장할 배열
 
-// 드래그 시 따라다니는 미리보기 요소
-let dragPreview = null;
-
 // CSS 애니메이션 한 주기(1초) 만큼 녹화하기 위해 사용
 const WIRE_ANIM_DURATION = 1000; // ms
 
@@ -32,8 +29,6 @@ function enableTouchDrag() {
     if (!target) return;
     dragEl = target;
     data.text = '';
-    const t = e.touches[0];
-    startDragPreview(target, t.clientX, t.clientY);
     const ev = new Event('dragstart', { bubbles: true });
     ev.dataTransfer = dt;
     target.dispatchEvent(ev);
@@ -42,7 +37,6 @@ function enableTouchDrag() {
   document.addEventListener('touchmove', e => {
     if (!dragEl) return;
     const t = e.touches[0];
-    updateDragPreview(t.clientX, t.clientY);
     const el = document.elementFromPoint(t.clientX, t.clientY);
     if (el) {
       const over = new Event('dragover', { bubbles: true });
@@ -65,37 +59,7 @@ function enableTouchDrag() {
     endEv.dataTransfer = dt;
     dragEl.dispatchEvent(endEv);
     dragEl = null;
-    removeDragPreview();
   });
-}
-
-function startDragPreview(src, x, y) {
-  removeDragPreview();
-  const p = src.cloneNode(true);
-  p.classList.add('drag-preview');
-  p.style.position = 'fixed';
-  p.style.pointerEvents = 'none';
-  p.style.zIndex = '10000';
-  p.style.opacity = '0.8';
-  p.style.left = x + 'px';
-  p.style.top = y + 'px';
-  p.style.transform = 'translate(-50%, -50%)';
-  document.body.appendChild(p);
-  dragPreview = p;
-}
-
-function updateDragPreview(x, y) {
-  if (dragPreview) {
-    dragPreview.style.left = x + 'px';
-    dragPreview.style.top = y + 'px';
-  }
-}
-
-function removeDragPreview() {
-  if (dragPreview) {
-    dragPreview.remove();
-    dragPreview = null;
-  }
 }
 
 
@@ -1653,14 +1617,6 @@ window.addEventListener("DOMContentLoaded", () => {
     btn.textContent = levelTitles[level] ?? `Stage ${level}`;
   });
   enableTouchDrag();
-  document.addEventListener('dragstart', e => {
-    const target = e.target.closest('.blockIcon, .cell.block');
-    if (target) startDragPreview(target, e.clientX, e.clientY);
-  });
-  document.addEventListener('dragover', e => {
-    updateDragPreview(e.clientX, e.clientY);
-  });
-  document.addEventListener('dragend', removeDragPreview);
   const clearedLevels = JSON.parse(localStorage.getItem("clearedLevels") || "[]");
   clearedLevels.forEach(level => {
     const btn = document.querySelector(`.levelBtn[data-level="${level}"]`);
