@@ -56,8 +56,8 @@ function enableTouchDrag() {
       const cell  = dropTarget.closest('.cell');
       const trash = dropTarget.closest('.trash-area');
       if (cell) {
-        // ctrl 키가 눌린 상태에서 블록이 없는 셀이라면 취소
-        if (!(e.ctrlKey && (!cell.dataset.type || cell.dataset.type === 'WIRE'))) {
+        const ctrlActive = e.ctrlKey || statusToggle.classList.contains('active');
+        if (!(ctrlActive && (!cell.dataset.type || cell.dataset.type === 'WIRE'))) {
           dropTarget = cell;
         } else {
           dropTarget = null;
