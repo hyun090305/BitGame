@@ -15,6 +15,8 @@
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap"
       rel="stylesheet" />
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
   </head>
   <body>
     <div id="usernameModal" class="modal" style="display:none;">
@@ -331,6 +333,13 @@
         <button id="startLevelBtn">시작하기</button>
       </div>
     </div>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("service-worker.js");
+        });
+      }
+    </script>
 
   </body>
 </html>
