@@ -49,12 +49,32 @@ function enableTouchDrag() {
   document.addEventListener('touchend', e => {
     if (!dragEl) return;
     const t = e.changedTouches[0];
-    const dropTarget = document.elementFromPoint(t.clientX, t.clientY);
+    let dropTarget = document.elementFromPoint(t.clientX, t.clientY);
+
+    // 드롭 가능 요소만 허용
+    if (dropTarget) {
+      const cell  = dropTarget.closest('.cell');
+      const trash = dropTarget.closest('.trash-area');
+      if (cell) {
+        // ctrl 키가 눌린 상태에서 블록이 없는 셀이라면 취소
+        if (!(e.ctrlKey && (!cell.dataset.type || cell.dataset.type === 'WIRE'))) {
+          dropTarget = cell;
+        } else {
+          dropTarget = null;
+        }
+      } else if (trash) {
+        dropTarget = trash;
+      } else {
+        dropTarget = null;
+      }
+    }
+
     if (dropTarget) {
       const dropEv = new Event('drop', { bubbles: true });
       dropEv.dataTransfer = dt;
       dropTarget.dispatchEvent(dropEv);
     }
+
     const endEv = new Event('dragend', { bubbles: true });
     endEv.dataTransfer = dt;
     dragEl.dispatchEvent(endEv);
