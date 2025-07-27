@@ -2633,6 +2633,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (loginBtn) {
     firebase.auth().onAuthStateChanged(user => {
       loginBtn.textContent = user ? '로그아웃' : 'Google 로그인';
+      if (user) handleGoogleLogin(user);
     });
     loginBtn.addEventListener('click', () => {
       const user = firebase.auth().currentUser;
@@ -2648,6 +2649,86 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+function handleGoogleLogin(user) {
+  const googleName = user.displayName || user.email;
+  const oldName = localStorage.getItem('username');
+  if (oldName !== googleName) {
+    localStorage.setItem('username', googleName);
+    document.getElementById('guestUsername').textContent = googleName;
+    if (oldName) {
+      showMergeModal(oldName, googleName);
+    } else {
+      registerUsernameIfNeeded(googleName);
+    }
+  } else {
+    registerUsernameIfNeeded(googleName);
+  }
+}
+
+function registerUsernameIfNeeded(name) {
+  db.ref('usernames').orderByValue().equalTo(name).once('value', snap => {
+    if (!snap.exists()) {
+      const id = db.ref('usernames').push().key;
+      db.ref(`usernames/${id}`).set(name);
+    }
+  });
+}
+
+function removeUsername(name) {
+  db.ref('usernames').orderByValue().equalTo(name).once('value', snap => {
+    snap.forEach(ch => ch.ref.remove());
+  });
+}
+
+function showMergeModal(oldName, newName) {
+  const modal = document.getElementById('mergeModal');
+  const confirm = document.getElementById('mergeConfirmBtn');
+  const cancel = document.getElementById('mergeCancelBtn');
+  modal.style.display = 'flex';
+  confirm.onclick = () => {
+    modal.style.display = 'none';
+    mergeProgress(oldName, newName).then(showOverallRanking);
+  };
+  cancel.onclick = () => {
+    modal.style.display = 'none';
+    registerUsernameIfNeeded(newName);
+  };
+}
+
+function isRecordBetter(a, b) {
+  if (!b) return true;
+  const sumBlocks = e => Object.values(e.blockCounts || {}).reduce((s, x) => s + x, 0);
+  const aBlocks = sumBlocks(a), bBlocks = sumBlocks(b);
+  if (aBlocks !== bBlocks) return aBlocks < bBlocks;
+  if (a.usedWires !== b.usedWires) return a.usedWires < b.usedWires;
+  return new Date(a.timestamp) < new Date(b.timestamp);
+}
+
+function mergeProgress(oldName, newName) {
+  return db.ref('rankings').once('value').then(snap => {
+    const promises = [];
+    snap.forEach(levelSnap => {
+      let best = null;
+      const removeKeys = [];
+      levelSnap.forEach(recSnap => {
+        const v = recSnap.val();
+        if (v.nickname === oldName || v.nickname === newName) {
+          if (isRecordBetter(v, best)) best = { ...v };
+          removeKeys.push(recSnap.key);
+        }
+      });
+      removeKeys.forEach(k => promises.push(levelSnap.ref.child(k).remove()));
+      if (best) {
+        best.nickname = newName;
+        promises.push(levelSnap.ref.push(best));
+      }
+    });
+    removeUsername(oldName);
+    registerUsernameIfNeeded(newName);
+    return Promise.all(promises);
+  });
+}
 
 // 1) 모달과 버튼 요소 참조
 const viewSavedBtn = document.getElementById('viewSavedBtn');
