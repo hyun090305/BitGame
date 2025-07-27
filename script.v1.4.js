@@ -2628,6 +2628,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const recordBtn = document.getElementById('recordBtn');
   if (recordBtn) recordBtn.addEventListener('click', () => startRecording(WIRE_ANIM_DURATION));
   setupKeyToggles();
+
+  const loginBtn = document.getElementById('googleLoginBtn');
+  if (loginBtn) {
+    firebase.auth().onAuthStateChanged(user => {
+      loginBtn.textContent = user ? '로그아웃' : 'Google 로그인';
+    });
+    loginBtn.addEventListener('click', () => {
+      const user = firebase.auth().currentUser;
+      if (user) {
+        firebase.auth().signOut();
+      } else {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        firebase.auth().signInWithPopup(provider).catch(err => {
+          alert('로그인에 실패했습니다.');
+          console.error(err);
+        });
+      }
+    });
+  }
 });
 
 // 1) 모달과 버튼 요소 참조
