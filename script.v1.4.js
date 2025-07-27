@@ -2641,7 +2641,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         const provider = new firebase.auth.GoogleAuthProvider();
         firebase.auth().signInWithPopup(provider).catch(err => {
-          alert('로그인에 실패했습니다.');
+          alert(`로그인에 실패했습니다. 코드: ${err.code}, 메시지: ${err.message}`);
           console.error(err);
         });
       }
