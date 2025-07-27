@@ -2737,6 +2737,7 @@ function showMergeModal(oldName, newName) {
   cancel.onclick = () => {
     modal.style.display = 'none';
     registerUsernameIfNeeded(newName);
+    showOverallRanking();
   };
 }
 
