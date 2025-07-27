@@ -2466,35 +2466,74 @@ document.getElementById("gradeButton").addEventListener("click", () => {
 
 function promptForUsername() {
   const savedName = localStorage.getItem("username");
-  if (savedName) return;  // 이미 저장되어 있음
+  if (savedName) return; // 이미 저장되어 있음
 
+  const input = document.getElementById("usernameInput");
+  const errorDiv = document.getElementById("usernameError");
+  input.value = "";
+  errorDiv.textContent = "";
+  document.getElementById("usernameSubmit").onclick = onInitialUsernameSubmit;
   document.getElementById("usernameModal").style.display = "flex";
 }
 
-document.getElementById("usernameSubmit").addEventListener("click", () => {
+function onInitialUsernameSubmit() {
   const name = document.getElementById("usernameInput").value.trim();
   const errorDiv = document.getElementById("usernameError");
-
   if (!name) {
     errorDiv.textContent = "닉네임을 입력해주세요.";
     return;
   }
-
-  // Firebase에서 중복 확인
   db.ref("usernames").orderByValue().equalTo(name).once("value", snapshot => {
     if (snapshot.exists()) {
       errorDiv.textContent = "이미 사용 중인 닉네임입니다.";
     } else {
-      // 저장
       const userId = db.ref("usernames").push().key;
       db.ref(`usernames/${userId}`).set(name);
       localStorage.setItem("username", name);
       document.getElementById("usernameModal").style.display = "none";
-      const uname = localStorage.getItem("username") || "익명";
-      document.getElementById("guestUsername").textContent = uname;
+      document.getElementById("guestUsername").textContent = name;
     }
   });
-});
+}
+
+function promptForGoogleNickname(oldName, uid) {
+  const input = document.getElementById("usernameInput");
+  const errorDiv = document.getElementById("usernameError");
+  input.value = oldName || "";
+  errorDiv.textContent = "";
+  document.getElementById("usernameSubmit").onclick = () =>
+    onGoogleUsernameSubmit(oldName, uid);
+  document.getElementById("usernameModal").style.display = "flex";
+}
+
+function onGoogleUsernameSubmit(oldName, uid) {
+  const name = document.getElementById("usernameInput").value.trim();
+  const errorDiv = document.getElementById("usernameError");
+  if (!name) {
+    errorDiv.textContent = "닉네임을 입력해주세요.";
+    return;
+  }
+  db.ref("usernames").orderByValue().equalTo(name).once("value", snap => {
+    if (snap.exists() && name !== oldName) {
+      errorDiv.textContent = "이미 사용 중인 닉네임입니다.";
+    } else {
+      if (!snap.exists()) {
+        const id = db.ref("usernames").push().key;
+        db.ref(`usernames/${id}`).set(name);
+      }
+      localStorage.setItem("username", name);
+      localStorage.setItem(`googleNickname_${uid}`, name);
+      document.getElementById("usernameModal").style.display = "none";
+      document.getElementById("guestUsername").textContent = name;
+      if (oldName && oldName !== name) {
+        showMergeModal(oldName, name);
+      } else {
+        registerUsernameIfNeeded(name);
+        showOverallRanking();
+      }
+    }
+  });
+}
 
 
 function saveRanking(levelId, blockCounts, usedWires /*, timeMs */) {
@@ -2651,18 +2690,23 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function handleGoogleLogin(user) {
-  const googleName = user.displayName || user.email;
+  const uid = user.uid;
+  const stored = localStorage.getItem(`googleNickname_${uid}`);
   const oldName = localStorage.getItem('username');
-  if (oldName !== googleName) {
-    localStorage.setItem('username', googleName);
-    document.getElementById('guestUsername').textContent = googleName;
-    if (oldName) {
-      showMergeModal(oldName, googleName);
+  if (stored) {
+    if (oldName !== stored) {
+      localStorage.setItem('username', stored);
+      document.getElementById('guestUsername').textContent = stored;
+      if (oldName) {
+        showMergeModal(oldName, stored);
+      } else {
+        registerUsernameIfNeeded(stored);
+      }
     } else {
-      registerUsernameIfNeeded(googleName);
+      registerUsernameIfNeeded(stored);
     }
   } else {
-    registerUsernameIfNeeded(googleName);
+    promptForGoogleNickname(oldName, uid);
   }
 }
 
@@ -2693,6 +2737,7 @@ function showMergeModal(oldName, newName) {
   cancel.onclick = () => {
     modal.style.display = 'none';
     registerUsernameIfNeeded(newName);
+    showOverallRanking();
   };
 }
 
