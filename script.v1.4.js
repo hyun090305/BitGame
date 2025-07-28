@@ -4,6 +4,7 @@ let lastDraggedIcon = null;
 let lastDraggedFromCell = null;
 let lastDraggedName = null;
 let currentLevel = null;
+let currentCustomProblem = null;
 
 let isWireDrawing = false;
 let isMouseDown = false;
@@ -1283,7 +1284,12 @@ document.getElementById("backToMainBtn").onclick = () => {
 document.getElementById("backToLevelsBtn").onclick = () => {
   document.body.classList.remove('game-active');
   gameScreen.style.display = "none";
-  levelScreen.style.display = "block";
+  if (currentCustomProblem) {
+    currentCustomProblem = null;
+    userProblemsScreen.style.display = 'block';
+  } else {
+    levelScreen.style.display = "block";
+  }
 };
 
 document.querySelectorAll(".levelBtn").forEach(btn => {
@@ -2007,9 +2013,15 @@ function renderChapterGrid() {
         <p>${chapter.desc}</p>
       `;
       card.onclick = () => {
-        renderLevelGrid(chapter.stages);
-        document.getElementById("chapterScreen").style.display = "none";
-        document.getElementById("levelScreen").style.display = "block";
+        if (chapter.id === 'user') {
+          renderUserProblemList();
+          document.getElementById('chapterScreen').style.display = 'none';
+          userProblemsScreen.style.display = 'block';
+        } else {
+          renderLevelGrid(chapter.stages);
+          document.getElementById("chapterScreen").style.display = "none";
+          document.getElementById("levelScreen").style.display = "block";
+        }
       };
     }
 
@@ -2502,11 +2514,15 @@ const overlay = document.getElementById("gridOverlay");
 let isScoring = false;
 
 document.getElementById("gradeButton").addEventListener("click", () => {
-  if (currentLevel == null || isScoring) return;
+  if (isScoring) return;
+  if (currentCustomProblem == null && currentLevel == null) return;
   isScoring = true;
   overlay.style.display = "block";
-  // 채점 애니메이션만 실행 (오버레이 해제는 returnToEditScreen에서)
-  gradeLevelAnimated(currentLevel);
+  if (currentCustomProblem) {
+    gradeProblemAnimated(currentCustomProblem);
+  } else {
+    gradeLevelAnimated(currentLevel);
+  }
 });
 
 function promptForUsername() {
@@ -3482,6 +3498,10 @@ const backToMainFromProblem    = document.getElementById('backToMainFromProblem'
 const saveProblemBtn           = document.getElementById('saveProblemBtn');
 const viewProblemListBtn       = document.getElementById('viewProblemListBtn');
 const closeProblemListModal    = document.getElementById('closeProblemListModal');
+const userProblemsScreen       = document.getElementById('user-problems-screen');
+const userProblemList          = document.getElementById('userProblemList');
+const backToChapterFromUserProblems = document.getElementById('backToChapterFromUserProblems');
+const openProblemCreatorBtn    = document.getElementById('openProblemCreatorBtn');
 
 //— ① 메인 → 모듈 관리  
 manageModulesBtn.addEventListener('click', () => {
@@ -3521,6 +3541,21 @@ backToMainFromProblem.addEventListener('click', () => {
     document.getElementById('levelScreen').style.display = 'block';
   }
 });
+
+if (backToChapterFromUserProblems) {
+  backToChapterFromUserProblems.addEventListener('click', () => {
+    userProblemsScreen.style.display = 'none';
+    document.getElementById('chapterScreen').style.display = 'block';
+  });
+}
+
+if (openProblemCreatorBtn) {
+  openProblemCreatorBtn.addEventListener('click', () => {
+    userProblemsScreen.style.display = 'none';
+    problemScreen.style.display = 'block';
+    initProblemEditor();
+  });
+}
 
 document.getElementById('updateIOBtn').addEventListener('click', () => {
   initProblemBlockPanel();
@@ -4060,6 +4095,213 @@ function loadProblem(key) {
       }));
     }
   });
+}
+
+function renderUserProblemList() {
+  userProblemList.innerHTML = '';
+  db.ref('problems').once('value').then(snapshot => {
+    userProblemList.innerHTML = '';
+    if (!snapshot.exists()) {
+      const li = document.createElement('li');
+      li.className = 'problem-item';
+      li.textContent = '등록된 문제가 없습니다.';
+      userProblemList.appendChild(li);
+    } else {
+      snapshot.forEach(child => {
+        const data = child.val();
+        const li = document.createElement('li');
+        li.className = 'problem-item';
+        li.textContent = data.title || child.key;
+        li.addEventListener('click', () => {
+          previewUserProblem(child.key);
+        });
+        userProblemList.appendChild(li);
+      });
+    }
+  });
+}
+
+function previewUserProblem(key) {
+  db.ref('problems/' + key).once('value').then(snap => {
+    const data = snap.val();
+    if (!data) return alert('불러오기 실패');
+    showProblemIntro(data, () => startCustomProblem(key, data));
+  });
+}
+
+function showProblemIntro(problem, callback) {
+  const modal = document.getElementById('levelIntroModal');
+  const title = document.getElementById('introTitle');
+  const desc  = document.getElementById('introDesc');
+  const table = document.getElementById('truthTable');
+
+  title.textContent = problem.title || '';
+  desc.textContent  = problem.description || '';
+  const keys = Object.keys(problem.table[0] || {});
+  table.innerHTML = `
+    <tr>${keys.map(k=>`<th>${k}</th>`).join('')}</tr>
+    ${problem.table.map(row => `<tr>${keys.map(k=>`<td>${row[k]}</td>`).join('')}</tr>`).join('')}
+  `;
+  modal.style.display = 'flex';
+  modal.style.backgroundColor = 'white';
+  document.getElementById('startLevelBtn').onclick = () => {
+    modal.style.display = 'none';
+    callback();
+  };
+}
+
+function setupCustomBlockPanel(problem) {
+  const panel = document.getElementById('blockPanel');
+  panel.innerHTML = '';
+  const blocks = [];
+  for (let i=1;i<=problem.inputCount;i++) blocks.push({type:'INPUT', name:'IN'+i});
+  for (let j=1;j<=problem.outputCount;j++) blocks.push({type:'OUTPUT', name:'OUT'+j});
+  ['AND','OR','NOT','JUNCTION'].forEach(t=>blocks.push({type:t}));
+  blocks.forEach(block => {
+    const div=document.createElement('div');
+    div.className='blockIcon';
+    div.draggable=true;
+    div.dataset.type=block.type;
+    if(block.name) div.dataset.name=block.name;
+    div.textContent=block.name||block.type;
+    div.dataset.tooltip = (() => {
+      switch(block.type) {
+        case 'AND': return 'AND 게이트: 여러 입력이 모두 1일 때 1';
+        case 'OR':  return 'OR 게이트: 입력 중 하나라도 1이면 1';
+        case 'NOT': return 'NOT 게이트: 입력의 반대 출력';
+        case 'INPUT': return `입력(${block.name})`;
+        case 'OUTPUT': return `출력(${block.name})`;
+        case 'JUNCTION': return 'JUNCTION: 신호 분기';
+        default: return '';
+      }
+    })();
+    panel.appendChild(div);
+  });
+  const wireDiv=document.createElement('div');
+  wireDiv.className='blockIcon';
+  wireDiv.draggable=true;
+  wireDiv.dataset.type='WIRE';
+  wireDiv.textContent='WIRE';
+  wireDiv.dataset.tooltip='전선: [Ctrl] 드래그 설치, [Shift] 클릭 삭제';
+  panel.appendChild(wireDiv);
+  attachDragHandlersToBlockIcons();
+}
+
+function startCustomProblem(key, problem) {
+  currentCustomProblem = problem;
+  currentLevel = null;
+  setupGrid('grid', 6, 6);
+  clearGrid();
+  setupCustomBlockPanel(problem);
+  setGridDimensions(6,6);
+  const prevMenuBtn = document.getElementById('prevStageBtnMenu');
+  const nextMenuBtn = document.getElementById('nextStageBtnMenu');
+  prevMenuBtn.disabled = true;
+  nextMenuBtn.disabled = true;
+  document.getElementById('gameTitle').textContent = problem.title || '사용자 문제';
+  userProblemsScreen.style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'flex';
+  document.body.classList.add('game-active');
+}
+
+async function gradeProblemAnimated(problem) {
+  const inNames = Array.from({length:problem.inputCount},(_,i)=>'IN'+(i+1));
+  const outNames = Array.from({length:problem.outputCount},(_,i)=>'OUT'+(i+1));
+  const testCases = problem.table.map(row=>({
+    inputs: Object.fromEntries(inNames.map(n=>[n,row[n]])),
+    expected: Object.fromEntries(outNames.map(n=>[n,row[n]]))
+  }));
+
+  const allBlocks = Array.from(document.querySelectorAll('.cell.block'));
+  let junctionError = false;
+  allBlocks.filter(b=>b.dataset.type==='JUNCTION').forEach(junction=>{
+    const inputs = getIncomingBlocks(junction);
+    if (inputs.length>1){ junction.classList.add('error'); junctionError=true; }
+    else junction.classList.remove('error');
+  });
+  if (junctionError){
+    alert('❌ JUNCTION 블록에 여러 입력이 연결되어 있습니다. 회로를 수정해주세요.');
+    overlay.style.display='none';
+    isScoring=false; return; }
+  let outputError=false;
+  Array.from(document.querySelectorAll('.cell.block[data-type="OUTPUT"]'))
+    .forEach(output=>{
+      const inputs=getIncomingBlocks(output);
+      if(inputs.length>1){output.classList.add('error');outputError=true;}else{output.classList.remove('error');}
+    });
+  if(outputError){
+    alert('❌ OUTPUT 블록에 여러 입력이 연결되어 있습니다. 회로를 수정해주세요.');
+    overlay.style.display='none';
+    isScoring=false;return;
+  }
+
+  const requiredOutputs = outNames;
+  const actualOutputCells = Array.from(document.querySelectorAll('.cell.block[data-type="OUTPUT"]'));
+  const actualOutputNames = actualOutputCells.map(c=>c.dataset.name);
+  const missingOutputs = requiredOutputs.filter(n=>!actualOutputNames.includes(n));
+  if(missingOutputs.length>0){
+    alert(`❌ 다음 출력 블록이 배치되지 않았습니다: ${missingOutputs.join(', ')}`);
+    overlay.style.display='none';
+    isScoring=false;return;
+  }
+
+  let allCorrect=true;
+  document.getElementById('blockPanel').style.display='none';
+  document.getElementById('rightPanel').style.display='none';
+  document.getElementById('gradingArea').style.display='block';
+  const gradingArea=document.getElementById('gradingArea');
+  gradingArea.innerHTML='<b>채점 결과:</b><br><br>';
+
+  const inputs=document.querySelectorAll('.cell.block[data-type="INPUT"]');
+  const outputs=document.querySelectorAll('.cell.block[data-type="OUTPUT"]');
+
+  for(const test of testCases){
+    inputs.forEach(input=>{
+      const name=input.dataset.name;
+      const value=test.inputs[name]??0;
+      input.dataset.value=String(value);
+      input.classList.toggle('active',value===1);
+    });
+    evaluateCircuit();
+    await new Promise(r=>setTimeout(r,100));
+
+    let correct=true;
+    const actualText=Array.from(outputs).map(out=>{
+      const name=out.dataset.name;
+      const actual=+JSON.parse(out.dataset.val);
+      const expected=test.expected[name];
+      if(actual!==expected) correct=false;
+      return `${name}=${actual}`;
+    }).join(', ');
+    const expectedText=Object.entries(test.expected).map(([k,v])=>`${k}=${v}`).join(', ');
+    const inputText=Object.entries(test.inputs).map(([k,v])=>`${k}=${v}`).join(', ');
+    if(!correct) allCorrect=false;
+    if(!document.getElementById('gradingTable')){
+      gradingArea.innerHTML+=`
+      <table id="gradingTable">
+        <thead>
+          <tr><th>입력</th><th>예상 출력</th><th>실제 출력</th><th>결과</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>`;
+    }
+    const tbody=document.querySelector('#gradingTable tbody');
+    const tr=document.createElement('tr');
+    tr.className=correct?'correct':'wrong';
+    tr.innerHTML=`<td>${inputText}</td><td>${expectedText}</td><td>${actualText}</td><td style="font-weight:bold;color:${correct?'green':'red'};">${correct?'✅ 정답':'❌ 오답'}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  const summary=document.createElement('div');
+  summary.id='gradeResultSummary';
+  summary.textContent=allCorrect?'🎉 모든 테스트를 통과했습니다!':'😢 일부 테스트에 실패했습니다.';
+  gradingArea.appendChild(summary);
+
+  const returnBtn=document.createElement('button');
+  returnBtn.id='returnToEditBtn';
+  returnBtn.textContent='🛠 편집으로 돌아가기';
+  gradingArea.appendChild(returnBtn);
+  document.getElementById('returnToEditBtn').addEventListener('click',returnToEditScreen);
 }
 
 // ======================================
