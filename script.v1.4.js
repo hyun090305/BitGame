@@ -91,6 +91,7 @@ let levelBlockSets = {};
 let chapterData = [];
 let levelAnswers = {};
 let levelDescriptions = {};
+let levelHints = {};
 
 function loadStageData() {
   return fetch('levels.json')
@@ -102,6 +103,7 @@ function loadStageData() {
       chapterData = data.chapterData;
       levelAnswers = data.levelAnswers;
       levelDescriptions = data.levelDescriptions;
+      levelHints = data.levelHints || {};
     });
 }
 
@@ -1224,6 +1226,7 @@ async function gradeLevelAnimated(level) {
 
     // ③ 도선 수 집계
     const usedWires = document.querySelectorAll(".cell.wire").length;
+    const hintsUsed = parseInt(localStorage.getItem(`hintsUsed_${level}`) || '0');
     const nickname = localStorage.getItem("username") || "익명";
     const rankingsRef = db.ref(`rankings/${level}`);
 
@@ -1232,7 +1235,7 @@ async function gradeLevelAnimated(level) {
       .once("value", snapshot => {
         if (!snapshot.exists()) {
           // 내 기록이 없으면 새로 저장
-          saveRanking(level, blockCounts, usedWires);
+          saveRanking(level, blockCounts, usedWires, hintsUsed);
           showClearedModal(level);
           return;
         }
@@ -1263,6 +1266,7 @@ async function gradeLevelAnimated(level) {
           rankingsRef.child(best.key).update({
             blockCounts,
             usedWires,
+            hintsUsed,
             timestamp: new Date().toISOString()
           });
           showClearedModal(level);
@@ -1920,6 +1924,22 @@ document.getElementById("showIntroBtn").addEventListener("click", () => {
   }
 });
 
+document.getElementById('hintBtn').addEventListener('click', () => {
+  if (currentLevel == null) {
+    alert('먼저 스테이지를 시작하세요.');
+    return;
+  }
+  checkHintCooldown(until => {
+    const now = Date.now();
+    if (now < until) {
+      const remain = Math.ceil((until - now)/60000);
+      alert(`다음 힌트는 ${remain}분 후에 열 수 있습니다.`);
+      return;
+    }
+    openHintModal(currentLevel);
+  });
+});
+
 
 
 function showIntroModal(level) {
@@ -2197,20 +2217,21 @@ function onGoogleUsernameSubmit(oldName, uid) {
 }
 
 
-function saveRanking(levelId, blockCounts, usedWires /*, timeMs */) {
+function saveRanking(levelId, blockCounts, usedWires, hintsUsed /*, timeMs */) {
   const nickname = localStorage.getItem("username") || "익명";
   const entry = {
     nickname,
     blockCounts,                        // { INPUT:2, AND:1, OR:1, … }
     usedWires,
+    hintsUsed,
     timestamp: new Date().toISOString()
   };
   db.ref(`rankings/${levelId}`).push(entry);
 }
 
-function saveProblemRanking(problemKey, blockCounts, usedWires) {
+function saveProblemRanking(problemKey, blockCounts, usedWires, hintsUsed) {
   const nickname = localStorage.getItem("username") || "익명";
-  const entry = { nickname, blockCounts, usedWires, timestamp: new Date().toISOString() };
+  const entry = { nickname, blockCounts, usedWires, hintsUsed, timestamp: new Date().toISOString() };
   db.ref(`problems/${problemKey}/ranking`).push(entry);
 }
 
@@ -2247,6 +2268,8 @@ function showProblemRanking(problemKey) {
         const aB=sumBlocks(a), bB=sumBlocks(b);
         if(aB!==bB) return aB-bB;
         if(a.usedWires!==b.usedWires) return a.usedWires-b.usedWires;
+        const aH=(a.hintsUsed??0), bH=(b.hintsUsed??0);
+        if(aH!==bH) return aH-bH;
         return new Date(a.timestamp)-new Date(b.timestamp);
       });
 
@@ -2255,6 +2278,7 @@ function showProblemRanking(problemKey) {
         '<th>닉네임</th>',
         ...allowedTypes.map(t=>`<th>${t}</th>`),
         '<th>도선</th>',
+        '<th>힌트 사용</th>',
         '<th>클리어 시각</th>'
       ].join('');
 
@@ -2269,6 +2293,7 @@ function showProblemRanking(problemKey) {
     <td>${displayNickname}</td>
     ${counts}
     <td>${e.usedWires}</td>
+    <td>${e.hintsUsed ?? 0}</td>
     <td>${timeStr}</td>
   </tr>`;
       }).join('');
@@ -2337,6 +2362,8 @@ function showRanking(levelId) {
         const aBlocks = sumBlocks(a), bBlocks = sumBlocks(b);
         if (aBlocks !== bBlocks) return aBlocks - bBlocks;            // 블록 합계 오름차순
         if (a.usedWires !== b.usedWires) return a.usedWires - b.usedWires; // 도선 오름차순
+        const aH = (a.hintsUsed ?? 0), bH = (b.hintsUsed ?? 0);
+        if (aH !== bH) return aH - bH;                                 // 힌트 사용 오름차순
         return new Date(a.timestamp) - new Date(b.timestamp);         // 제출 시간 오름차순
       });
 
@@ -2347,6 +2374,7 @@ function showRanking(levelId) {
         // 이전: <th>블록 사용</th>
         ...allowedTypes.map(t => `<th>${t}</th>`),
         "<th>도선</th>",
+        "<th>힌트 사용</th>",
         "<th>클리어 시각</th>"
       ].join("");
 
@@ -2367,6 +2395,7 @@ function showRanking(levelId) {
     <td>${displayNickname}</td>
     ${counts}
     <td>${e.usedWires}</td>
+    <td>${e.hintsUsed ?? 0}</td>
     <td>${timeStr}</td>
   </tr>`;
       }).join("");
@@ -2970,6 +2999,8 @@ function showClearedModal(level) {
           const aBlocks = sumBlocks(a), bBlocks = sumBlocks(b);
           if (aBlocks !== bBlocks) return aBlocks - bBlocks;              // 블록 합계 오름차순
           if (a.usedWires !== b.usedWires) return a.usedWires - b.usedWires; // 도선 수 오름차순
+          const aH = (a.hintsUsed ?? 0), bH = (b.hintsUsed ?? 0);
+          if (aH !== bH) return aH - bH;
           return new Date(a.timestamp) - new Date(b.timestamp);           // 클리어 시각 오름차순
         });
         // ──────────────────────────────────────────────────────────────
@@ -2977,7 +3008,7 @@ function showClearedModal(level) {
         // 3) 정렬된 entries로 테이블 생성
         let html = `
           <table class="rankingTable">
-            <tr><th>순위</th><th>닉네임</th><th>시간</th></tr>
+            <tr><th>순위</th><th>닉네임</th><th>힌트 사용</th><th>시간</th></tr>
         `;
         entries.forEach((e, i) => {
           const timeStr = new Date(e.timestamp).toLocaleString();
@@ -2986,6 +3017,7 @@ function showClearedModal(level) {
             <tr class="${cls}">
               <td>${i + 1}</td>
               <td>${e.nickname}</td>
+              <td>${e.hintsUsed ?? 0}</td>
               <td>${timeStr}</td>
             </tr>
           `;
@@ -3343,9 +3375,16 @@ if (addRowBtn) addRowBtn.style.display = 'none';
 document.getElementById('computeOutputsBtn').addEventListener('click', computeOutputs);
 if (saveProblemBtn) saveProblemBtn.addEventListener('click', saveProblem);
 if (viewProblemListBtn) viewProblemListBtn.addEventListener('click', showProblemList);
-if (closeProblemListModal) closeProblemListModal.addEventListener('click', () => {
-  document.getElementById('problemListModal').style.display = 'none';
-});
+  if (closeProblemListModal) closeProblemListModal.addEventListener('click', () => {
+    document.getElementById('problemListModal').style.display = 'none';
+  });
+
+  const nextHintBtn = document.getElementById('openNextHintBtn');
+  const closeHintBtn = document.getElementById('closeHintBtn');
+  if (nextHintBtn) nextHintBtn.addEventListener('click', showNextHint);
+  if (closeHintBtn) closeHintBtn.addEventListener('click', () => {
+    document.getElementById('hintModal').style.display = 'none';
+  });
 
 /**
  * localStorage에서 "module_"로 시작하는 모든 항목을 찾고,
@@ -4002,6 +4041,57 @@ function showProblemIntro(problem, callback) {
   };
 }
 
+let currentHintStage = null;
+let nextHintIndex = 0;
+
+function checkHintCooldown(cb) {
+  const localUntil = parseInt(localStorage.getItem('hintCooldownUntil') || '0');
+  const user = firebase.auth().currentUser;
+  if (user) {
+    db.ref(`hintLocks/${user.uid}`).once('value').then(snap => {
+      cb(Math.max(localUntil, snap.val() || 0));
+    });
+  } else {
+    cb(localUntil);
+  }
+}
+
+function openHintModal(stage) {
+  const hints = levelHints[`stage${stage}`]?.hints;
+  if (!hints) {
+    alert('힌트가 없습니다.');
+    return;
+  }
+  currentHintStage = stage;
+  nextHintIndex = 0;
+  document.getElementById('hintContent').innerHTML = '';
+  document.getElementById('hintModal').style.display = 'flex';
+  document.getElementById('openNextHintBtn').disabled = false;
+}
+
+function showNextHint() {
+  const hints = levelHints[`stage${currentHintStage}`]?.hints || [];
+  if (nextHintIndex >= hints.length) return;
+  const hint = hints[nextHintIndex];
+  const div = document.createElement('div');
+  div.textContent = `[${hint.type}] ${hint.content}`;
+  document.getElementById('hintContent').appendChild(div);
+  nextHintIndex++;
+
+  const key = `hintsUsed_${currentHintStage}`;
+  const count = parseInt(localStorage.getItem(key) || '0') + 1;
+  localStorage.setItem(key, count);
+
+  const until = Date.now() + 60*60*1000;
+  localStorage.setItem('hintCooldownUntil', until);
+  const user = firebase.auth().currentUser;
+  if (user) db.ref(`hintLocks/${user.uid}`).set(until);
+
+  if (nextHintIndex >= hints.length) {
+    document.getElementById('openNextHintBtn').disabled = true;
+  }
+}
+
 function setupCustomBlockPanel(problem) {
   const panel = document.getElementById('blockPanel');
   panel.innerHTML = '';
@@ -4158,7 +4248,8 @@ async function gradeProblemAnimated(key, problem) {
       const t=c.dataset.type; acc[t]=(acc[t]||0)+1; return acc;
     },{});
     const usedWires=document.querySelectorAll('.cell.wire').length;
-    saveProblemRanking(key, blockCounts, usedWires);
+    const hintsUsed=parseInt(localStorage.getItem(`hintsUsed_${key}`)||'0');
+    saveProblemRanking(key, blockCounts, usedWires, hintsUsed);
   }
 }
 
