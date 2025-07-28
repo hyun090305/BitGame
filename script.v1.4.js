@@ -2465,9 +2465,6 @@ document.getElementById("gradeButton").addEventListener("click", () => {
 });
 
 function promptForUsername() {
-  const savedName = localStorage.getItem("username");
-  if (savedName) return; // 이미 저장되어 있음
-
   const input = document.getElementById("usernameInput");
   const errorDiv = document.getElementById("usernameError");
   input.value = "";
@@ -2658,8 +2655,38 @@ document.getElementById("viewRankingBtn")
     }
   });
 
+function setupGoogleAuth() {
+  const buttons = ['googleLoginBtn', 'modalGoogleLoginBtn']
+    .map(id => document.getElementById(id))
+    .filter(Boolean);
+
+  if (!buttons.length) return;
+
+  firebase.auth().onAuthStateChanged(user => {
+    buttons.forEach(btn => btn.textContent = user ? '로그아웃' : 'Google 로그인');
+    if (user) {
+      handleGoogleLogin(user);
+      document.getElementById('usernameModal').style.display = 'none';
+    } else if (!localStorage.getItem('username')) {
+      promptForUsername();
+    }
+  });
+
+  buttons.forEach(btn => btn.addEventListener('click', () => {
+    const user = firebase.auth().currentUser;
+    if (user) {
+      firebase.auth().signOut();
+    } else {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider).catch(err => {
+        alert(`로그인에 실패했습니다. 코드: ${err.code}, 메시지: ${err.message}`);
+        console.error(err);
+      });
+    }
+  }));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  promptForUsername();
   const uname = localStorage.getItem("username") || "익명";
   document.getElementById("guestUsername").textContent = uname;
 
@@ -2668,26 +2695,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const recordBtn = document.getElementById('recordBtn');
   if (recordBtn) recordBtn.addEventListener('click', () => startRecording(WIRE_ANIM_DURATION));
   setupKeyToggles();
-
-  const loginBtn = document.getElementById('googleLoginBtn');
-  if (loginBtn) {
-    firebase.auth().onAuthStateChanged(user => {
-      loginBtn.textContent = user ? '로그아웃' : 'Google 로그인';
-      if (user) handleGoogleLogin(user);
-    });
-    loginBtn.addEventListener('click', () => {
-      const user = firebase.auth().currentUser;
-      if (user) {
-        firebase.auth().signOut();
-      } else {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        firebase.auth().signInWithPopup(provider).catch(err => {
-          alert(`로그인에 실패했습니다. 코드: ${err.code}, 메시지: ${err.message}`);
-          console.error(err);
-        });
-      }
-    });
-  }
+  setupGoogleAuth();
 });
 
 function handleGoogleLogin(user) {
