@@ -1679,6 +1679,46 @@ function returnToEditScreen() {
   document.getElementById("gradingArea").style.display = "none";
 }
 
+let clearedLevelsFromDb = [];
+
+function fetchClearedLevels(nickname) {
+  return db.ref('rankings').once('value').then(snap => {
+    const cleared = [];
+    snap.forEach(levelSnap => {
+      const levelId = parseInt(levelSnap.key, 10);
+      let hasRecord = false;
+      levelSnap.forEach(recSnap => {
+        if (recSnap.val().nickname === nickname) {
+          hasRecord = true;
+          return true; // stop iterating this level
+        }
+      });
+      if (hasRecord) cleared.push(levelId);
+    });
+    return cleared;
+  });
+}
+
+function refreshClearedUI() {
+  document.querySelectorAll('.levelBtn').forEach(btn => {
+    const level = parseInt(btn.dataset.level, 10);
+    btn.classList.remove('cleared');
+    btn.textContent = levelTitles[level] ?? `Stage ${level}`;
+    if (clearedLevelsFromDb.includes(level)) {
+      btn.classList.add('cleared');
+      btn.textContent += '\n ✅';
+    }
+  });
+}
+
+function loadClearedLevelsFromDb() {
+  const nickname = localStorage.getItem('username') || '익명';
+  return fetchClearedLevels(nickname).then(levels => {
+    clearedLevelsFromDb = levels;
+    refreshClearedUI();
+  });
+}
+
 window.addEventListener("DOMContentLoaded", () => {
   const prevMenuBtn = document.getElementById('prevStageBtnMenu');
   const nextMenuBtn = document.getElementById('nextStageBtnMenu');
@@ -1697,14 +1737,7 @@ window.addEventListener("DOMContentLoaded", () => {
     btn.textContent = levelTitles[level] ?? `Stage ${level}`;
   });
   enableTouchDrag();
-  const clearedLevels = JSON.parse(localStorage.getItem("clearedLevels") || "[]");
-  clearedLevels.forEach(level => {
-    const btn = document.querySelector(`.levelBtn[data-level="${level}"]`);
-    if (btn) {
-      btn.classList.add("cleared");
-      btn.textContent += "\n ✅";
-    }
-  });
+  loadClearedLevelsFromDb();
 });
 
 function markLevelCleared(level) {
@@ -1712,6 +1745,10 @@ function markLevelCleared(level) {
   if (!cleared.includes(level)) {
     cleared.push(level);
     localStorage.setItem("clearedLevels", JSON.stringify(cleared));
+  }
+  if (!clearedLevelsFromDb.includes(level)) {
+    clearedLevelsFromDb.push(level);
+    refreshClearedUI();
   }
 }
 
@@ -1985,7 +2022,7 @@ function renderLevelGrid(stageList) {
     btn.className = "levelBtn";
     btn.dataset.level = level;
     btn.textContent = levelTitles[level] ?? `Stage ${level}`;
-    if (JSON.parse(localStorage.getItem("clearedLevels") || "[]").includes(level)) {
+    if (clearedLevelsFromDb.includes(level)) {
       btn.classList.add("cleared");
       btn.textContent += "\n ✅";
     }
@@ -2489,6 +2526,7 @@ function onInitialUsernameSubmit() {
       localStorage.setItem("username", name);
       document.getElementById("usernameModal").style.display = "none";
       document.getElementById("guestUsername").textContent = name;
+      loadClearedLevelsFromDb();
     }
   });
 }
@@ -2523,6 +2561,7 @@ function onGoogleUsernameSubmit(oldName, uid) {
       db.ref(`google/${uid}`).set({ uid, nickname: name });
       document.getElementById("usernameModal").style.display = "none";
       document.getElementById("guestUsername").textContent = name;
+      loadClearedLevelsFromDb();
       if (oldName && oldName !== name) {
         showMergeModal(oldName, name);
       } else {
@@ -2721,6 +2760,7 @@ function applyGoogleNickname(name, oldName) {
   if (oldName !== name) {
     localStorage.setItem('username', name);
     document.getElementById('guestUsername').textContent = name;
+    loadClearedLevelsFromDb();
     if (oldName) {
       showMergeModal(oldName, name);
     } else {
@@ -2728,6 +2768,7 @@ function applyGoogleNickname(name, oldName) {
     }
   } else {
     registerUsernameIfNeeded(name);
+    loadClearedLevelsFromDb();
   }
 }
 
@@ -2753,11 +2794,15 @@ function showMergeModal(oldName, newName) {
   modal.style.display = 'flex';
   confirm.onclick = () => {
     modal.style.display = 'none';
-    mergeProgress(oldName, newName).then(showOverallRanking);
+    mergeProgress(oldName, newName).then(() => {
+      loadClearedLevelsFromDb();
+      showOverallRanking();
+    });
   };
   cancel.onclick = () => {
     modal.style.display = 'none';
     registerUsernameIfNeeded(newName);
+    loadClearedLevelsFromDb();
     showOverallRanking();
   };
 }
