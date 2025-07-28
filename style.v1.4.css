@@ -1795,6 +1795,21 @@ html, body {
 
 /* Hint modal buttons */
 #hintButtons button {
-  min-width: 90px;
+  width: 100px;
+  height: 100px;
   font-size: 1rem;
+  margin: 0.25rem;
+}
+#hintButtons button.open {
+  background-color: #87CEFA;
+}
+#hintButtons button.available {
+  background-color: #90EE90;
+}
+
+#hintTimerContainer {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  align-items: center;
 }

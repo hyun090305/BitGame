@@ -3375,6 +3375,7 @@ if (viewProblemListBtn) viewProblemListBtn.addEventListener('click', showProblem
   const closeHintMsgBtn = document.getElementById('closeHintMessageBtn');
   if (closeHintBtn) closeHintBtn.addEventListener('click', () => {
     document.getElementById('hintModal').style.display = 'none';
+    clearInterval(hintTimerInterval);
   });
   if (closeHintMsgBtn) closeHintMsgBtn.addEventListener('click', () => {
     document.getElementById('hintMessageModal').style.display = 'none';
@@ -4037,6 +4038,7 @@ function showProblemIntro(problem, callback) {
 
 let currentHintStage = null;
 let currentHintProgress = 0; // number of opened hints for current stage
+let hintTimerInterval = null; // interval id for hint cooldown timer
 
 function checkHintCooldown(cb) {
   const localUntil = parseInt(localStorage.getItem('hintCooldownUntil') || '0');
@@ -4075,18 +4077,40 @@ function saveHintProgress(stage, count) {
   }
 }
 
+function startHintTimer(until) {
+  clearInterval(hintTimerInterval);
+  const timerEl = document.getElementById('nextHintTimer');
+  function update() {
+    const diff = until - Date.now();
+    if (diff <= 0) {
+      timerEl.textContent = '다음 힌트를 바로 볼 수 있습니다.';
+    } else {
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      timerEl.textContent = `다음 힌트까지 ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+  }
+  update();
+  hintTimerInterval = setInterval(update, 1000);
+}
+
 function renderHintButtons(hints, progress, cooldownUntil) {
   const container = document.getElementById('hintButtons');
   container.innerHTML = '';
   const now = Date.now();
-  hints.forEach((_, i) => {
+  hints.forEach((hint, i) => {
     const btn = document.createElement('button');
-    btn.textContent = `힌트 ${i + 1}`;
+    btn.textContent = `힌트 ${i + 1} (${hint.type})`;
     btn.onclick = () => showHint(i);
     if (i < progress) {
-      // already opened
+      btn.classList.add('open');
     } else if (i === progress) {
-      if (now < cooldownUntil) btn.disabled = true;
+      if (now < cooldownUntil) {
+        btn.disabled = true;
+      } else {
+        btn.classList.add('available');
+      }
     } else {
       btn.disabled = true;
     }
@@ -4106,6 +4130,7 @@ function openHintModal(stage) {
     currentHintProgress = progress;
     checkHintCooldown(until => {
       renderHintButtons(hints, progress, until);
+      startHintTimer(until);
     });
   });
 }
@@ -4128,6 +4153,7 @@ function showHint(index) {
 
   checkHintCooldown(until => {
     renderHintButtons(hints, currentHintProgress, until);
+    startHintTimer(until);
   });
 }
 
