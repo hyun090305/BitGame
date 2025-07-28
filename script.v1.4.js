@@ -1386,15 +1386,8 @@ function setupBlockPanel(level) {
     panel.appendChild(div);
   });
 
-  // 기존 WIRE 블록 생성 코드도 동일하게 tooltip 추가
-  const wireDiv = document.createElement("div");
-  wireDiv.className = "blockIcon";
-  wireDiv.draggable = true;
-  wireDiv.dataset.type = "WIRE";
-  wireDiv.textContent = "WIRE";
-  wireDiv.style.display = "none";
-  wireDiv.dataset.tooltip = '전선: [Ctrl] 드래그로 설치, [Shift] 클릭으로 삭제';
-  panel.appendChild(wireDiv);
+
+  // WIRE는 블록이 아니므로 패널에 추가하지 않음
 
   attachDragHandlersToBlockIcons();
 }
@@ -3872,14 +3865,7 @@ function initModuleBlockPanel() {
     panel.appendChild(div);
   });
 
-  // 4) 전선 블록도 동일하게 추가
-  const wireDiv = document.createElement('div');
-  wireDiv.className       = 'blockIcon';
-  wireDiv.draggable       = true;
-  wireDiv.dataset.type    = 'WIRE';
-  wireDiv.textContent     = 'WIRE';
-  wireDiv.dataset.tooltip = '전선: [Ctrl] 드래그 설치, [Shift] 클릭 삭제';
-  panel.appendChild(wireDiv);
+  // WIRE는 별도 단축키로 그리므로 패널에 추가하지 않음
 
   // 5) 드래그 핸들러 다시 바인딩
   //    이 함수는 기존 attachDragHandlersToBlockIcons 정의를 재사용합니다.
@@ -3948,7 +3934,7 @@ function initProblemBlockPanel() {
     div.textContent='OUT'+j;
     panel.appendChild(div);
   }
-  ['AND','OR','NOT','JUNCTION','WIRE'].forEach(t=>{
+  ['AND','OR','NOT','JUNCTION'].forEach(t=>{
     const d=document.createElement('div');
     d.className='blockIcon';
     d.draggable=true;
@@ -4295,13 +4281,7 @@ function setupCustomBlockPanel(problem) {
     })();
     panel.appendChild(div);
   });
-  const wireDiv=document.createElement('div');
-  wireDiv.className='blockIcon';
-  wireDiv.draggable=true;
-  wireDiv.dataset.type='WIRE';
-  wireDiv.textContent='WIRE';
-  wireDiv.dataset.tooltip='전선: [Ctrl] 드래그 설치, [Shift] 클릭 삭제';
-  panel.appendChild(wireDiv);
+  // WIRE는 블록이 아니므로 패널에서 제외
   attachDragHandlersToBlockIcons();
 }
 
