@@ -4177,30 +4177,33 @@ function loadProblem(key) {
 
 function renderUserProblemList() {
   userProblemList.innerHTML = '';
+  const nickname = localStorage.getItem('username') || '익명';
   db.ref('problems').once('value').then(snapshot => {
     userProblemList.innerHTML = '';
     const table = document.createElement('table');
     table.id = 'userProblemTable';
-    table.innerHTML = `<thead><tr><th>제목</th><th>제작자</th><th>제작일</th><th>해결 수</th><th>좋아요</th></tr></thead><tbody></tbody>`;
+    table.innerHTML = `<thead><tr><th>제목</th><th>제작자</th><th>제작일</th><th>해결 수</th><th>좋아요</th><th>비고</th></tr></thead><tbody></tbody>`;
     const tbody = table.querySelector('tbody');
     if (!snapshot.exists()) {
       const tr = document.createElement('tr');
-      tr.innerHTML = '<td colspan="5">등록된 문제가 없습니다.</td>';
+      tr.innerHTML = '<td colspan="6">등록된 문제가 없습니다.</td>';
       tbody.appendChild(tr);
     } else {
       snapshot.forEach(child => {
         const data = child.val();
         const solved = data.ranking ? Object.keys(data.ranking).length : 0;
         const likes = data.likes ? Object.keys(data.likes).length : 0;
+        const isMine = data.creator === nickname;
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="probTitle">${data.title || child.key}</td>
-          <td>${data.creator || '익명'}</td>
+          <td>${data.creator || '익명'}${isMine ? ' (나)' : ''}</td>
           <td>${new Date(data.timestamp).toLocaleDateString()}</td>
           <td>${solved}</td>
-          <td><span class="likeCount">${likes}</span> <button class="likeBtn" data-key="${child.key}" aria-label="좋아요">♥</button></td>`;
+          <td><span class="likeCount">${likes}</span> <button class="likeBtn" data-key="${child.key}" aria-label="좋아요">♥</button></td>
+          <td>${isMine ? `<button class="deleteProbBtn" data-key="${child.key}">삭제</button>` : ''}</td>`;
         tr.addEventListener('click', e => {
-          if(e.target.classList.contains('likeBtn')) return;
+          if(e.target.classList.contains('likeBtn') || e.target.classList.contains('deleteProbBtn')) return;
           previewUserProblem(child.key);
         });
         tbody.appendChild(tr);
@@ -4213,6 +4216,13 @@ function renderUserProblemList() {
         toggleLikeProblem(btn.dataset.key);
       });
     });
+    userProblemList.querySelectorAll('.deleteProbBtn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const confirmed = confirm('정말 삭제하시겠습니까?');
+        if (confirmed) deleteUserProblem(btn.dataset.key);
+      });
+    });
   });
 }
 
@@ -4223,6 +4233,12 @@ function toggleLikeProblem(key){
     if(snap.exists()) likeRef.remove();
     else likeRef.set(true);
   }).then(renderUserProblemList);
+}
+
+function deleteUserProblem(key){
+  db.ref('problems/' + key).remove()
+    .then(renderUserProblemList)
+    .catch(err => alert('삭제 실패: ' + err));
 }
 
 function previewUserProblem(key) {
