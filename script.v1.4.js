@@ -547,6 +547,13 @@ const validWireShapes = [
   ["wire-left", "wire-up"]
 ];
 
+function isTextInputFocused() {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA';
+}
+
 /***** UI 요소 *****/
 
 const statusToggle  = document.getElementById("wireStatusInfo");
@@ -597,6 +604,12 @@ function setupKeyToggles() {
   });
 
   document.addEventListener('keydown', e => {
+    if (isTextInputFocused() && e.key.toLowerCase() === 'r') {
+      bindings.forEach(([btn, key]) => {
+        if (key.toLowerCase() === 'r') btn.classList.remove('active');
+      });
+      return;
+    }
     bindings.forEach(([btn, key]) => {
       if (e.key === key) {
         btn.classList.add('active');
@@ -1416,12 +1429,22 @@ function attachDragHandlersToBlockIcons() {
 
 document.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "r") {
+    if (isTextInputFocused()) {
+      [resetToggle, moduleResetToggle, problemResetToggle].forEach(btn => btn && btn.classList.remove('active'));
+      return;
+    }
     const gameScreen = document.getElementById("gameScreen");
-    if (gameScreen.style.display === "none") return;
+    const problemScreen = document.getElementById("problem-screen");
+    if (gameScreen.style.display === "none" && problemScreen.style.display === "none") return;
 
     if (confirm("⚠️ 모든 블록과 배선을 삭제하시겠습니까?")) {
       clearGrid();
-      setupBlockPanel(currentLevel);
+      if (problemScreen.style.display !== "none") {
+        initProblemBlockPanel();
+        initTestcaseTable();
+      } else {
+        setupBlockPanel(currentLevel);
+      }
       document.querySelectorAll('.cell').forEach(cell => delete cell.onclick);
     }
   }
@@ -2175,7 +2198,7 @@ function setupGrid(containerId, rows, cols) {
     });
 
     cell.addEventListener("click", (e) => {
-      if (e.shiftKey && cell.dataset.type === "WIRE") {
+      if ((e.shiftKey || isWireDeleting) && cell.dataset.type === "WIRE") {
         // (1) 클릭한 셀이 포함된 wire path 찾기
         const targetWires = wires.filter(w => w.path.includes(cell));
 
@@ -3353,7 +3376,7 @@ function handleModuleKeyDown(e) {
 
   // ── 1) 입력창에 포커스 있을 땐 리턴 (기존 조건) ──
   const active = document.activeElement;
-  if (active && active.id === 'moduleNameInput') {
+  if (active && (active.id === 'moduleNameInput' || active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
     return;
   }
 
@@ -3369,6 +3392,10 @@ function handleModuleKeyDown(e) {
   }
   // ── 4) R 키 누르면 회로 초기화 ──
   else if (e.key.toLowerCase() === 'r') {
+    if (isTextInputFocused()) {
+      [resetToggle, moduleResetToggle, problemResetToggle].forEach(btn => btn && btn.classList.remove('active'));
+      return;
+    }
     if (confirm('⚠️ 모든 블록과 배선을 삭제하시겠습니까?')) {
       clearGrid();
       initModuleBlockPanel();
@@ -3389,10 +3416,52 @@ function handleModuleKeyUp(e) {
   }
 }
 
+function handleProblemKeyDown(e) {
+  const active = document.activeElement;
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+    return;
+  }
+
+  if (e.key === 'Control') {
+    isWireDrawing = true;
+    problemStatusToggle.classList.add('active');
+  } else if (e.key === 'Shift') {
+    isWireDeleting = true;
+    problemDeleteToggle.classList.add('active');
+  } else if (e.key.toLowerCase() === 'r') {
+    if (isTextInputFocused()) {
+      [resetToggle, moduleResetToggle, problemResetToggle].forEach(btn => btn && btn.classList.remove('active'));
+      return;
+    }
+    if (confirm('⚠️ 모든 블록과 배선을 삭제하시겠습니까?')) {
+      clearGrid();
+      initProblemBlockPanel();
+      initTestcaseTable();
+    }
+  }
+}
+
+function handleProblemKeyUp(e) {
+  if (e.key === 'Control') {
+    isWireDrawing = false;
+    problemStatusToggle.classList.remove('active');
+    clearWirePreview();
+    wireTrace = [];
+  }
+  if (e.key === 'Shift') {
+    isWireDeleting = false;
+    problemDeleteToggle.classList.remove('active');
+  }
+}
+
 function getBlockPanel() {
   const moduleScreen = document.getElementById("module-editor-screen");
   if (moduleScreen && moduleScreen.style.display !== "none") {
     return document.getElementById("moduleBlockPanel");
+  }
+  const problemScreen = document.getElementById("problem-screen");
+  if (problemScreen && problemScreen.style.display !== "none") {
+    return document.getElementById("problemBlockPanel");
   }
   return document.getElementById("blockPanel");
 }
@@ -3839,6 +3908,10 @@ function initProblemEditor() {
   setGridDimensions(6, 6);
   initProblemBlockPanel();
   initTestcaseTable();
+  document.removeEventListener('keydown', handleProblemKeyDown);
+  document.removeEventListener('keyup', handleProblemKeyUp);
+  document.addEventListener('keydown', handleProblemKeyDown);
+  document.addEventListener('keyup', handleProblemKeyUp);
 }
 
 function initProblemBlockPanel() {
