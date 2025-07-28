@@ -1435,6 +1435,7 @@ document.addEventListener("keydown", (e) => {
     }
     const gameScreen = document.getElementById("gameScreen");
     const problemScreen = document.getElementById("problem-screen");
+    if (problemScreen.style.display !== "none" && gameScreen.style.display === "none") return;
     if (gameScreen.style.display === "none" && problemScreen.style.display === "none") return;
 
     if (confirm("⚠️ 모든 블록과 배선을 삭제하시겠습니까?")) {
@@ -3371,6 +3372,8 @@ exitBtn.addEventListener('click', () => {
   managementScreen.style.display = 'flex';
 });
 function handleModuleKeyDown(e) {
+  const moduleScreen = document.getElementById('module-editor-screen');
+  if (!moduleScreen || moduleScreen.style.display === 'none') return;
   // ── 0) “모듈 저장 모달”이 떠 있는 동안은 아무 동작도 하지 않음 ──
   if (moduleSaveModal.style.display === 'flex') {
     return;
@@ -3406,6 +3409,8 @@ function handleModuleKeyDown(e) {
 }
 
 function handleModuleKeyUp(e) {
+  const moduleScreen = document.getElementById('module-editor-screen');
+  if (!moduleScreen || moduleScreen.style.display === 'none') return;
   if (e.key === 'Control') {
     isWireDrawing = false
     moduleStatusToggle.classList.remove('active');
@@ -3419,6 +3424,8 @@ function handleModuleKeyUp(e) {
 }
 
 function handleProblemKeyDown(e) {
+  const problemScreen = document.getElementById('problem-screen');
+  if (!problemScreen || problemScreen.style.display === 'none') return;
   const active = document.activeElement;
   if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
     return;
@@ -3444,6 +3451,8 @@ function handleProblemKeyDown(e) {
 }
 
 function handleProblemKeyUp(e) {
+  const problemScreen = document.getElementById('problem-screen');
+  if (!problemScreen || problemScreen.style.display === 'none') return;
   if (e.key === 'Control') {
     isWireDrawing = false;
     problemStatusToggle.classList.remove('active');
