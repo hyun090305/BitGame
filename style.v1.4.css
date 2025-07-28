@@ -8,6 +8,7 @@
     align-items: center;
     font-family: 'Noto Sans KR', sans-serif;
     background-color: #f0f0f0;
+    color: #0F172A;
     text-align: center;
   }
 
@@ -127,7 +128,7 @@ html, body {
   .levelGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 1rem;
+    gap: 24px;
     width: 100%;
     max-width: 400px;
     margin: 1.5rem 0;
@@ -155,11 +156,11 @@ html, body {
   .levelBtn {
     width: 120px;
     height: 160px;
-    background: linear-gradient(135deg, #6B8CFF 0%, #88E0EF 100%);
+    background: #D9F3E5;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     font-size: 1.1em;
-    color: #fff;
+    color: #0F172A;
     margin: 10px;
     position: relative;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -168,12 +169,12 @@ html, body {
     justify-content: center;
     align-items: center;
     text-align: center;
-    border: none;
+    border: 1px solid #0B6B34;
     cursor: pointer;
   }
 
   .levelBtn:hover {
-    transform: translateY(-5px);
+    transform: scale(1.02);
     box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
   }
 
@@ -308,8 +309,9 @@ html, body {
     width: 200px;
     height: 50px;
     margin: 20px auto;
-    border: 2px dashed red;
-    color: red;
+    border: 2px dashed #F87171;
+    background-color: #FEE2E2;
+    color: #7F1D1D;
     font-weight: bold;
     display: flex;
     justify-content: center;
@@ -769,9 +771,10 @@ html, body {
   }
 
   .levelBtn.cleared {
-    background-color: #4caf50;
-    color: white;
+    background-color: #D9F3E5;
+    color: #0F172A;
     font-weight: bold;
+    border: 2px solid #0B6B34;
   }
 
   #guestbookArea {
@@ -779,7 +782,7 @@ html, body {
     padding: 1rem;
     background: #fffbe6;
     border: 1px solid #ccc;
-    border-radius: 10px;
+    border-radius: 12px;
     max-width: 600px;
   }
 
@@ -807,7 +810,7 @@ html, body {
   .modal-content {
     background: white;
     padding: 2rem;
-    border-radius: 10px;
+    border-radius: 12px;
     text-align: center;
   }
 
@@ -870,7 +873,7 @@ html, body {
   .modal-content {
     background: white;
     padding: 2rem;
-    border-radius: 10px;
+    border-radius: 12px;
     max-width: 600px;
     width: 90%;
     text-align: center;
@@ -1134,8 +1137,8 @@ html, body {
   }
 
   #rankingList thead th {
-    background-color: #6B8CFF;
-    color: white;
+    background-color: #C6C9ED;
+    color: #0F172A;
     font-weight: 600;
   }
 
@@ -1271,8 +1274,8 @@ html, body {
   }
 
   #overallRankingList thead th {
-    background-color: #6B8CFF;
-    color: white;
+    background-color: #C6C9ED;
+    color: #0F172A;
   }
 
   #firstScreen {
