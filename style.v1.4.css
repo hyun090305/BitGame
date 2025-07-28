@@ -1494,6 +1494,28 @@ html, body {
   border-bottom: none;
 }
 
+/* 사용자 문제 목록 */
+.problem-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  max-width: 360px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.problem-list .problem-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.problem-list .problem-item:last-child {
+  border-bottom: none;
+}
+
 .module-item .module-name {
   font-size: 1rem;
   color: #333;
