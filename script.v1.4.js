@@ -4128,7 +4128,7 @@ function renderUserProblemList() {
           <td>${data.creator || '익명'}</td>
           <td>${new Date(data.timestamp).toLocaleDateString()}</td>
           <td>${solved}</td>
-          <td><span class="likeCount">${likes}</span> <button class="likeBtn" data-key="${child.key}">👍</button></td>`;
+          <td><span class="likeCount">${likes}</span> <button class="likeBtn" data-key="${child.key}" aria-label="좋아요">♥</button></td>`;
         tr.addEventListener('click', e => {
           if(e.target.classList.contains('likeBtn')) return;
           previewUserProblem(child.key);
