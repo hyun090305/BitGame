@@ -5,6 +5,7 @@ let lastDraggedFromCell = null;
 let lastDraggedName = null;
 let currentLevel = null;
 let currentCustomProblem = null;
+let currentCustomProblemKey = null;
 
 let isWireDrawing = false;
 let isMouseDown = false;
@@ -2519,7 +2520,7 @@ document.getElementById("gradeButton").addEventListener("click", () => {
   isScoring = true;
   overlay.style.display = "block";
   if (currentCustomProblem) {
-    gradeProblemAnimated(currentCustomProblem);
+    gradeProblemAnimated(currentCustomProblemKey, currentCustomProblem);
   } else {
     gradeLevelAnimated(currentLevel);
   }
@@ -2606,6 +2607,12 @@ function saveRanking(levelId, blockCounts, usedWires /*, timeMs */) {
     timestamp: new Date().toISOString()
   };
   db.ref(`rankings/${levelId}`).push(entry);
+}
+
+function saveProblemRanking(problemKey, blockCounts, usedWires) {
+  const nickname = localStorage.getItem("username") || "익명";
+  const entry = { nickname, blockCounts, usedWires, timestamp: new Date().toISOString() };
+  db.ref(`problems/${problemKey}/ranking`).push(entry);
 }
 
 function showRanking(levelId) {
@@ -3998,6 +4005,7 @@ function collectProblemData() {
       endIdx: +w.end.dataset.index,
       pathIdxs: w.path.map(c => +c.dataset.index)
     })),
+    creator: localStorage.getItem('username') || '익명',
     timestamp: new Date().toISOString()
   };
 }
@@ -4101,24 +4109,50 @@ function renderUserProblemList() {
   userProblemList.innerHTML = '';
   db.ref('problems').once('value').then(snapshot => {
     userProblemList.innerHTML = '';
+    const table = document.createElement('table');
+    table.id = 'userProblemTable';
+    table.innerHTML = `<thead><tr><th>제목</th><th>제작자</th><th>제작일</th><th>해결 수</th><th>좋아요</th></tr></thead><tbody></tbody>`;
+    const tbody = table.querySelector('tbody');
     if (!snapshot.exists()) {
-      const li = document.createElement('li');
-      li.className = 'problem-item';
-      li.textContent = '등록된 문제가 없습니다.';
-      userProblemList.appendChild(li);
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="5">등록된 문제가 없습니다.</td>';
+      tbody.appendChild(tr);
     } else {
       snapshot.forEach(child => {
         const data = child.val();
-        const li = document.createElement('li');
-        li.className = 'problem-item';
-        li.textContent = data.title || child.key;
-        li.addEventListener('click', () => {
+        const solved = data.ranking ? Object.keys(data.ranking).length : 0;
+        const likes = data.likes ? Object.keys(data.likes).length : 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="probTitle">${data.title || child.key}</td>
+          <td>${data.creator || '익명'}</td>
+          <td>${new Date(data.timestamp).toLocaleDateString()}</td>
+          <td>${solved}</td>
+          <td><span class="likeCount">${likes}</span> <button class="likeBtn" data-key="${child.key}">👍</button></td>`;
+        tr.addEventListener('click', e => {
+          if(e.target.classList.contains('likeBtn')) return;
           previewUserProblem(child.key);
         });
-        userProblemList.appendChild(li);
+        tbody.appendChild(tr);
       });
     }
+    userProblemList.appendChild(table);
+    userProblemList.querySelectorAll('.likeBtn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleLikeProblem(btn.dataset.key);
+      });
+    });
   });
+}
+
+function toggleLikeProblem(key){
+  const nickname = localStorage.getItem('username') || '익명';
+  const likeRef = db.ref(`problems/${key}/likes/${nickname}`);
+  likeRef.once('value').then(snap => {
+    if(snap.exists()) likeRef.remove();
+    else likeRef.set(true);
+  }).then(renderUserProblemList);
 }
 
 function previewUserProblem(key) {
@@ -4189,6 +4223,7 @@ function setupCustomBlockPanel(problem) {
 
 function startCustomProblem(key, problem) {
   currentCustomProblem = problem;
+  currentCustomProblemKey = key;
   currentLevel = null;
   setupGrid('grid', 6, 6);
   clearGrid();
@@ -4204,7 +4239,7 @@ function startCustomProblem(key, problem) {
   document.body.classList.add('game-active');
 }
 
-async function gradeProblemAnimated(problem) {
+async function gradeProblemAnimated(key, problem) {
   const inNames = Array.from({length:problem.inputCount},(_,i)=>'IN'+(i+1));
   const outNames = Array.from({length:problem.outputCount},(_,i)=>'OUT'+(i+1));
   const testCases = problem.table.map(row=>({
@@ -4302,6 +4337,15 @@ async function gradeProblemAnimated(problem) {
   returnBtn.textContent='🛠 편집으로 돌아가기';
   gradingArea.appendChild(returnBtn);
   document.getElementById('returnToEditBtn').addEventListener('click',returnToEditScreen);
+
+  if(allCorrect && key){
+    const blocks=Array.from(document.querySelectorAll('.cell.block'));
+    const blockCounts=blocks.reduce((acc,c)=>{
+      const t=c.dataset.type; acc[t]=(acc[t]||0)+1; return acc;
+    },{});
+    const usedWires=document.querySelectorAll('.cell.wire').length;
+    saveProblemRanking(key, blockCounts, usedWires);
+  }
 }
 
 // ======================================
