@@ -2337,6 +2337,8 @@ function resetCell(cell) {
 document.getElementById("showIntroBtn").addEventListener("click", () => {
   if (currentLevel != null) {
     showIntroModal(currentLevel);
+  } else if (currentCustomProblem) {
+    showProblemIntro(currentCustomProblem);
   }
 });
 
@@ -2634,6 +2636,87 @@ function saveProblemRanking(problemKey, blockCounts, usedWires) {
   db.ref(`problems/${problemKey}/ranking`).push(entry);
 }
 
+function showProblemRanking(problemKey) {
+  const listEl = document.getElementById('rankingList');
+  listEl.innerHTML = '로딩 중…';
+
+  const allowedTypes = ['INPUT','OUTPUT','AND','OR','NOT','JUNCTION'];
+
+  db.ref(`problems/${problemKey}/ranking`)
+    .orderByChild('timestamp')
+    .once('value', snap => {
+      const entries = [];
+      snap.forEach(ch => entries.push(ch.val()));
+
+      if (entries.length === 0) {
+        listEl.innerHTML = `
+        <p>랭킹이 없습니다.</p>
+        <div class="modal-buttons">
+          <button id="refreshRankingBtn">🔄 새로고침</button>
+          <button id="closeRankingBtn">닫기</button>
+        </div>`;
+        document.getElementById('refreshRankingBtn')
+          .addEventListener('click', () => showProblemRanking(problemKey));
+        document.getElementById('closeRankingBtn')
+          .addEventListener('click', () =>
+            document.getElementById('rankingModal').classList.remove('active')
+          );
+        return;
+      }
+
+      const sumBlocks = e => Object.values(e.blockCounts || {}).reduce((s,x)=>s+x,0);
+      entries.sort((a,b)=>{
+        const aB=sumBlocks(a), bB=sumBlocks(b);
+        if(aB!==bB) return aB-bB;
+        if(a.usedWires!==b.usedWires) return a.usedWires-b.usedWires;
+        return new Date(a.timestamp)-new Date(b.timestamp);
+      });
+
+      const headerCols = [
+        '<th>순위</th>',
+        '<th>닉네임</th>',
+        ...allowedTypes.map(t=>`<th>${t}</th>`),
+        '<th>도선</th>',
+        '<th>클리어 시각</th>'
+      ].join('');
+
+      const bodyRows = entries.map((e,i)=>{
+        const counts = allowedTypes.map(t=>e.blockCounts?.[t]??0).map(c=>`<td>${c}</td>`).join('');
+        const timeStr = new Date(e.timestamp).toLocaleString();
+        const nickname = e.nickname;
+        const displayNickname = nickname.length>20 ? nickname.slice(0,20)+'...' : nickname;
+        return `
+  <tr>
+    <td>${i+1}</td>
+    <td>${displayNickname}</td>
+    ${counts}
+    <td>${e.usedWires}</td>
+    <td>${timeStr}</td>
+  </tr>`;
+      }).join('');
+
+      listEl.innerHTML = `
+        <div class="rankingTableWrapper">
+          <table>
+            <thead><tr>${headerCols}</tr></thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </div>
+        <div class="modal-buttons">
+          <button id="refreshRankingBtn">🔄 새로고침</button>
+          <button id="closeRankingBtn">닫기</button>
+        </div>`;
+      document.getElementById('refreshRankingBtn')
+        .addEventListener('click', () => showProblemRanking(problemKey));
+      document.getElementById('closeRankingBtn')
+        .addEventListener('click', () =>
+          document.getElementById('rankingModal').classList.remove('active')
+        );
+    });
+
+  document.getElementById('rankingModal').classList.add('active');
+}
+
 function showRanking(levelId) {
   const listEl = document.getElementById("rankingList");
   listEl.innerHTML = "로딩 중…";
@@ -2737,10 +2820,12 @@ function showRanking(levelId) {
 
 document.getElementById("viewRankingBtn")
   .addEventListener("click", () => {
-    if (!currentLevel) {
-      alert("먼저 레벨을 선택해주세요.");
-    } else {
+    if (currentLevel != null) {
       showRanking(currentLevel);
+    } else if (currentCustomProblemKey) {
+      showProblemRanking(currentCustomProblemKey);
+    } else {
+      alert("먼저 레벨을 선택해주세요.");
     }
   });
 
@@ -2909,12 +2994,20 @@ saveCircuitBtn.addEventListener('click', () => {
 });
 
 // 2) 저장된 회로 키들 읽어오기
+function getSavePrefix() {
+  if (currentLevel != null) {
+    return `bit_saved_stage_${String(currentLevel).padStart(2, '0')}_`;
+  } else if (currentCustomProblemKey) {
+    return `bit_saved_prob_${currentCustomProblemKey}_`;
+  }
+  return 'bit_saved_';
+}
+
 function getSavedKeys() {
-  const prefix = `bit_saved_stage_${String(currentLevel).padStart(2, '0')}_`;
+  const prefix = getSavePrefix();
   return Object.keys(localStorage)
     .filter(k => k.startsWith(prefix))
     .sort((a, b) => {
-      // 키 뒤에 붙은 timestamp(ms) 비교 — 내림차순(최신순)
       const tA = parseInt(a.slice(prefix.length), 10);
       const tB = parseInt(b.slice(prefix.length), 10);
       return tB - tA;
@@ -2927,7 +3020,9 @@ function renderSavedList() {
   savedList.innerHTML = '';
   const keys = getSavedKeys().filter(key => {
     const data = JSON.parse(localStorage.getItem(key));
-    return data.stageId === currentLevel;
+    if (currentLevel != null) return data.stageId === currentLevel;
+    if (currentCustomProblemKey) return data.problemKey === currentCustomProblemKey;
+    return false;
   });
   if (!keys.length) {
     savedList.innerHTML = '<li>저장된 회로가 없습니다.</li>';
@@ -2937,8 +3032,11 @@ function renderSavedList() {
     const data = JSON.parse(localStorage.getItem(key));
     const li = document.createElement('li');
     li.style.margin = '6px 0';
+    const label = data.stageId != null
+      ? `Stage ${String(data.stageId).padStart(2, '0')}`
+      : `Problem ${data.problemKey}`;
     li.innerHTML = `
-      <strong>Stage ${String(data.stageId).padStart(2, '0')}</strong>
+      <strong>${label}</strong>
       — ${new Date(data.timestamp).toLocaleString()}
       <button data-key="${key}" class="loadBtn">불러오기</button>
       <button data-key="${key}" class="deleteBtn">삭제</button>
@@ -3063,6 +3161,7 @@ function highlightOutputErrors() {
 function saveCircuit() {
   const data = {
     stageId: currentLevel,
+    problemKey: currentCustomProblemKey,
     timestamp: new Date().toISOString(),
     grid: getGridData(),
     wires: getWireData(),
@@ -3080,7 +3179,7 @@ function saveCircuit() {
   };
 
   const timestampMs = Date.now();
-  const key = `bit_saved_stage_${String(currentLevel).padStart(2, '0')}_${timestampMs}`;
+  const key = `${getSavePrefix()}${timestampMs}`;
   try {
     localStorage.setItem(key, JSON.stringify(data));
     console.log(`Circuit saved: ${key}`, data);
@@ -4194,6 +4293,8 @@ function renderUserProblemList() {
         const solved = data.ranking ? Object.keys(data.ranking).length : 0;
         const likes = data.likes ? Object.keys(data.likes).length : 0;
         const isMine = data.creator === nickname;
+        const solvedByMe = data.ranking && Object.values(data.ranking)
+          .some(r => r.nickname === nickname);
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="probTitle">${data.title || child.key}</td>
@@ -4202,6 +4303,7 @@ function renderUserProblemList() {
           <td>${solved}</td>
           <td><span class="likeCount">${likes}</span> <button class="likeBtn" data-key="${child.key}" aria-label="좋아요">♥</button></td>
           <td>${isMine ? `<button class="deleteProbBtn" data-key="${child.key}">삭제</button>` : ''}</td>`;
+        if (solvedByMe) tr.classList.add('solved');
         tr.addEventListener('click', e => {
           if(e.target.classList.contains('likeBtn') || e.target.classList.contains('deleteProbBtn')) return;
           previewUserProblem(child.key);
@@ -4264,9 +4366,11 @@ function showProblemIntro(problem, callback) {
   `;
   modal.style.display = 'flex';
   modal.style.backgroundColor = 'white';
-  document.getElementById('startLevelBtn').onclick = () => {
+  const btn = document.getElementById('startLevelBtn');
+  btn.textContent = callback ? '시작하기' : '닫기';
+  btn.onclick = () => {
     modal.style.display = 'none';
-    callback();
+    if (callback) callback();
   };
 }
 

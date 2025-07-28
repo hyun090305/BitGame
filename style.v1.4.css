@@ -1784,3 +1784,11 @@ html, body {
 #openProblemCreatorBtn:hover {
   background: #0069d9;
 }
+
+#userProblemTable tbody tr:hover {
+  background-color: #f0f8ff;
+}
+
+#userProblemTable tbody tr.solved {
+  background-color: #e6ffe6;
+}
