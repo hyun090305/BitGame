@@ -1332,7 +1332,7 @@ function startLevel(level) {
     setupGrid("grid", rows, cols);
     clearGrid();
     setupBlockPanel(level);
-    setGridDimensions(level);
+    setGridDimensions(rows, cols);
     currentLevel = parseInt(level);
     const title = document.getElementById("gameTitle");
     title.textContent = levelTitles[level] ?? `Stage ${level}`;
@@ -2083,18 +2083,19 @@ function renderLevelGrid(stageList) {
   });
 }
 
-function setGridDimensions(level) {
-  const [rows, cols] = levelGridSizes[level] || [6, 6];
+function setGridDimensions(rows, cols) {
   GRID_ROWS = rows;
   GRID_COLS = cols;
 
-  // ① CSS 변수만 업데이트
-  grid.style.setProperty('--grid-rows', rows);
-  grid.style.setProperty('--grid-cols', cols);
+  if (grid) {
+    // ① CSS 변수만 업데이트
+    grid.style.setProperty('--grid-rows', rows);
+    grid.style.setProperty('--grid-cols', cols);
 
-  // ② inline grid-template 은 제거하거나 주석 처리
-  // grid.style.gridTemplateRows   = `repeat(${rows}, 1fr)`;
-  // grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    // ② inline grid-template 은 제거하거나 주석 처리
+    // grid.style.gridTemplateRows   = `repeat(${rows}, 1fr)`;
+    // grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  }
 }
 
 
@@ -3750,6 +3751,12 @@ if (openProblemCreatorBtn) {
 
 document.getElementById('updateIOBtn').addEventListener('click', () => {
   alert('입출력/그리드 설정을 변경하면 회로가 초기화됩니다.');
+  const inputEl = document.getElementById('inputCount');
+  const outputEl = document.getElementById('outputCount');
+  const inputs = Math.min(6, Math.max(1, parseInt(inputEl.value) || 1));
+  const outputs = Math.min(6, Math.max(1, parseInt(outputEl.value) || 1));
+  inputEl.value = inputs;
+  outputEl.value = outputs;
   const rows = Math.min(15, Math.max(1, parseInt(document.getElementById('gridRows').value) || 6));
   const cols = Math.min(15, Math.max(1, parseInt(document.getElementById('gridCols').value) || 6));
   document.getElementById('gridRows').value = rows;
@@ -4021,8 +4028,15 @@ function getModuleWireData() {
 
 // -------------------- 사용자 정의 문제 편집 --------------------
 function initProblemEditor() {
-  const rows = parseInt(document.getElementById('gridRows').value) || 6;
-  const cols = parseInt(document.getElementById('gridCols').value) || 6;
+  const inputEl = document.getElementById('inputCount');
+  const outputEl = document.getElementById('outputCount');
+  inputEl.value = Math.min(6, Math.max(1, parseInt(inputEl.value) || 1));
+  outputEl.value = Math.min(6, Math.max(1, parseInt(outputEl.value) || 1));
+
+  const rows = Math.min(15, Math.max(1, parseInt(document.getElementById('gridRows').value) || 6));
+  const cols = Math.min(15, Math.max(1, parseInt(document.getElementById('gridCols').value) || 6));
+  document.getElementById('gridRows').value = rows;
+  document.getElementById('gridCols').value = cols;
   setupGrid('problemGrid', rows, cols);
   clearGrid();
   setGridDimensions(rows, cols);
