@@ -1,5 +1,5 @@
   body {
-    min-height: 150vh;
+    min-height: 100vh;
     margin: 0;
     flex-direction: column;
     justify-content: center;
@@ -32,8 +32,7 @@ html, body {
   #gameScreen {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    /* 전체 높이 */
+    min-height: 100vh;
     margin: 0;
     /* 혹시 기본 마진 있으면 제거 */
   }
@@ -1278,6 +1277,7 @@ html, body {
 
   #firstScreen {
     /* 이전: .container { display:flex; gap:5rem; } 에서만 정의되어 있었음 */
+    min-height: 100vh;
     justify-content: center;
     /* 가로 중앙 정렬 */
     align-items: flex-start;
