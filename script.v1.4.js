@@ -95,7 +95,8 @@ const levelTitles = {
   8: "Parity checker", 9: "Half Adder",
   10: "Full Adder",
   11: "2-to-4 Decoder",
-  12: "4-to-1 MUX"
+  12: "4-to-1 MUX",
+  13: "사용자 정의 회로"
 };
 
 const levelGridSizes = {
@@ -244,7 +245,7 @@ const chapterData = [
     id: "user",
     name: "사용자 정의 회로",
     desc: "직접 만든 회로를 공유하고 도전해보세요!",
-    stages: []
+    stages: [13]
   }
 ];
 
@@ -552,6 +553,9 @@ const resetToggle   = document.getElementById("DeleteAllInfo");
 const moduleStatusToggle = document.getElementById('moduleWireStatusInfo');
 const moduleDeleteToggle = document.getElementById('moduleWireDeleteInfo');
 const moduleResetToggle  = document.getElementById('moduleDeleteAllInfo');
+const problemStatusToggle = document.getElementById('problemWireStatusInfo');
+const problemDeleteToggle = document.getElementById('problemWireDeleteInfo');
+const problemResetToggle  = document.getElementById('problemDeleteAllInfo');
 let grid;
 
 function simulateKey(key, type = 'keydown') {
@@ -566,7 +570,10 @@ function setupKeyToggles() {
     [resetToggle, 'r'],
     [moduleStatusToggle, 'Control'],
     [moduleDeleteToggle, 'Shift'],
-    [moduleResetToggle, 'r']
+    [moduleResetToggle, 'r'],
+    [problemStatusToggle, 'Control'],
+    [problemDeleteToggle, 'Shift'],
+    [problemResetToggle, 'r']
   ];
 
   bindings.forEach(([btn, key]) => {
@@ -1976,7 +1983,9 @@ function renderChapterGrid() {
 
     // 1단계 챕터(basic)는 항상 잠금 해제, 이후 챕터는 이전 챕터 스테이지 전부 클리어되어야 해제
     let unlocked = true;
-    if (idx > 0) {
+    if (chapter.id === 'user') {
+      unlocked = [1,2,3,4,5,6].every(s => cleared.includes(s));
+    } else if (idx > 0) {
       const prevStages = chapterData[idx - 1].stages;
       unlocked = prevStages.every(s => cleared.includes(s));
     }
@@ -2023,12 +2032,16 @@ function renderLevelGrid(stageList) {
     }
     btn.onclick = () => {
       returnToEditScreen();
-      startLevel(level);
-
-      // ✅ level 화면 닫고 game 화면 열기
-      document.getElementById("levelScreen").style.display = "none";
-      document.getElementById("gameScreen").style.display = "flex";
-      document.body.classList.add('game-active');
+      if (level === 13) {
+        document.getElementById('levelScreen').style.display = 'none';
+        document.getElementById('problem-screen').style.display = 'block';
+        initProblemEditor();
+      } else {
+        startLevel(level);
+        document.getElementById("levelScreen").style.display = "none";
+        document.getElementById("gameScreen").style.display = "flex";
+        document.body.classList.add('game-active');
+      }
     };
     levelGrid.appendChild(btn);
   });
@@ -3284,6 +3297,9 @@ function showClearedModal(level) {
 
 function isLevelUnlocked(level) {
   const cleared = clearedLevelsFromDb;
+  if (level === 13) {
+    return [1,2,3,4,5,6].every(s => cleared.includes(s));
+  }
   for (let idx = 0; idx < chapterData.length; idx++) {
     const chap = chapterData[idx];
     if (chap.stages.includes(level)) {
@@ -3485,23 +3501,31 @@ createModuleBtn.addEventListener('click', () => {
 });
 
 //— ④ 메인 → 문제 출제 화면
-createProblemBtn.addEventListener('click', () => {
-  firstScreen.style.display   = 'none';
-  problemScreen.style.display = 'block';
-  initProblemEditor();
-});
+if (createProblemBtn) {
+  createProblemBtn.addEventListener('click', () => {
+    firstScreen.style.display   = 'none';
+    problemScreen.style.display = 'block';
+    initProblemEditor();
+  });
+}
 
 //— ⑤ 문제 출제 화면 → 메인
 backToMainFromProblem.addEventListener('click', () => {
   problemScreen.style.display = 'none';
-  firstScreen.style.display   = 'flex';
+  if (firstScreen.style.display !== 'none') {
+    firstScreen.style.display = 'flex';
+  } else {
+    document.getElementById('levelScreen').style.display = 'block';
+  }
 });
 
 document.getElementById('updateIOBtn').addEventListener('click', () => {
   initProblemBlockPanel();
   initTestcaseTable();
 });
-document.getElementById('addTestcaseRowBtn').addEventListener('click', addTestcaseRow);
+// 자동 생성 방식으로 테스트케이스를 채우므로 행 추가 버튼 비활성화
+const addRowBtn = document.getElementById('addTestcaseRowBtn');
+if (addRowBtn) addRowBtn.style.display = 'none';
 document.getElementById('computeOutputsBtn').addEventListener('click', computeOutputs);
 
 /**
@@ -3813,6 +3837,26 @@ function initTestcaseTable() {
   for(let j=1;j<=outputCnt;j++){const th=document.createElement('th');th.textContent='OUT'+j;tr.appendChild(th);} 
   thead.appendChild(tr);
   tbody.innerHTML='';
+  const totalRows=1<<inputCnt;
+  for(let r=0;r<totalRows;r++){
+    const row=document.createElement('tr');
+    for(let i=0;i<inputCnt;i++){
+      const td=document.createElement('td');
+      const inp=document.createElement('input');
+      inp.type='number';
+      inp.readOnly=true;
+      inp.style.width='30px';
+      inp.value=((r>>(inputCnt-1-i))&1);
+      td.appendChild(inp);row.appendChild(td);
+    }
+    for(let j=0;j<outputCnt;j++){
+      const td=document.createElement('td');
+      const out=document.createElement('input');
+      out.readOnly=true;out.style.width='30px';
+      td.appendChild(out);row.appendChild(td);
+    }
+    tbody.appendChild(row);
+  }
 }
 
 function addTestcaseRow() {
