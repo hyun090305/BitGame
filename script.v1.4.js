@@ -13,6 +13,7 @@ let wireTrace = [];     // 드래그 경로
 let GRID_ROWS = 6;
 let GRID_COLS = 6;
 let wires = [];  // { path, start, end } 객체를 저장할 배열
+let problemOutputsValid = false;
 
 // CSS 애니메이션 한 주기(1초) 만큼 녹화하기 위해 사용
 const WIRE_ANIM_DURATION = 1000; // ms
@@ -826,6 +827,7 @@ function disconnectWiresCascade(startBlock) {
 
   // wires 배열에서 해당 연결 제거
   wires = wires.filter(w => w.start !== startBlock && w.end !== startBlock);
+  markCircuitModified();
 }
 
 /*--------------------------------------------------
@@ -939,6 +941,7 @@ document.querySelectorAll('.trash-area').forEach(trashEl => {
       delete lastDraggedFromCell.dataset.type;
       lastDraggedFromCell.removeAttribute("draggable");
     }
+    markCircuitModified();
     lastDraggedType = null;
     lastDraggedIcon = null;
     lastDraggedFromCell = null;
@@ -1019,6 +1022,7 @@ function drawWirePath(path) {
     start: path[0],        // 시작 블록 cell
     end: path[path.length - 1]  // 끝 블록 cell
   });
+  markCircuitModified();
 
   for (let i = 0; i < path.length; i++) {
     const cell = path[i];
@@ -2177,6 +2181,7 @@ function setupGrid(containerId, rows, cols) {
         delete lastDraggedFromCell.dataset.type;
         lastDraggedFromCell.removeAttribute("draggable");
       }
+      markCircuitModified();
       lastDraggedType = lastDraggedIcon = lastDraggedFromCell = null;
     });
 
@@ -2317,6 +2322,7 @@ function setupGrid(containerId, rows, cols) {
       delete cell.dataset.type;
       delete cell.dataset.directions;
     }
+    markCircuitModified();
   });
   // ——— 그리드 밖 마우스 탈출 시 취소 ———
   grid.addEventListener('mouseleave', cancelWireDrawing);
@@ -2332,6 +2338,7 @@ function resetCell(cell) {
   cell.removeAttribute("draggable");
   // 클릭 이벤트 프로퍼티 초기화
   cell.onclick = null;
+  markCircuitModified();
 }
 
 document.getElementById("showIntroBtn").addEventListener("click", () => {
@@ -3238,6 +3245,10 @@ function clearWires() {
     delete cell.dataset.type;
   });
 }
+
+function markCircuitModified() {
+  problemOutputsValid = false;
+}
 // 이전: placeBlockAt 미정의
 function placeBlockAt(x, y, type) {
   const idx = y * GRID_COLS + x;
@@ -3538,6 +3549,7 @@ function handleProblemKeyDown(e) {
       clearGrid();
       initProblemBlockPanel();
       initTestcaseTable();
+      markCircuitModified();
     }
   }
 }
@@ -3737,8 +3749,18 @@ if (openProblemCreatorBtn) {
 }
 
 document.getElementById('updateIOBtn').addEventListener('click', () => {
+  alert('입출력/그리드 설정을 변경하면 회로가 초기화됩니다.');
+  const rows = Math.min(15, Math.max(1, parseInt(document.getElementById('gridRows').value) || 6));
+  const cols = Math.min(15, Math.max(1, parseInt(document.getElementById('gridCols').value) || 6));
+  document.getElementById('gridRows').value = rows;
+  document.getElementById('gridCols').value = cols;
+  setupGrid('problemGrid', rows, cols);
+  setGridDimensions(rows, cols);
+  clearGrid();
+  clearWires();
   initProblemBlockPanel();
   initTestcaseTable();
+  markCircuitModified();
 });
 // 자동 생성 방식으로 테스트케이스를 채우므로 행 추가 버튼 비활성화
 const addRowBtn = document.getElementById('addTestcaseRowBtn');
@@ -3999,15 +4021,18 @@ function getModuleWireData() {
 
 // -------------------- 사용자 정의 문제 편집 --------------------
 function initProblemEditor() {
-  setupGrid('problemGrid', 6, 6);
+  const rows = parseInt(document.getElementById('gridRows').value) || 6;
+  const cols = parseInt(document.getElementById('gridCols').value) || 6;
+  setupGrid('problemGrid', rows, cols);
   clearGrid();
-  setGridDimensions(6, 6);
+  setGridDimensions(rows, cols);
   initProblemBlockPanel();
   initTestcaseTable();
   document.removeEventListener('keydown', handleProblemKeyDown);
   document.removeEventListener('keyup', handleProblemKeyUp);
   document.addEventListener('keydown', handleProblemKeyDown);
   document.addEventListener('keyup', handleProblemKeyUp);
+  markCircuitModified();
 }
 
 function initProblemBlockPanel() {
@@ -4122,6 +4147,7 @@ function computeOutputs() {
       tr.querySelectorAll('td input')[inputCnt+idx].value=val;
     });
   });
+  problemOutputsValid = true;
 }
 
 // ----- 사용자 정의 문제 저장/불러오기 -----
@@ -4166,6 +4192,8 @@ function collectProblemData() {
     limit: document.getElementById('problemLimitInput').value.trim(),
     inputCount: parseInt(document.getElementById('inputCount').value) || 1,
     outputCount: parseInt(document.getElementById('outputCount').value) || 1,
+    gridRows: parseInt(document.getElementById('gridRows').value) || 6,
+    gridCols: parseInt(document.getElementById('gridCols').value) || 6,
     table: getProblemTruthTable(),
     grid: getProblemGridData(),
     wires: getProblemWireData(),
@@ -4180,6 +4208,10 @@ function collectProblemData() {
 }
 
 function saveProblem() {
+  if (!problemOutputsValid) {
+    alert('출력 계산을 먼저 실행하세요.');
+    return;
+  }
   const data = collectProblemData();
   const key = db.ref('problems').push().key;
   db.ref('problems/' + key).set(data)
@@ -4192,23 +4224,31 @@ function showProblemList() {
   const list = document.getElementById('problemList');
   db.ref('problems').once('value').then(snapshot => {
     list.innerHTML = '';
+    const table = document.createElement('table');
+    table.innerHTML = `<thead><tr><th>제목</th><th>그리드</th><th>비고</th></tr></thead><tbody></tbody>`;
+    const tbody = table.querySelector('tbody');
     if (!snapshot.exists()) {
-      list.innerHTML = '<li>저장된 문제가 없습니다.</li>';
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="3">저장된 문제가 없습니다.</td>';
+      tbody.appendChild(tr);
     } else {
       snapshot.forEach(child => {
         const d = child.val();
-        const li = document.createElement('li');
-        li.style.margin = '6px 0';
-        li.innerHTML = `<strong>${d.title || child.key}</strong> <button class="loadProbBtn" data-key="${child.key}">불러오기</button>`;
-        list.appendChild(li);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${d.title || child.key}</td>
+          <td>${(d.gridRows || 6)}×${(d.gridCols || 6)}</td>
+          <td><button class="loadProbBtn" data-key="${child.key}">불러오기</button></td>`;
+        tbody.appendChild(tr);
       });
-      list.querySelectorAll('.loadProbBtn').forEach(btn => {
+      table.querySelectorAll('.loadProbBtn').forEach(btn => {
         btn.addEventListener('click', () => {
           loadProblem(btn.dataset.key);
           modal.style.display = 'none';
         });
       });
     }
+    list.appendChild(table);
     modal.style.display = 'flex';
   });
 }
@@ -4220,6 +4260,10 @@ function loadProblem(key) {
 
     document.getElementById('inputCount').value = data.inputCount || 1;
     document.getElementById('outputCount').value = data.outputCount || 1;
+    document.getElementById('gridRows').value = data.gridRows || 6;
+    document.getElementById('gridCols').value = data.gridCols || 6;
+    setupGrid('problemGrid', data.gridRows || 6, data.gridCols || 6);
+    setGridDimensions(data.gridRows || 6, data.gridCols || 6);
     initProblemBlockPanel();
     initTestcaseTable();
 
@@ -4271,6 +4315,7 @@ function loadProblem(key) {
         path: obj.pathIdxs.map(i => cells[i])
       }));
     }
+    problemOutputsValid = true;
   });
 }
 
@@ -4281,11 +4326,11 @@ function renderUserProblemList() {
     userProblemList.innerHTML = '';
     const table = document.createElement('table');
     table.id = 'userProblemTable';
-    table.innerHTML = `<thead><tr><th>제목</th><th>제작자</th><th>제작일</th><th>해결 수</th><th>좋아요</th><th>비고</th></tr></thead><tbody></tbody>`;
+    table.innerHTML = `<thead><tr><th>제목</th><th>그리드</th><th>제작자</th><th>제작일</th><th>해결 수</th><th>좋아요</th><th>비고</th></tr></thead><tbody></tbody>`;
     const tbody = table.querySelector('tbody');
     if (!snapshot.exists()) {
       const tr = document.createElement('tr');
-      tr.innerHTML = '<td colspan="6">등록된 문제가 없습니다.</td>';
+      tr.innerHTML = '<td colspan="7">등록된 문제가 없습니다.</td>';
       tbody.appendChild(tr);
     } else {
       snapshot.forEach(child => {
@@ -4298,6 +4343,7 @@ function renderUserProblemList() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="probTitle">${data.title || child.key}</td>
+          <td>${(data.gridRows || 6)}×${(data.gridCols || 6)}</td>
           <td>${data.creator || '익명'}${isMine ? ' (나)' : ''}</td>
           <td>${new Date(data.timestamp).toLocaleDateString()}</td>
           <td>${solved}</td>
@@ -4409,10 +4455,12 @@ function startCustomProblem(key, problem) {
   currentCustomProblem = problem;
   currentCustomProblemKey = key;
   currentLevel = null;
-  setupGrid('grid', 6, 6);
+  const rows = problem.gridRows || 6;
+  const cols = problem.gridCols || 6;
+  setupGrid('grid', rows, cols);
   clearGrid();
   setupCustomBlockPanel(problem);
-  setGridDimensions(6,6);
+  setGridDimensions(rows, cols);
   const prevMenuBtn = document.getElementById('prevStageBtnMenu');
   const nextMenuBtn = document.getElementById('nextStageBtnMenu');
   prevMenuBtn.disabled = true;
