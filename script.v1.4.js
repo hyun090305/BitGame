@@ -3479,6 +3479,9 @@ const moduleList               = document.getElementById('moduleList');
 const createProblemBtn         = document.getElementById('createProblemBtn');
 const problemScreen            = document.getElementById('problem-screen');
 const backToMainFromProblem    = document.getElementById('backToMainFromProblem');
+const saveProblemBtn           = document.getElementById('saveProblemBtn');
+const viewProblemListBtn       = document.getElementById('viewProblemListBtn');
+const closeProblemListModal    = document.getElementById('closeProblemListModal');
 
 //— ① 메인 → 모듈 관리  
 manageModulesBtn.addEventListener('click', () => {
@@ -3527,6 +3530,11 @@ document.getElementById('updateIOBtn').addEventListener('click', () => {
 const addRowBtn = document.getElementById('addTestcaseRowBtn');
 if (addRowBtn) addRowBtn.style.display = 'none';
 document.getElementById('computeOutputsBtn').addEventListener('click', computeOutputs);
+if (saveProblemBtn) saveProblemBtn.addEventListener('click', saveProblem);
+if (viewProblemListBtn) viewProblemListBtn.addEventListener('click', showProblemList);
+if (closeProblemListModal) closeProblemListModal.addEventListener('click', () => {
+  document.getElementById('problemListModal').style.display = 'none';
+});
 
 /**
  * localStorage에서 "module_"로 시작하는 모든 항목을 찾고,
@@ -3902,6 +3910,155 @@ function computeOutputs() {
       const val=cell? (cell.dataset.val==='true' || cell.dataset.val==='1'? '1':'0') :'0';
       tr.querySelectorAll('td input')[inputCnt+idx].value=val;
     });
+  });
+}
+
+// ----- 사용자 정의 문제 저장/불러오기 -----
+function getProblemGridData() {
+  return Array.from(document.querySelectorAll('#problemGrid .cell')).map(cell => ({
+    index: +cell.dataset.index,
+    type: cell.dataset.type || null,
+    name: cell.dataset.name || null,
+    value: cell.dataset.value || null,
+    classes: Array.from(cell.classList).filter(c => c !== 'cell')
+  }));
+}
+
+function getProblemWireData() {
+  return Array.from(document.querySelectorAll('#problemGrid .cell.wire')).map(cell => {
+    const dir = Array.from(cell.classList).find(c => c.startsWith('wire-')).split('-')[1];
+    return { x: cell.col, y: cell.row, dir };
+  });
+}
+
+function getProblemTruthTable() {
+  const inputCnt = parseInt(document.getElementById('inputCount').value) || 1;
+  const outputCnt = parseInt(document.getElementById('outputCount').value) || 1;
+  const rows = Array.from(document.querySelectorAll('#testcaseTable tbody tr'));
+  return rows.map(tr => {
+    const row = {};
+    const cells = Array.from(tr.querySelectorAll('td input'));
+    for (let i = 0; i < inputCnt; i++) {
+      row['IN' + (i + 1)] = cells[i].value === '1' ? 1 : 0;
+    }
+    for (let j = 0; j < outputCnt; j++) {
+      row['OUT' + (j + 1)] = cells[inputCnt + j].value === '1' ? 1 : 0;
+    }
+    return row;
+  });
+}
+
+function collectProblemData() {
+  return {
+    title: document.getElementById('problemTitleInput').value.trim(),
+    description: document.getElementById('problemDescInput').value.trim(),
+    limit: document.getElementById('problemLimitInput').value.trim(),
+    inputCount: parseInt(document.getElementById('inputCount').value) || 1,
+    outputCount: parseInt(document.getElementById('outputCount').value) || 1,
+    table: getProblemTruthTable(),
+    grid: getProblemGridData(),
+    wires: getProblemWireData(),
+    wiresObj: wires.map(w => ({
+      startIdx: +w.start.dataset.index,
+      endIdx: +w.end.dataset.index,
+      pathIdxs: w.path.map(c => +c.dataset.index)
+    })),
+    timestamp: new Date().toISOString()
+  };
+}
+
+function saveProblem() {
+  const data = collectProblemData();
+  const key = db.ref('problems').push().key;
+  db.ref('problems/' + key).set(data)
+    .then(() => alert('문제가 저장되었습니다.'))
+    .catch(err => alert('저장 실패: ' + err));
+}
+
+function showProblemList() {
+  const modal = document.getElementById('problemListModal');
+  const list = document.getElementById('problemList');
+  db.ref('problems').once('value').then(snapshot => {
+    list.innerHTML = '';
+    if (!snapshot.exists()) {
+      list.innerHTML = '<li>저장된 문제가 없습니다.</li>';
+    } else {
+      snapshot.forEach(child => {
+        const d = child.val();
+        const li = document.createElement('li');
+        li.style.margin = '6px 0';
+        li.innerHTML = `<strong>${d.title || child.key}</strong> <button class="loadProbBtn" data-key="${child.key}">불러오기</button>`;
+        list.appendChild(li);
+      });
+      list.querySelectorAll('.loadProbBtn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          loadProblem(btn.dataset.key);
+          modal.style.display = 'none';
+        });
+      });
+    }
+    modal.style.display = 'flex';
+  });
+}
+
+function loadProblem(key) {
+  db.ref('problems/' + key).once('value').then(snapshot => {
+    const data = snapshot.val();
+    if (!data) return alert('불러오기 실패');
+
+    document.getElementById('inputCount').value = data.inputCount || 1;
+    document.getElementById('outputCount').value = data.outputCount || 1;
+    initProblemBlockPanel();
+    initTestcaseTable();
+
+    document.getElementById('problemTitleInput').value = data.title || '';
+    document.getElementById('problemDescInput').value = data.description || '';
+    document.getElementById('problemLimitInput').value = data.limit || '';
+
+    // truth table
+    const tbodyRows = document.querySelectorAll('#testcaseTable tbody tr');
+    data.table.forEach((row, rIdx) => {
+      const cells = Array.from(tbodyRows[rIdx].querySelectorAll('td input'));
+      for (let i = 0; i < data.inputCount; i++) {
+        if (cells[i]) cells[i].value = row['IN' + (i + 1)];
+      }
+      for (let j = 0; j < data.outputCount; j++) {
+        if (cells[data.inputCount + j]) cells[data.inputCount + j].value = row['OUT' + (j + 1)];
+      }
+    });
+
+    clearGrid();
+    clearWires();
+
+    const cells = document.querySelectorAll('#problemGrid .cell');
+    data.grid.forEach(state => {
+      const cell = cells[state.index];
+      cell.className = 'cell';
+      if (state.type) cell.dataset.type = state.type;
+      if (state.name) cell.dataset.name = state.name;
+      if (state.value) cell.dataset.value = state.value;
+      state.classes.forEach(c => cell.classList.add(c));
+      if (state.type === 'INPUT' || state.type === 'OUTPUT') {
+        attachInputClickHandlers(cell);
+      }
+      if (state.type && state.type !== 'WIRE') {
+        cell.classList.add('block');
+        if (state.type === 'INPUT') cell.textContent = state.name;
+        else if (state.type === 'OUTPUT') cell.textContent = state.name;
+        else cell.textContent = state.type;
+        cell.draggable = true;
+      }
+    });
+
+    data.wires && data.wires.forEach(w => placeWireAt(w.x, w.y, w.dir));
+
+    if (data.wiresObj) {
+      wires = data.wiresObj.map(obj => ({
+        start: cells[obj.startIdx],
+        end: cells[obj.endIdx],
+        path: obj.pathIdxs.map(i => cells[i])
+      }));
+    }
   });
 }
 

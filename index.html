@@ -222,6 +222,10 @@
         <textarea id="problemDescInput" rows="3" placeholder="문제 설명" style="width:100%; margin-bottom:0.5rem;"></textarea>
         <textarea id="problemLimitInput" rows="2" placeholder="제한 조건" style="width:100%;"></textarea>
       </div>
+      <div style="margin-top:0.5rem;">
+        <button id="saveProblemBtn">문제 저장</button>
+        <button id="viewProblemListBtn">불러오기</button>
+      </div>
     </div>
 
     <div id="chapterScreen" style="display:none; padding: 2rem;">
@@ -337,6 +341,16 @@
         </ul>
         <div style="text-align:right; margin-top:1rem;">
           <button id="closeSavedModal">닫기</button>
+        </div>
+      </div>
+    </div>
+    <!-- 문제 목록 모달 -->
+    <div id="problemListModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <h2>📂 저장된 문제</h2>
+        <ul id="problemList" style="list-style:none; padding:0; max-height:300px; overflow-y:auto;"></ul>
+        <div style="text-align:right; margin-top:1rem;">
+          <button id="closeProblemListModal">닫기</button>
         </div>
       </div>
     </div>
