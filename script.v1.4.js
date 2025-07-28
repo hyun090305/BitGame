@@ -3460,6 +3460,9 @@ const managementScreen         = document.getElementById('module-management-scre
 const backToMainFromManagement = document.getElementById('backToMainFromManagement');
 const createModuleBtn          = document.getElementById('createModuleBtn');
 const moduleList               = document.getElementById('moduleList');
+const createProblemBtn         = document.getElementById('createProblemBtn');
+const problemScreen            = document.getElementById('problem-screen');
+const backToMainFromProblem    = document.getElementById('backToMainFromProblem');
 
 //— ① 메인 → 모듈 관리  
 manageModulesBtn.addEventListener('click', () => {
@@ -3480,6 +3483,26 @@ createModuleBtn.addEventListener('click', () => {
   moduleScreen.style.display     = 'block';
   initModuleEditor();  // 모듈 에디터 초기화 함수 호출 fileciteturn28file1
 });
+
+//— ④ 메인 → 문제 출제 화면
+createProblemBtn.addEventListener('click', () => {
+  firstScreen.style.display   = 'none';
+  problemScreen.style.display = 'block';
+  initProblemEditor();
+});
+
+//— ⑤ 문제 출제 화면 → 메인
+backToMainFromProblem.addEventListener('click', () => {
+  problemScreen.style.display = 'none';
+  firstScreen.style.display   = 'flex';
+});
+
+document.getElementById('updateIOBtn').addEventListener('click', () => {
+  initProblemBlockPanel();
+  initTestcaseTable();
+});
+document.getElementById('addTestcaseRowBtn').addEventListener('click', addTestcaseRow);
+document.getElementById('computeOutputsBtn').addEventListener('click', computeOutputs);
 
 /**
  * localStorage에서 "module_"로 시작하는 모든 항목을 찾고,
@@ -3732,6 +3755,109 @@ function getModuleWireData() {
                      .find(c => c.startsWith('wire-'))
                      .split('-')[1];
     return { x: cell.col, y: cell.row, dir };
+  });
+}
+
+// -------------------- 사용자 정의 문제 편집 --------------------
+function initProblemEditor() {
+  setupGrid('problemGrid', 6, 6);
+  clearGrid();
+  setGridDimensions(6, 6);
+  initProblemBlockPanel();
+  initTestcaseTable();
+}
+
+function initProblemBlockPanel() {
+  const panel = document.getElementById('problemBlockPanel');
+  panel.innerHTML = '';
+  const inputCnt = parseInt(document.getElementById('inputCount').value) || 1;
+  const outputCnt = parseInt(document.getElementById('outputCount').value) || 1;
+  for (let i=1;i<=inputCnt;i++) {
+    const div=document.createElement('div');
+    div.className='blockIcon';
+    div.draggable=true;
+    div.dataset.type='INPUT';
+    div.dataset.name='IN'+i;
+    div.textContent='IN'+i;
+    panel.appendChild(div);
+  }
+  for (let j=1;j<=outputCnt;j++) {
+    const div=document.createElement('div');
+    div.className='blockIcon';
+    div.draggable=true;
+    div.dataset.type='OUTPUT';
+    div.dataset.name='OUT'+j;
+    div.textContent='OUT'+j;
+    panel.appendChild(div);
+  }
+  ['AND','OR','NOT','JUNCTION','WIRE'].forEach(t=>{
+    const d=document.createElement('div');
+    d.className='blockIcon';
+    d.draggable=true;
+    d.dataset.type=t;
+    d.textContent=t;
+    panel.appendChild(d);
+  });
+  attachDragHandlersToBlockIcons();
+}
+
+function initTestcaseTable() {
+  const table=document.getElementById('testcaseTable');
+  const inputCnt = parseInt(document.getElementById('inputCount').value)||1;
+  const outputCnt = parseInt(document.getElementById('outputCount').value)||1;
+  const thead=table.querySelector('thead');
+  const tbody=table.querySelector('tbody');
+  thead.innerHTML='';
+  const tr=document.createElement('tr');
+  for(let i=1;i<=inputCnt;i++){const th=document.createElement('th');th.textContent='IN'+i;tr.appendChild(th);} 
+  for(let j=1;j<=outputCnt;j++){const th=document.createElement('th');th.textContent='OUT'+j;tr.appendChild(th);} 
+  thead.appendChild(tr);
+  tbody.innerHTML='';
+}
+
+function addTestcaseRow() {
+  const table=document.getElementById('testcaseTable');
+  const inputCnt=parseInt(document.getElementById('inputCount').value)||1;
+  const outputCnt=parseInt(document.getElementById('outputCount').value)||1;
+  const tr=document.createElement('tr');
+  for(let i=0;i<inputCnt;i++){
+    const td=document.createElement('td');
+    const inp=document.createElement('input');
+    inp.type='number';
+    inp.min='0';inp.max='1';inp.value='0';
+    inp.style.width='30px';
+    td.appendChild(inp);tr.appendChild(td);
+  }
+  for(let j=0;j<outputCnt;j++){
+    const td=document.createElement('td');
+    const out=document.createElement('input');
+    out.readOnly=true;out.style.width='30px';
+    td.appendChild(out);tr.appendChild(td);
+  }
+  table.querySelector('tbody').appendChild(tr);
+}
+
+function computeOutputs() {
+  const inputCnt=parseInt(document.getElementById('inputCount').value)||1;
+  const outputCnt=parseInt(document.getElementById('outputCount').value)||1;
+  const rows=Array.from(document.querySelectorAll('#testcaseTable tbody tr'));
+  const inNames=Array.from({length:inputCnt},(_,i)=>'IN'+(i+1));
+  const outNames=Array.from({length:outputCnt},(_,i)=>'OUT'+(i+1));
+  rows.forEach(tr=>{
+    const inputs=Array.from(tr.querySelectorAll('td input')).slice(0,inputCnt);
+    inNames.forEach((name,idx)=>{
+      const cell=document.querySelector('.cell.block[data-type="INPUT"][data-name="'+name+'"]');
+      if(cell){
+        cell.dataset.value=inputs[idx].value==='1'?'1':'0';
+        cell.classList.toggle('active', cell.dataset.value==='1');
+      }
+    });
+    evaluateCircuit();
+    outNames.forEach((name,idx)=>{
+      const cell=document.querySelector('.cell.block[data-type="OUTPUT"][data-name="'+name+'"]');
+      const val=cell? (cell.dataset.val==='true' || cell.dataset.val==='1'? '1':'0') :'0';
+      tr.querySelectorAll('td input')[inputCnt+idx].value=val;
+    });
   });
 }
 
