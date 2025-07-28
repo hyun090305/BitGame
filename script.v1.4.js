@@ -1929,15 +1929,7 @@ document.getElementById('hintBtn').addEventListener('click', () => {
     alert('먼저 스테이지를 시작하세요.');
     return;
   }
-  checkHintCooldown(until => {
-    const now = Date.now();
-    if (now < until) {
-      const remain = Math.ceil((until - now)/60000);
-      alert(`다음 힌트는 ${remain}분 후에 열 수 있습니다.`);
-      return;
-    }
-    openHintModal(currentLevel);
-  });
+  openHintModal(currentLevel);
 });
 
 
@@ -3379,11 +3371,13 @@ if (viewProblemListBtn) viewProblemListBtn.addEventListener('click', showProblem
     document.getElementById('problemListModal').style.display = 'none';
   });
 
-  const nextHintBtn = document.getElementById('openNextHintBtn');
   const closeHintBtn = document.getElementById('closeHintBtn');
-  if (nextHintBtn) nextHintBtn.addEventListener('click', showNextHint);
+  const closeHintMsgBtn = document.getElementById('closeHintMessageBtn');
   if (closeHintBtn) closeHintBtn.addEventListener('click', () => {
     document.getElementById('hintModal').style.display = 'none';
+  });
+  if (closeHintMsgBtn) closeHintMsgBtn.addEventListener('click', () => {
+    document.getElementById('hintMessageModal').style.display = 'none';
   });
 
 /**
@@ -4042,7 +4036,7 @@ function showProblemIntro(problem, callback) {
 }
 
 let currentHintStage = null;
-let nextHintIndex = 0;
+let currentHintProgress = 0; // number of opened hints for current stage
 
 function checkHintCooldown(cb) {
   const localUntil = parseInt(localStorage.getItem('hintCooldownUntil') || '0');
@@ -4056,6 +4050,50 @@ function checkHintCooldown(cb) {
   }
 }
 
+function loadHintProgress(stage, cb) {
+  const key = `hintsUsed_${stage}`;
+  const local = parseInt(localStorage.getItem(key) || '0');
+  const user = firebase.auth().currentUser;
+  if (user) {
+    db.ref(`hintProgress/${user.uid}/stage${stage}`).once('value').then(snap => {
+      const remote = snap.val() || 0;
+      const val = Math.max(local, remote);
+      if (val !== local) localStorage.setItem(key, val);
+      cb(val);
+    });
+  } else {
+    cb(local);
+  }
+}
+
+function saveHintProgress(stage, count) {
+  const key = `hintsUsed_${stage}`;
+  localStorage.setItem(key, count);
+  const user = firebase.auth().currentUser;
+  if (user) {
+    db.ref(`hintProgress/${user.uid}/stage${stage}`).set(count);
+  }
+}
+
+function renderHintButtons(hints, progress, cooldownUntil) {
+  const container = document.getElementById('hintButtons');
+  container.innerHTML = '';
+  const now = Date.now();
+  hints.forEach((_, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = `힌트 ${i + 1}`;
+    btn.onclick = () => showHint(i);
+    if (i < progress) {
+      // already opened
+    } else if (i === progress) {
+      if (now < cooldownUntil) btn.disabled = true;
+    } else {
+      btn.disabled = true;
+    }
+    container.appendChild(btn);
+  });
+}
+
 function openHintModal(stage) {
   const hints = levelHints[`stage${stage}`]?.hints;
   if (!hints) {
@@ -4063,33 +4101,34 @@ function openHintModal(stage) {
     return;
   }
   currentHintStage = stage;
-  nextHintIndex = 0;
-  document.getElementById('hintContent').innerHTML = '';
   document.getElementById('hintModal').style.display = 'flex';
-  document.getElementById('openNextHintBtn').disabled = false;
+  loadHintProgress(stage, progress => {
+    currentHintProgress = progress;
+    checkHintCooldown(until => {
+      renderHintButtons(hints, progress, until);
+    });
+  });
 }
 
-function showNextHint() {
+function showHint(index) {
   const hints = levelHints[`stage${currentHintStage}`]?.hints || [];
-  if (nextHintIndex >= hints.length) return;
-  const hint = hints[nextHintIndex];
-  const div = document.createElement('div');
-  div.textContent = `[${hint.type}] ${hint.content}`;
-  document.getElementById('hintContent').appendChild(div);
-  nextHintIndex++;
+  if (!hints[index]) return;
+  const hint = hints[index];
+  document.getElementById('hintMessage').textContent = `[${hint.type}] ${hint.content}`;
+  document.getElementById('hintMessageModal').style.display = 'flex';
 
-  const key = `hintsUsed_${currentHintStage}`;
-  const count = parseInt(localStorage.getItem(key) || '0') + 1;
-  localStorage.setItem(key, count);
-
-  const until = Date.now() + 60*60*1000;
-  localStorage.setItem('hintCooldownUntil', until);
-  const user = firebase.auth().currentUser;
-  if (user) db.ref(`hintLocks/${user.uid}`).set(until);
-
-  if (nextHintIndex >= hints.length) {
-    document.getElementById('openNextHintBtn').disabled = true;
+  if (index >= currentHintProgress) {
+    currentHintProgress = index + 1;
+    saveHintProgress(currentHintStage, currentHintProgress);
+    const until = Date.now() + 60*60*1000;
+    localStorage.setItem('hintCooldownUntil', until);
+    const user = firebase.auth().currentUser;
+    if (user) db.ref(`hintLocks/${user.uid}`).set(until);
   }
+
+  checkHintCooldown(until => {
+    renderHintButtons(hints, currentHintProgress, until);
+  });
 }
 
 function setupCustomBlockPanel(problem) {
