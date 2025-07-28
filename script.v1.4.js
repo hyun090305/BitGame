@@ -1442,6 +1442,8 @@ document.addEventListener("keydown", (e) => {
       if (problemScreen.style.display !== "none") {
         initProblemBlockPanel();
         initTestcaseTable();
+      } else if (currentCustomProblem) {
+        setupCustomBlockPanel(currentCustomProblem);
       } else {
         setupBlockPanel(currentLevel);
       }

@@ -192,7 +192,7 @@
     <div id="problem-screen" class="screen" style="display:none; padding:2rem;">
       <button id="backToMainFromProblem" class="btn-back">← 메인으로</button>
       <h1>📝 문제 출제</h1>
-      <div style="display:flex; gap:1rem; align-items:flex-start;">
+      <div style="display:flex; gap:1rem; align-items:flex-start; justify-content:center;">
         <div id="problemBlockPanel" style="width:120px;"></div>
         <div id="problemGridContainer" class="grid" style="position:relative;">
           <div id="problemGrid"></div>
@@ -217,12 +217,12 @@
           </div>
         </div>
       </div>
-      <div style="margin-top:1rem; width:100%; max-width:500px;">
+      <div style="margin-top:1rem; width:100%; max-width:500px; margin-left:auto; margin-right:auto; text-align:center;">
         <input id="problemTitleInput" type="text" placeholder="문제 제목" style="width:100%; margin-bottom:0.5rem;"/>
         <textarea id="problemDescInput" rows="3" placeholder="문제 설명" style="width:100%; margin-bottom:0.5rem;"></textarea>
         <textarea id="problemLimitInput" rows="2" placeholder="제한 조건" style="width:100%;"></textarea>
       </div>
-      <div style="margin-top:0.5rem;">
+      <div style="margin-top:0.5rem; text-align:center;">
         <button id="saveProblemBtn">문제 저장</button>
         <button id="viewProblemListBtn">불러오기</button>
       </div>
@@ -251,7 +251,7 @@
     <div id="user-problems-screen" class="screen" style="display:none;">
       <button id="backToChapterFromUserProblems" class="btn-back">← 챕터로</button>
       <h1>📝 사용자 문제</h1>
-      <ul id="userProblemList" class="problem-list"></ul>
+      <ul id="userProblemList" class="problem-list" style="margin:0 auto;"></ul>
       <button id="openProblemCreatorBtn" class="btn-primary">문제 만들기</button>
     </div>
     <div id="rankingModal" class="modal" style="display:none;">
