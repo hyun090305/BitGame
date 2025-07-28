@@ -2523,6 +2523,7 @@ function onGoogleUsernameSubmit(oldName, uid) {
       }
       localStorage.setItem("username", name);
       localStorage.setItem(`googleNickname_${uid}`, name);
+      db.ref(`google/${uid}`).set({ uid, nickname: name });
       document.getElementById("usernameModal").style.display = "none";
       document.getElementById("guestUsername").textContent = name;
       if (oldName && oldName !== name) {
@@ -2691,22 +2692,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function handleGoogleLogin(user) {
   const uid = user.uid;
-  const stored = localStorage.getItem(`googleNickname_${uid}`);
+  const localName = localStorage.getItem(`googleNickname_${uid}`);
   const oldName = localStorage.getItem('username');
-  if (stored) {
-    if (oldName !== stored) {
-      localStorage.setItem('username', stored);
-      document.getElementById('guestUsername').textContent = stored;
-      if (oldName) {
-        showMergeModal(oldName, stored);
+  if (localName) {
+    applyGoogleNickname(localName, oldName);
+  } else {
+    db.ref(`google/${uid}`).once('value').then(snap => {
+      const dbName = snap.exists() ? snap.val().nickname : null;
+      if (dbName) {
+        localStorage.setItem(`googleNickname_${uid}`, dbName);
+        applyGoogleNickname(dbName, oldName);
       } else {
-        registerUsernameIfNeeded(stored);
+        promptForGoogleNickname(oldName, uid);
       }
+    });
+  }
+}
+
+function applyGoogleNickname(name, oldName) {
+  if (oldName !== name) {
+    localStorage.setItem('username', name);
+    document.getElementById('guestUsername').textContent = name;
+    if (oldName) {
+      showMergeModal(oldName, name);
     } else {
-      registerUsernameIfNeeded(stored);
+      registerUsernameIfNeeded(name);
     }
   } else {
-    promptForGoogleNickname(oldName, uid);
+    registerUsernameIfNeeded(name);
   }
 }
 
