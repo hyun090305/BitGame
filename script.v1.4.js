@@ -15,8 +15,6 @@ let GRID_COLS = 6;
 let wires = [];  // { path, start, end } 객체를 저장할 배열
 let problemOutputsValid = false;
 
-// CSS 애니메이션 한 주기(1초) 만큼 녹화하기 위해 사용
-const WIRE_ANIM_DURATION = 1000; // ms
 
 // --- 모바일 터치 기반 드래그 지원 폴리필 ---
 function enableTouchDrag() {
@@ -2874,8 +2872,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   showOverallRanking();  // 전체 랭킹 표시
 
-  const recordBtn = document.getElementById('recordBtn');
-  if (recordBtn) recordBtn.addEventListener('click', () => startRecording(WIRE_ANIM_DURATION));
   setupKeyToggles();
   setupGoogleAuth();
 });
@@ -4594,160 +4590,3 @@ async function gradeProblemAnimated(key, problem) {
   }
 }
 
-// ======================================
-// [수정된 전체 캡처 코드 예시]
-// ======================================
-
-// 1. 애니메이션 캡처를 위한 상수 정의
-// --------------------------------------
-const ANIMATION_DURATION = 1000; // ms (CSS 애니메이션 주기가 1초일 때)
-const FPS = 30;                 // 초당 캡처할 프레임 수 (30fps 권장)
-const TOTAL_FRAMES = Math.ceil((ANIMATION_DURATION / 1000) * FPS);
-const GIF_QUALITY = 10;         // gif.js 인코딩 품질 (0~20, 낮을수록 고화질)
-
-// 2. 메인 그리드(#grid) 캡처 함수
-// --------------------------------------
-/**
- * 메인 그리드(#grid) 요소 안의 CSS 애니메이션(도선 흐름)을
- * 1주기 동안 매 프레임(html2canvas)으로 캡처하여 GIF로 묶고 다운로드합니다.
- */
-async function captureGridGifMain() {
-  // 캡처 버튼과 실제 그리드 요소(#grid)를 가져옵니다.
-  const captureBtn = document.getElementById('captureGifBtnMain');
-  const targetElement = document.getElementById('grid'); // ← 'gridContainer' → 'grid' 로 변경
-
-  // 버튼 혹은 그리드가 없으면 아무것도 하지 않습니다.
-  if (!captureBtn || !targetElement) return;
-
-  // 1) 버튼 상태 변경 (비활성화 + 텍스트 변경)
-  captureBtn.disabled = true;
-  captureBtn.textContent = '캡처 중…';
-
-  // 2) gif.js 초기화
-  //    - workerScript 경로가 실제로 브라우저에서 200 응답을 주는지 확인하세요.
-  //    - 여기서는 프로젝트 루트 기준 'lib/gif.worker.js'를 사용한다고 가정합니다.
-  const gif = new GIF({
-    workers: 2,
-    quality: GIF_QUALITY,
-    workerScript: 'lib/gif.worker.js',     // 반드시 같은 출처에서 제공되는 워커 스크립트 경로
-    width: targetElement.offsetWidth,      // #grid 요소의 실제 너비 (px)
-    height: targetElement.offsetHeight     // #grid 요소의 실제 높이 (px)
-  });
-
-  // 3) 1주기 동안 TOTAL_FRAMES번 루프를 돌면서 캡처
-  for (let frameIndex = 0; frameIndex < TOTAL_FRAMES; frameIndex++) {
-    // 3-1) CSS 애니메이션이 계속 재생되는 상태이므로, 
-    //       일정 시간(ANIMATION_DURATION/TOTAL_FRAMES) 만큼 기다렸다가 캡처
-    await new Promise(resolve => setTimeout(resolve, ANIMATION_DURATION / TOTAL_FRAMES));
-
-    // 3-2) html2canvas로 현재 화면(#grid 요소)을 캡처
-    //       - backgroundColor:null → 투명 배경으로 캡처
-    //       - useCORS, allowTaint, foreignObjectRendering 옵션은 필요 시 사용
-    const canvas = await html2canvas(targetElement, {
-      backgroundColor: null,
-      scale: 1,
-      useCORS: true,
-      allowTaint: true,
-      foreignObjectRendering: true
-    });
-
-    // 3-3) 캡처된 캔버스를 GIF의 한 프레임으로 추가
-    gif.addFrame(canvas, { delay: Math.round(1000 / FPS) });
-  }
-
-  // 4) 모든 프레임을 모았다면 인코딩을 시작
-  gif.on('finished', function(blob) {
-    // 4-1) Blob → URL → 자동 다운로드
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'bit_game_grid_animation.gif';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    // 4-2) 버튼 상태 원복
-    captureBtn.disabled = false;
-    captureBtn.textContent = '🖼️ 애니메이션 캡처';
-  });
-
-  gif.render();
-}
-
-// 3. 모듈 편집 그리드(#moduleGrid) 캡처 함수
-// --------------------------------------
-/**
- * 모듈 편집 그리드(#moduleGrid) 요소 안의 CSS 애니메이션(도선 흐름)을
- * 1주기 동안 매 프레임(html2canvas)으로 캡처하여 GIF로 묶고 다운로드합니다.
- */
-async function captureGridGifModule() {
-  // 캡처 버튼과 모듈 그리드 요소(#moduleGrid)를 가져옵니다.
-  const captureBtn = document.getElementById('captureGifBtnModule');
-  const targetElement = document.getElementById('moduleGrid'); // ← 'moduleGridContainer' → 'moduleGrid' 로 변경
-
-  // 버튼 혹은 모듈 그리드가 없으면 종료
-  if (!captureBtn || !targetElement) return;
-
-  // 1) 버튼 상태 변경 (비활성화 + 텍스트 변경)
-  captureBtn.disabled = true;
-  captureBtn.textContent = '캡처 중…';
-
-  // 2) gif.js 초기화 (메인 그리드와 동일하게 로컬 워커 스크립트 경로 사용)
-  const gif = new GIF({
-    workers: 2,
-    quality: GIF_QUALITY,
-    workerScript: 'lib/gif.worker.js',     // 반드시 같은 출처에서 제공되는 워커 스크립트 경로
-    width: targetElement.offsetWidth,      // #moduleGrid 너비 (px)
-    height: targetElement.offsetHeight     // #moduleGrid 높이 (px)
-  });
-
-  // 3) 1주기 동안 TOTAL_FRAMES번 루프
-  for (let frameIndex = 0; frameIndex < TOTAL_FRAMES; frameIndex++) {
-    // 3-1) 일정 시간 대기
-    await new Promise(resolve => setTimeout(resolve, ANIMATION_DURATION / TOTAL_FRAMES));
-
-    // 3-2) html2canvas로 현재 화면(#moduleGrid) 캡처
-    const canvas = await html2canvas(targetElement, {
-      backgroundColor: null,
-      scale: 1,
-      useCORS: true,
-      allowTaint: true,
-      foreignObjectRendering: true
-    });
-
-    // 3-3) 캡처된 캔버스를 GIF의 한 프레임으로 추가
-    gif.addFrame(canvas, { delay: Math.round(1000 / FPS) });
-  }
-
-  // 4) 모든 프레임을 모아서 인코딩 시작
-  gif.on('finished', function(blob) {
-    // 4-1) Blob → URL → 자동 다운로드
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'bit_game_module_grid_animation.gif';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    // 4-2) 버튼 상태 원복
-    captureBtn.disabled = false;
-    captureBtn.textContent = '🖼️ 애니메이션 캡처';
-  });
-
-  gif.render();
-}
-
-// 4. 페이지 로드 시점에 버튼 클릭과 함수 바인딩
-// --------------------------------------
-const captureMainBtn = document.getElementById('captureGifBtnMain');
-if (captureMainBtn) {
-  captureMainBtn.addEventListener('click', captureGridGifMain);
-}
-
-const captureModuleBtn = document.getElementById('captureGifBtnModule');
-if (captureModuleBtn) {
-  captureModuleBtn.addEventListener('click', captureGridGifModule);
-}
