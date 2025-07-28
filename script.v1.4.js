@@ -1741,11 +1741,6 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 function markLevelCleared(level) {
-  const cleared = JSON.parse(localStorage.getItem("clearedLevels") || "[]");
-  if (!cleared.includes(level)) {
-    cleared.push(level);
-    localStorage.setItem("clearedLevels", JSON.stringify(cleared));
-  }
   if (!clearedLevelsFromDb.includes(level)) {
     clearedLevelsFromDb.push(level);
     refreshClearedUI();
@@ -1972,8 +1967,8 @@ function renderChapterGrid() {
   const grid = document.getElementById("chapterGrid");
   grid.innerHTML = "";
 
-  // 클리어된 레벨 정보 로드
-  const cleared = JSON.parse(localStorage.getItem("clearedLevels") || "[]");
+  // 랭킹 데이터 기반 클리어 정보 사용
+  const cleared = clearedLevelsFromDb;
 
   chapterData.forEach((chapter, idx) => {
     const card = document.createElement("div");
@@ -2454,7 +2449,7 @@ function buildShareString() {
   const lines = [];
   lines.push("I played " + location.origin + location.pathname);
   lines.push("");
-  const cleared = JSON.parse(localStorage.getItem("clearedLevels") || "[]");
+  const cleared = clearedLevelsFromDb;
   const totalStages = Object.keys(levelTitles).length;  // 총 스테이지 수 (필요 시 갱신)
 
 
@@ -3288,7 +3283,7 @@ function showClearedModal(level) {
 
 
 function isLevelUnlocked(level) {
-  const cleared = JSON.parse(localStorage.getItem("clearedLevels") || "[]");
+  const cleared = clearedLevelsFromDb;
   for (let idx = 0; idx < chapterData.length; idx++) {
     const chap = chapterData[idx];
     if (chap.stages.includes(level)) {
