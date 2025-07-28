@@ -52,6 +52,8 @@
         <div></div>
         <button id="manageModulesBtn">모듈 관리</button>
         <div></div>
+        <button id="createProblemBtn">문제 출제</button>
+        <div></div>
         <button id="copyStatusBtn">📋 공유하기</button>
         <div></div>
         <button id="googleLoginBtn">Google 로그인</button>
@@ -185,6 +187,36 @@
       </div>
       <!-- 뒤로가기 -->
       <button id="exit-module-mode">← 돌아가기</button>
+    </div>
+
+    <div id="problem-screen" class="screen" style="display:none; padding:2rem;">
+      <button id="backToMainFromProblem" class="btn-back">← 메인으로</button>
+      <h1>📝 문제 출제</h1>
+      <div style="display:flex; gap:1rem; align-items:flex-start;">
+        <div id="problemBlockPanel" style="width:120px;"></div>
+        <div id="problemGridContainer" class="grid" style="position:relative;">
+          <div id="problemGrid"></div>
+          <div id="problemGridOverlay"></div>
+        </div>
+        <div class="rightPanel" style="display:flex; flex-direction:column; gap:0.5rem;">
+          <div>
+            입력 <input id="inputCount" type="number" min="1" max="4" value="1" style="width:40px;">
+            출력 <input id="outputCount" type="number" min="1" max="4" value="1" style="width:40px;">
+            <button id="updateIOBtn">적용</button>
+          </div>
+          <table id="testcaseTable" border="1" style="font-size:0.9rem; text-align:center;">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+          <button id="addTestcaseRowBtn">+ 행 추가</button>
+          <button id="computeOutputsBtn">출력 계산</button>
+        </div>
+      </div>
+      <div style="margin-top:1rem; width:100%; max-width:500px;">
+        <input id="problemTitleInput" type="text" placeholder="문제 제목" style="width:100%; margin-bottom:0.5rem;"/>
+        <textarea id="problemDescInput" rows="3" placeholder="문제 설명" style="width:100%; margin-bottom:0.5rem;"></textarea>
+        <textarea id="problemLimitInput" rows="2" placeholder="제한 조건" style="width:100%;"></textarea>
+      </div>
     </div>
 
     <div id="chapterScreen" style="display:none; padding: 2rem;">
