@@ -2722,8 +2722,10 @@ function loadCircuit(key) {
       alert('invalid circuit!');
       return;
     }
+    restoreAllWireFlows();
   }
   updateUsedCounts(data.usedBlocks, data.usedWires);
+  evaluateCircuit();
   // ▼ circuit 불러올 때 사용된 INPUT/OUTPUT 블록 아이콘 숨기기
   const panel = document.getElementById('blockPanel');
   // data.grid 에 복원된 셀 상태 중 INPUT/OUTPUT 타입만 골라 이름(name) 리스트 생성
@@ -2862,6 +2864,28 @@ function placeWireAt(x, y, dir) {
   const cell = grid.querySelectorAll('.cell')[idx];
   cell.classList.add('wire', `wire-${dir}`);
   cell.dataset.type = 'WIRE';
+}
+
+// wire.path 배열을 이용해 flow-* 클래스를 복원합니다
+function applyWireFlows(wire) {
+  const path = wire.path;
+  for (let i = 0; i < path.length; i++) {
+    const cell = path[i];
+    cell.classList.remove('flow-left', 'flow-right', 'flow-up', 'flow-down');
+    if (i > 0) {
+      const prev = path[i - 1];
+      cell.classList.add(getFlowClass(prev, cell));
+    }
+    if (i < path.length - 1) {
+      const next = path[i + 1];
+      cell.classList.add(getFlowClass(cell, next));
+    }
+  }
+}
+
+// 저장된 wires 배열 전체에 대해 flow 클래스를 적용합니다
+function restoreAllWireFlows() {
+  wires.forEach(w => applyWireFlows(w));
 }
 
 function updateUsedCounts(blockCount, wireCount) {
@@ -3534,10 +3558,12 @@ function loadModule(moduleKey) {
       end:   cells[obj.endIdx],
       path:  obj.pathIdxs.map(i => cells[i])
     }));
+    restoreAllWireFlows();
   }
 
   // 5) 사용량 카운트 업데이트
   updateUsedCounts(data.usedBlocks, data.usedWires);
+  evaluateCircuit();
 
   // 6) 사용된 INPUT/OUTPUT 아이콘 숨기기
   const panel = document.getElementById('moduleBlockPanel');
@@ -3949,8 +3975,10 @@ function loadProblem(key) {
         end: cells[obj.endIdx],
         path: obj.pathIdxs.map(i => cells[i])
       }));
+      restoreAllWireFlows();
     }
     problemOutputsValid = true;
+    evaluateCircuit();
   });
 }
 
