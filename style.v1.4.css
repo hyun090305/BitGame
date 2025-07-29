@@ -71,6 +71,12 @@ html, body {
     overflow-x: auto;
   }
 
+  #problem-screen #testcaseContainer {
+    max-width: 90vw;
+    max-height: 60vh;
+    overflow: auto;
+  }
+
   #problem-screen #testcaseTable {
     width: max-content;
   }
