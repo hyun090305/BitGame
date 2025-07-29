@@ -1,4 +1,6 @@
-# BitGame
+# Bitwiser
+
+Play bitwise. Become bit wiser.
 
 웹 기반 조합 논리 회로 시뮬레이터 게임입니다. 6×6 그리드 위에 입력(Input), 출력(Output), 논리 게이트(AND, OR, NOT), 와이어를 끌어다 놓아 간단한 회로를 설계하고 시뮬레이션할 수 있습니다.
 
