@@ -3286,6 +3286,12 @@ const userProblemsScreen       = document.getElementById('user-problems-screen')
 const userProblemList          = document.getElementById('userProblemList');
 const backToChapterFromUserProblems = document.getElementById('backToChapterFromUserProblems');
 const openProblemCreatorBtn    = document.getElementById('openProblemCreatorBtn');
+const problemSaveModal         = document.getElementById('problemSaveModal');
+const problemModalBackdrop     = document.querySelector('#problemSaveModal .modal-backdrop');
+const confirmSaveProblemBtn    = document.getElementById('confirmSaveProblemBtn');
+const cancelSaveProblemBtn     = document.getElementById('cancelSaveProblemBtn');
+const problemTitleInput        = document.getElementById('problemTitleInput');
+const problemDescInput         = document.getElementById('problemDescInput');
 
 //— ① 메인 → 모듈 관리  
 manageModulesBtn.addEventListener('click', () => {
@@ -3365,7 +3371,22 @@ document.getElementById('updateIOBtn').addEventListener('click', () => {
 const addRowBtn = document.getElementById('addTestcaseRowBtn');
 if (addRowBtn) addRowBtn.style.display = 'none';
 document.getElementById('computeOutputsBtn').addEventListener('click', computeOutputs);
-if (saveProblemBtn) saveProblemBtn.addEventListener('click', saveProblem);
+if (saveProblemBtn) saveProblemBtn.addEventListener('click', () => {
+  problemTitleInput.value = '';
+  problemDescInput.value = '';
+  problemSaveModal.style.display = 'flex';
+  problemTitleInput.focus();
+});
+if (confirmSaveProblemBtn) confirmSaveProblemBtn.addEventListener('click', () => {
+  problemSaveModal.style.display = 'none';
+  saveProblem();
+});
+if (cancelSaveProblemBtn) cancelSaveProblemBtn.addEventListener('click', () => {
+  problemSaveModal.style.display = 'none';
+});
+if (problemModalBackdrop) problemModalBackdrop.addEventListener('click', () => {
+  problemSaveModal.style.display = 'none';
+});
 if (viewProblemListBtn) viewProblemListBtn.addEventListener('click', showProblemList);
   if (closeProblemListModal) closeProblemListModal.addEventListener('click', () => {
     document.getElementById('problemListModal').style.display = 'none';
@@ -3805,7 +3826,6 @@ function collectProblemData() {
   return {
     title: document.getElementById('problemTitleInput').value.trim(),
     description: document.getElementById('problemDescInput').value.trim(),
-    limit: document.getElementById('problemLimitInput').value.trim(),
     inputCount: parseInt(document.getElementById('inputCount').value) || 1,
     outputCount: parseInt(document.getElementById('outputCount').value) || 1,
     gridRows: parseInt(document.getElementById('gridRows').value) || 6,
@@ -3885,7 +3905,6 @@ function loadProblem(key) {
 
     document.getElementById('problemTitleInput').value = data.title || '';
     document.getElementById('problemDescInput').value = data.description || '';
-    document.getElementById('problemLimitInput').value = data.limit || '';
 
     // truth table
     const tbodyRows = document.querySelectorAll('#testcaseTable tbody tr');

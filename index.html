@@ -220,14 +220,23 @@
           </div>
         </div>
       </div>
-      <div style="margin-top:1rem; width:100%; max-width:500px; margin-left:auto; margin-right:auto; text-align:center;">
-        <input id="problemTitleInput" type="text" placeholder="문제 제목" style="width:100%; margin-bottom:0.5rem;"/>
-        <textarea id="problemDescInput" rows="3" placeholder="문제 설명" style="width:100%; margin-bottom:0.5rem;"></textarea>
-        <textarea id="problemLimitInput" rows="2" placeholder="제한 조건" style="width:100%;"></textarea>
-      </div>
       <div style="margin-top:0.5rem; text-align:center;">
         <button id="saveProblemBtn">문제 저장</button>
         <button id="viewProblemListBtn">불러오기</button>
+      </div>
+    </div>
+
+    <!-- 문제 저장 모달 -->
+    <div id="problemSaveModal" class="modal" style="display:none;">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <h3>문제 정보 입력</h3>
+        <input id="problemTitleInput" type="text" placeholder="문제 제목" class="modal-input" />
+        <textarea id="problemDescInput" rows="3" placeholder="문제 설명" class="modal-textarea"></textarea>
+        <div class="modal-buttons">
+          <button id="confirmSaveProblemBtn" class="btn-primary">저장하기</button>
+          <button id="cancelSaveProblemBtn" class="btn-secondary">취소</button>
+        </div>
       </div>
     </div>
 

@@ -67,6 +67,14 @@ html, body {
     flex-shrink: 0;
   }
 
+  #problem-screen .rightPanel {
+    overflow-x: auto;
+  }
+
+  #problem-screen #testcaseTable {
+    width: max-content;
+  }
+
   #mainScreen button {
     margin: 10px;
     padding: 12px 20px;
