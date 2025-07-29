@@ -393,7 +393,6 @@
       { "inputs": { "IN1": 1, "IN2": 1, "IN3": 1, "IN4": 1, "S1": 1, "S0": 0 }, "expected": { "OUT1": 1 } },
       { "inputs": { "IN1": 1, "IN2": 1, "IN3": 1, "IN4": 1, "S1": 1, "S0": 1 }, "expected": { "OUT1": 1 } }
     ],
-    {
   "13": [
     {
       "inputs": {
@@ -1614,7 +1613,6 @@
       }
     }
   ]
-}
   },
   "levelDescriptions": {
     "1": {
@@ -1748,7 +1746,6 @@
         { "IN1": 0, "IN2": 0, "IN3": 0, "IN4": 1, "S1": 1, "S0": 1, "OUT1": 1 }
       ]
     },
-    {
   "13": {
     "title": "Stage 13: 2-bit Comparator",
     "desc": "두 2비트 숫자 A와 B를 비교하여 A > B, A = B, A < B 중 하나를 출력합니다.",
