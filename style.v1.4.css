@@ -59,7 +59,7 @@ html, body {
   }
 
   .rightPanel {
-    width: 200px;
+    max=width: 600px;
     display: flex;
     flex-direction: column;
     align-items: center;
