@@ -1642,16 +1642,10 @@ function renderLevelGrid(stageList) {
     }
     btn.onclick = () => {
       returnToEditScreen();
-      if (level === 13) {
-        document.getElementById('levelScreen').style.display = 'none';
-        document.getElementById('problem-screen').style.display = 'block';
-        initProblemEditor();
-      } else {
-        startLevel(level);
-        document.getElementById("levelScreen").style.display = "none";
-        document.getElementById("gameScreen").style.display = "flex";
-        document.body.classList.add('game-active');
-      }
+      startLevel(level);
+      document.getElementById("levelScreen").style.display = "none";
+      document.getElementById("gameScreen").style.display = "flex";
+      document.body.classList.add('game-active');
     };
     levelGrid.appendChild(btn);
   });
@@ -3042,9 +3036,6 @@ function showClearedModal(level) {
 
 function isLevelUnlocked(level) {
   const cleared = clearedLevelsFromDb;
-  if (level === 13) {
-    return [1,2,3,4,5,6].every(s => cleared.includes(s));
-  }
   for (let idx = 0; idx < chapterData.length; idx++) {
     const chap = chapterData[idx];
     if (chap.stages.includes(level)) {
