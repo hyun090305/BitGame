@@ -712,7 +712,7 @@ function getFlowClass(curr, next) {
 
 /* 2) INPUT 블록 토글 설정 (0 ↔ 1) */
 function setupInputToggles() {
-  document.querySelectorAll('.cell.block').forEach(cell => {
+  grid.querySelectorAll('.cell.block').forEach(cell => {
     if (cell.dataset.type === 'INPUT') {
       cell.dataset.value = '0';
       cell.textContent = cell.dataset.name;
@@ -733,7 +733,7 @@ function setupInputToggles() {
 /* 3) 회로 평가 엔진 (BFS 기반) */
 function evaluateCircuit() {
   // 1) 모든 블록과 INPUT 초기값 준비
-  const blocks = Array.from(document.querySelectorAll('.cell.block'));
+  const blocks = Array.from(grid.querySelectorAll('.cell.block'));
   const values = new Map();
   blocks
     .filter(b => b.dataset.type === 'INPUT')
@@ -772,7 +772,7 @@ function evaluateCircuit() {
       junction.classList.toggle('active', v);
     });
 
-  const allBlocks = Array.from(document.querySelectorAll('.cell.block'));
+  const allBlocks = Array.from(grid.querySelectorAll('.cell.block'));
   allBlocks
     .filter(b => b.dataset.type === "JUNCTION")
     .forEach(junction => {
@@ -1031,7 +1031,7 @@ document.addEventListener("keydown", (e) => {
       } else {
         setupBlockPanel(currentLevel);
       }
-      document.querySelectorAll('.cell').forEach(cell => delete cell.onclick);
+      grid.querySelectorAll('.cell').forEach(cell => delete cell.onclick);
     }
   }
   if (e.key === "Control") {
@@ -1083,7 +1083,7 @@ async function gradeLevelAnimated(level) {
   const testCases = levelAnswers[level];
   if (!testCases) return;
 
-  const allBlocks = Array.from(document.querySelectorAll('.cell.block'));
+  const allBlocks = Array.from(grid.querySelectorAll('.cell.block'));
   let junctionError = false;
 
   allBlocks
@@ -1105,7 +1105,7 @@ async function gradeLevelAnimated(level) {
     return;
   }
   let outputError = false;
-  Array.from(document.querySelectorAll('.cell.block[data-type="OUTPUT"]'))
+  Array.from(grid.querySelectorAll('.cell.block[data-type="OUTPUT"]'))
     .forEach(output => {
       const inputs = getIncomingBlocks(output);
       if (inputs.length > 1) {
@@ -1127,7 +1127,7 @@ async function gradeLevelAnimated(level) {
     .map(block => block.name);
 
   // 🔍 현재 화면에 있는 OUTPUT 셀 조사
-  const actualOutputCells = Array.from(document.querySelectorAll('.cell.block[data-type="OUTPUT"]'));
+  const actualOutputCells = Array.from(grid.querySelectorAll('.cell.block[data-type="OUTPUT"]'));
   const actualOutputNames = actualOutputCells.map(cell => cell.dataset.name);
 
   // 🔒 [2] 누락된 출력 블록이 있으면 채점 막기
@@ -1148,8 +1148,8 @@ async function gradeLevelAnimated(level) {
   const gradingArea = document.getElementById("gradingArea");
   gradingArea.innerHTML = "<b>채점 결과:</b><br><br>";
 
-  const inputs = document.querySelectorAll('.cell.block[data-type="INPUT"]');
-  const outputs = document.querySelectorAll('.cell.block[data-type="OUTPUT"]');
+  const inputs = grid.querySelectorAll('.cell.block[data-type="INPUT"]');
+  const outputs = grid.querySelectorAll('.cell.block[data-type="OUTPUT"]');
 
   for (const test of testCases) {
     inputs.forEach(input => {
@@ -1231,7 +1231,7 @@ async function gradeLevelAnimated(level) {
       clearedBtn.textContent += `\n✅`;
       markLevelCleared(level);
     }
-    const blocks = Array.from(document.querySelectorAll(".cell.block"));
+    const blocks = Array.from(grid.querySelectorAll(".cell.block"));
 
     // ② 타입별 개수 집계
     const blockCounts = blocks.reduce((acc, cell) => {
@@ -1241,7 +1241,7 @@ async function gradeLevelAnimated(level) {
     }, {});
 
     // ③ 도선 수 집계
-    const usedWires = document.querySelectorAll(".cell.wire").length;
+    const usedWires = grid.querySelectorAll(".cell.wire").length;
     const hintsUsed = parseInt(localStorage.getItem(`hintsUsed_${level}`) || '0');
     const nickname = localStorage.getItem("username") || "익명";
     const rankingsRef = db.ref(`rankings/${level}`);
@@ -2758,11 +2758,11 @@ function loadCircuit(key) {
 
 function highlightOutputErrors() {
   // 1) 기존 에러 표시 제거
-  document.querySelectorAll('.cell[data-type="OUTPUT"].error')
+  grid.querySelectorAll('.cell[data-type="OUTPUT"].error')
     .forEach(el => el.classList.remove('error'));
 
   // 2) 각 OUTPUT 블록에 들어오는 전선 수 세기
-  document.querySelectorAll('.cell[data-type="OUTPUT"]')
+  grid.querySelectorAll('.cell[data-type="OUTPUT"]')
     .forEach(block => {
       const incomingCount = wires.filter(w => w.end === block).length;
       if (incomingCount >= 2) {
@@ -2813,7 +2813,7 @@ function getGridData() {
 }
 
 function getWireData() {
-  return Array.from(document.querySelectorAll('#grid .cell.wire')).map(cell => {
+  return Array.from(grid.querySelectorAll('.cell.wire')).map(cell => {
     const dir = Array.from(cell.classList)
       .find(c => c.startsWith('wire-'))
       .split('-')[1];
@@ -2822,12 +2822,12 @@ function getWireData() {
 }
 // 이전: countUsedBlocks 미정의
 function countUsedBlocks() {
-  return document.querySelectorAll('#grid .cell.block').length;
+  return grid.querySelectorAll('.cell.block').length;
 }
 
 // 이전: countUsedWires 미정의
 function countUsedWires() {
-  return document.querySelectorAll('#grid .cell.wire').length;
+  return grid.querySelectorAll('.cell.wire').length;
 }
 // 이전: clearGrid 미정의
 function clearGrid() {
@@ -3784,7 +3784,7 @@ function computeOutputs() {
   rows.forEach(tr=>{
     const inputs=Array.from(tr.querySelectorAll('td input')).slice(0,inputCnt);
     inNames.forEach((name,idx)=>{
-      const cell=document.querySelector('.cell.block[data-type="INPUT"][data-name="'+name+'"]');
+      const cell=grid.querySelector('.cell.block[data-type="INPUT"][data-name="'+name+'"]');
       if(cell){
         cell.dataset.value=inputs[idx].value==='1'?'1':'0';
         cell.classList.toggle('active', cell.dataset.value==='1');
@@ -3792,7 +3792,7 @@ function computeOutputs() {
     });
     evaluateCircuit();
     outNames.forEach((name,idx)=>{
-      const cell=document.querySelector('.cell.block[data-type="OUTPUT"][data-name="'+name+'"]');
+      const cell=grid.querySelector('.cell.block[data-type="OUTPUT"][data-name="'+name+'"]');
       const val=cell? (cell.dataset.val==='true' || cell.dataset.val==='1'? '1':'0') :'0';
       tr.querySelectorAll('td input')[inputCnt+idx].value=val;
     });
@@ -4248,7 +4248,7 @@ async function gradeProblemAnimated(key, problem) {
     expected: Object.fromEntries(outNames.map(n=>[n,row[n]]))
   }));
 
-  const allBlocks = Array.from(document.querySelectorAll('.cell.block'));
+  const allBlocks = Array.from(grid.querySelectorAll('.cell.block'));
   let junctionError = false;
   allBlocks.filter(b=>b.dataset.type==='JUNCTION').forEach(junction=>{
     const inputs = getIncomingBlocks(junction);
@@ -4260,7 +4260,7 @@ async function gradeProblemAnimated(key, problem) {
     overlay.style.display='none';
     isScoring=false; return; }
   let outputError=false;
-  Array.from(document.querySelectorAll('.cell.block[data-type="OUTPUT"]'))
+  Array.from(grid.querySelectorAll('.cell.block[data-type="OUTPUT"]'))
     .forEach(output=>{
       const inputs=getIncomingBlocks(output);
       if(inputs.length>1){output.classList.add('error');outputError=true;}else{output.classList.remove('error');}
@@ -4272,7 +4272,7 @@ async function gradeProblemAnimated(key, problem) {
   }
 
   const requiredOutputs = outNames;
-  const actualOutputCells = Array.from(document.querySelectorAll('.cell.block[data-type="OUTPUT"]'));
+  const actualOutputCells = Array.from(grid.querySelectorAll('.cell.block[data-type="OUTPUT"]'));
   const actualOutputNames = actualOutputCells.map(c=>c.dataset.name);
   const missingOutputs = requiredOutputs.filter(n=>!actualOutputNames.includes(n));
   if(missingOutputs.length>0){
@@ -4288,8 +4288,8 @@ async function gradeProblemAnimated(key, problem) {
   const gradingArea=document.getElementById('gradingArea');
   gradingArea.innerHTML='<b>채점 결과:</b><br><br>';
 
-  const inputs=document.querySelectorAll('.cell.block[data-type="INPUT"]');
-  const outputs=document.querySelectorAll('.cell.block[data-type="OUTPUT"]');
+  const inputs=grid.querySelectorAll('.cell.block[data-type="INPUT"]');
+  const outputs=grid.querySelectorAll('.cell.block[data-type="OUTPUT"]');
 
   for(const test of testCases){
     inputs.forEach(input=>{
@@ -4340,11 +4340,11 @@ async function gradeProblemAnimated(key, problem) {
   document.getElementById('returnToEditBtn').addEventListener('click',returnToEditScreen);
 
   if(allCorrect && key){
-    const blocks=Array.from(document.querySelectorAll('.cell.block'));
+    const blocks=Array.from(grid.querySelectorAll('.cell.block'));
     const blockCounts=blocks.reduce((acc,c)=>{
       const t=c.dataset.type; acc[t]=(acc[t]||0)+1; return acc;
     },{});
-    const usedWires=document.querySelectorAll('.cell.wire').length;
+    const usedWires=grid.querySelectorAll('.cell.wire').length;
     const hintsUsed=parseInt(localStorage.getItem(`hintsUsed_${key}`)||'0');
     saveProblemRanking(key, blockCounts, usedWires, hintsUsed);
   }
