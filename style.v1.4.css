@@ -1288,7 +1288,11 @@ html, body {
   }
 
   #chapterScreen,
-  #levelScreen,
+  #levelScreen {
+    min-height: auto;
+    overflow-y: auto;
+  }
+
   #module-editor-screen {
     min-height: 100vh;
   }
