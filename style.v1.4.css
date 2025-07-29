@@ -87,6 +87,11 @@ html, body {
     font-size: 1.2rem;
   }
 
+  /* 모듈 기능 보류에 따라 메인화면의 모듈 관리 버튼 숨김 */
+  #manageModulesBtn {
+    display: none;
+  }
+
   #guestbookArea button {
     margin: 10px;
     padding: 12px 20px;
