@@ -1044,6 +1044,7 @@ html, body {
     background: #333;
     color: #fff;
     padding: 4px 8px;
+    z-index: 1001;
     border-radius: 4px;
     font-size: 12px;
     white-space: nowrap;
