@@ -15,6 +15,13 @@ let GRID_COLS = 6;
 let wires = [];  // { path, start, end } 객체를 저장할 배열
 let problemOutputsValid = false;
 
+// 초기 로딩 관련
+const initialTasks = [];
+function hideLoadingScreen() {
+  const el = document.getElementById('loadingScreen');
+  if (el) el.style.display = 'none';
+}
+
 
 // --- 모바일 터치 기반 드래그 지원 폴리필 ---
 function enableTouchDrag() {
@@ -1338,7 +1345,7 @@ function loadClearedLevelsFromDb() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  loadStageData().then(() => {
+  const p = loadStageData().then(() => {
     const prevMenuBtn = document.getElementById('prevStageBtnMenu');
     const nextMenuBtn = document.getElementById('nextStageBtnMenu');
 
@@ -1356,8 +1363,9 @@ window.addEventListener("DOMContentLoaded", () => {
       btn.textContent = levelTitles[level] ?? `Stage ${level}`;
     });
     enableTouchDrag();
-    loadClearedLevelsFromDb();
+    return loadClearedLevelsFromDb();
   });
+  initialTasks.push(p);
 });
 
 function markLevelCleared(level) {
@@ -2436,40 +2444,45 @@ function setupGoogleAuth() {
     .map(id => document.getElementById(id))
     .filter(Boolean);
 
-  if (!buttons.length) return;
+  if (!buttons.length) return Promise.resolve();
 
-  firebase.auth().onAuthStateChanged(user => {
-    buttons.forEach(btn => btn.textContent = user ? '로그아웃' : 'Google 로그인');
-    if (user) {
-      handleGoogleLogin(user);
-      document.getElementById('usernameModal').style.display = 'none';
-    } else if (!localStorage.getItem('username')) {
-      promptForUsername();
-    }
+  return new Promise(resolve => {
+    let done = false;
+    firebase.auth().onAuthStateChanged(user => {
+      buttons.forEach(btn => btn.textContent = user ? '로그아웃' : 'Google 로그인');
+      if (user) {
+        handleGoogleLogin(user);
+        document.getElementById('usernameModal').style.display = 'none';
+      } else if (!localStorage.getItem('username')) {
+        promptForUsername();
+      }
+      if (!done) { done = true; resolve(); }
+    });
+
+    buttons.forEach(btn => btn.addEventListener('click', () => {
+      const user = firebase.auth().currentUser;
+      if (user) {
+        firebase.auth().signOut();
+      } else {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        firebase.auth().signInWithPopup(provider).catch(err => {
+          alert(`로그인에 실패했습니다. 코드: ${err.code}, 메시지: ${err.message}`);
+          console.error(err);
+        });
+      }
+    }));
   });
-
-  buttons.forEach(btn => btn.addEventListener('click', () => {
-    const user = firebase.auth().currentUser;
-    if (user) {
-      firebase.auth().signOut();
-    } else {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      firebase.auth().signInWithPopup(provider).catch(err => {
-        alert(`로그인에 실패했습니다. 코드: ${err.code}, 메시지: ${err.message}`);
-        console.error(err);
-      });
-    }
-  }));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   const uname = localStorage.getItem("username") || "익명";
   document.getElementById("guestUsername").textContent = uname;
 
-  showOverallRanking();  // 전체 랭킹 표시
+  initialTasks.push(showOverallRanking());  // 전체 랭킹 표시
+  initialTasks.push(setupGoogleAuth());
 
   setupKeyToggles();
-  setupGoogleAuth();
+  Promise.all(initialTasks).then(hideLoadingScreen);
 });
 
 function handleGoogleLogin(user) {
@@ -2887,7 +2900,7 @@ function showOverallRanking() {
   listEl.innerHTML = "로딩 중…";
 
   // rankings 아래 모든 레벨의 데이터를 한 번에 읽어옵니다.
-  db.ref("rankings").once("value", snap => {  // :contentReference[oaicite:1]{index=1}
+  return db.ref("rankings").once("value").then(snap => {
     const data = {};  // { nickname: { stages:Set, blocks:sum, wires:sum, lastTimestamp } }
 
     snap.forEach(levelSnap => {
