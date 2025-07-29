@@ -14,6 +14,7 @@ let GRID_ROWS = 6;
 let GRID_COLS = 6;
 let wires = [];  // { path, start, end } 객체를 저장할 배열
 let problemOutputsValid = false;
+let problemScreenPrev = null;  // 문제 출제 화면 진입 이전 화면 기록
 
 // 초기 로딩 관련
 const initialTasks = [];
@@ -221,7 +222,11 @@ function setupKeyToggles() {
 
 // ——— wire 미리보기 완전 삭제 함수 ———
 function clearWirePreview() {
-  document.querySelectorAll('.cell.wire-preview').forEach(cell => {
+  // 기존에는 페이지 내의 모든 그리드 셀을 탐색하던 탓에
+  // 문제 제작 화면에서 게임 화면으로 돌아왔을 때 숨겨진 셀까지
+  // 영향받아 회로 계산이 잘못되는 문제가 있었다.
+  // 현재 활성화된 grid 내부에서만 처리하도록 수정한다.
+  grid.querySelectorAll('.cell.wire-preview').forEach(cell => {
     cell.classList.remove('wire-preview');
   });
 }
@@ -481,7 +486,8 @@ document.addEventListener("click", e => {
 // 드래그 종료 시 INPUT/OUTPUT 복구
 document.addEventListener("dragend", () => {
   if (["INPUT", "OUTPUT"].includes(lastDraggedType)) {
-    const found = [...document.querySelectorAll(".cell")].some(
+    // 현재 사용 중인 grid 내부에서만 존재 여부를 확인한다.
+    const found = [...grid.querySelectorAll(".cell")].some(
       c => c.dataset.type === lastDraggedType
     );
     if (!found && lastDraggedIcon) {
@@ -531,7 +537,8 @@ document.querySelectorAll('.trash-area').forEach(trashEl => {
 function updateOneWireDirection(cell) {
   const index = parseInt(cell.dataset.index);
   const gridSize = GRID_COLS;
-  const cells = document.querySelectorAll(".cell");
+  // 다른 화면의 그리드 셀까지 포함하지 않도록 현재 grid 기준으로 조회
+  const cells = grid.querySelectorAll(".cell");
 
   const row = Math.floor(index / gridSize);
   const col = index % gridSize;
@@ -621,7 +628,8 @@ function drawWirePath(path) {
 }
 function getNeighbourWireDirs(cell) {
   const idx = +cell.dataset.index, g = GRID_COLS;
-  const cells = document.querySelectorAll(".cell");
+  // 현재 보이는 grid의 셀만 고려한다
+  const cells = grid.querySelectorAll(".cell");
   const map = [
     { d: "wire-up", n: idx - g },
     { d: "wire-down", n: idx + g },
@@ -933,7 +941,9 @@ function startLevel(level) {
 
 
 function clearGrid() {
-  const cells = document.querySelectorAll(".cell");
+  // 문제 제작용 그리드가 DOM에 남아 있을 때 다른 셀까지
+  // 초기화되는 문제를 막기 위해 현재 grid 기준으로만 처리
+  const cells = grid.querySelectorAll(".cell");
   cells.forEach(cell => {
     cell.className = "cell";
     cell.textContent = "";
@@ -3331,6 +3341,7 @@ if (createProblemBtn) {
   createProblemBtn.addEventListener('click', () => {
     firstScreen.style.display   = 'none';
     problemScreen.style.display = 'block';
+    problemScreenPrev = 'main';
     initProblemEditor();
   });
 }
@@ -3338,11 +3349,14 @@ if (createProblemBtn) {
 //— ⑤ 문제 출제 화면 → 메인
 backToMainFromProblem.addEventListener('click', () => {
   problemScreen.style.display = 'none';
-  if (firstScreen.style.display !== 'none') {
+  if (problemScreenPrev === 'userProblems') {
+    userProblemsScreen.style.display = 'block';
+  } else if (problemScreenPrev === 'main') {
     firstScreen.style.display = 'flex';
   } else {
     document.getElementById('levelScreen').style.display = 'block';
   }
+  problemScreenPrev = null;
 });
 
 if (backToChapterFromUserProblems) {
@@ -3356,6 +3370,7 @@ if (openProblemCreatorBtn) {
   openProblemCreatorBtn.addEventListener('click', () => {
     userProblemsScreen.style.display = 'none';
     problemScreen.style.display = 'block';
+    problemScreenPrev = 'userProblems';
     initProblemEditor();
   });
 }
