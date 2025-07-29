@@ -756,6 +756,15 @@ function evaluateCircuit() {
       out.dataset.val = v
       out.classList.toggle('active', v);
     });
+
+  // JUNCTION 블록의 현재 상태에 따라 테두리 점선 표시
+  blocks
+    .filter(b => b.dataset.type === 'JUNCTION')
+    .forEach(junction => {
+      const v = values.get(junction) || false;
+      junction.classList.toggle('active', v);
+    });
+
   const allBlocks = Array.from(document.querySelectorAll('.cell.block'));
   allBlocks
     .filter(b => b.dataset.type === "JUNCTION")
@@ -952,7 +961,7 @@ function setupBlockPanel(level) {
         case 'NOT': return 'NOT 게이트: 입력의 반대(0↔1)를 출력';
         case 'INPUT': return `입력(${block.name}): 클릭하여 0↔1 전환 가능`;
         case 'OUTPUT': return `출력(${block.name})`;
-        case 'JUNCTION': return 'JUNCTION: 하나의 신호를 여러 방향으로 나눔(입력이 하나만 연결되어야 함)';
+        case 'JUNCTION': return 'JUNCTION: 하나의 신호를 여러 방향으로 나눔(입력이 하나만 연결되어야 함, 값이 1이면 테두리 점선 표시)';
         default: return '';
       }
     })();
@@ -4188,7 +4197,7 @@ function setupCustomBlockPanel(problem) {
         case 'NOT': return 'NOT 게이트: 입력의 반대 출력';
         case 'INPUT': return `입력(${block.name})`;
         case 'OUTPUT': return `출력(${block.name})`;
-        case 'JUNCTION': return 'JUNCTION: 신호 분기';
+        case 'JUNCTION': return 'JUNCTION: 신호 분기(1일 때 테두리 점선 표시)';
         default: return '';
       }
     })();
