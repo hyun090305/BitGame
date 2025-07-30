@@ -2573,7 +2573,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setupKeyToggles();
   Promise.all(initialTasks).then(() => {
     hideLoadingScreen();
-    maybeStartTutorial();
   });
 });
 
