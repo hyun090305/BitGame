@@ -4232,11 +4232,12 @@ function renderHintButtons(hints, progress, cooldownUntil) {
   const hasAvailable = progress < hints.length && now >= cooldownUntil;
   hints.forEach((hint, i) => {
     const btn = document.createElement('button');
+    btn.appendChild(document.createTextNode(`힌트 ${i + 1} (${hint.type})`));
+    btn.appendChild(document.createElement('br'));
     const lockIcon = document.createElement('span');
     lockIcon.className = 'lock-icon';
     lockIcon.textContent = i < progress ? '🔓' : '🔒';
     btn.appendChild(lockIcon);
-    btn.appendChild(document.createTextNode(` 힌트 ${i + 1} (${hint.type})`));
     btn.onclick = () => showHint(i);
     if (i < progress) {
       btn.classList.add('open');

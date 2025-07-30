@@ -1836,11 +1836,12 @@ html, body {
   font-size: 1rem;
   margin: 0.25rem;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 #hintButtons .lock-icon {
-  margin-right: 0.25rem;
+  margin-top: 0.25rem;
 }
 #hintButtons button.open {
   background-color: #87CEFA;
