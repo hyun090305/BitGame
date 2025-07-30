@@ -918,24 +918,32 @@ html, body {
   /* style.css 맨 아래에 추가 */
 
   /* 튜토리얼 모달 배경을 살짝 더 어둡게 */
-  .tutorial-modal {
-    background-color: rgba(0, 0, 0, 0.7);
-  }
+.tutorial-modal {
+  background-color: rgba(0, 0, 0, 0.7);
+  overflow-y: auto;
+  padding: 1rem;
+}
 
-  .tutorial-modal .tutorial-content {
-    width: 100%;
-    max-width: none;
-    max-height: 100dvh;
-    overflow-y: auto;
-    border-radius: 0;
-    padding: 2rem;
-    box-sizing: border-box;
-    box-shadow: none;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
+.tutorial-modal .tutorial-content {
+  width: 100%;
+  max-width: 600px;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 2rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  height: 100%;
+}
+
+.tutorial-modal .tut-controls {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
 
   /* 버튼 스타일 강조 */
   .tutorial-modal .tut-controls button {
