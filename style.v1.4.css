@@ -1823,6 +1823,12 @@ html, body {
   background-color: #e6ffe6;
 }
 
+#hintButtons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 /* Hint modal buttons */
 #hintButtons button {
   width: 100px;
