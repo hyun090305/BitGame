@@ -1596,7 +1596,7 @@ function showLevelIntro(level, callback) {
   modal.style.backgroundColor = "white";
   document.getElementById("startLevelBtn").onclick = () => {
     modal.style.display = "none";
-    callback();  // 실제 레벨 시작
+    showStageTutorial(level, callback);  // 레벨별 튜토리얼 표시 후 시작
   };
 }
 
@@ -2019,6 +2019,17 @@ const tutorialSteps = [
   }
 ];
 
+// 레벨별 튜토리얼 이미지와 문구
+const stageTutorials = {
+  1: [{ img: 'assets/not-gate-tutorial.gif', desc: 'NOT 게이트는 입력 신호와 반대되는 신호를 전달합니다.' }],
+  2: [{ img: 'assets/or-gate-tutorial.gif', desc: 'OR 게이트는 여러 개의 입력 신호 중 하나라도 1이 있으면 1을 전달하고, 모두 0이면 0을 전달합니다.' }],
+  3: [{ img: 'assets/and-gate-tutorial.gif', desc: 'AND 게이트는 여러 개의 입력 신호가 모두 1이면 1을 전달하고, 모두 0이면 0을 전달합니다.' }],
+  7: [
+    { img: 'assets/junction-tutorial.gif', desc: 'JUNC 블록은 하나의 입력 신호를 그대로 전달합니다.' },
+    { img: 'assets/multi-input-tutorial.gif', desc: 'OR, AND 게이트는 최대 3개의 입력 신호를 받을 수 있습니다.' }
+  ]
+};
+
 // 2) 모달 관련 변수
 let tutIndex = 0;
 const tutModal = document.getElementById("tutorialModal");
@@ -2087,6 +2098,37 @@ function maybeStartTutorial() {
   if (!localStorage.getItem('tutorialCompleted')) {
     showTutorial(0);
   }
+}
+
+// 레벨별 튜토리얼 표시 함수
+function showStageTutorial(level, done) {
+  const steps = stageTutorials[level];
+  if (!steps) {
+    done();
+    return;
+  }
+  const modal = document.getElementById('stageTutorialModal');
+  const img = document.getElementById('stageTutImg');
+  const desc = document.getElementById('stageTutDesc');
+  const btn = document.getElementById('stageTutBtn');
+  let idx = 0;
+  const render = () => {
+    const step = steps[idx];
+    img.src = step.img;
+    desc.textContent = step.desc;
+    btn.textContent = (idx === steps.length - 1) ? '시작하기' : '다음';
+  };
+  btn.onclick = () => {
+    if (idx < steps.length - 1) {
+      idx++;
+      render();
+    } else {
+      modal.style.display = 'none';
+      done();
+    }
+  };
+  render();
+  modal.style.display = 'flex';
 }
 
 // 5) ESC 키로 닫기
