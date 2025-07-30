@@ -2749,7 +2749,6 @@ function loadCircuit(key) {
       return;
     }
   }
-  updateUsedCounts(data.usedBlocks, data.usedWires);
   // ▼ circuit 불러올 때 사용된 INPUT/OUTPUT 블록 아이콘 숨기기
   const panel = document.getElementById('blockPanel');
   // data.grid 에 복원된 셀 상태 중 INPUT/OUTPUT 타입만 골라 이름(name) 리스트 생성
@@ -2888,11 +2887,6 @@ function placeWireAt(x, y, dir) {
   const cell = grid.querySelectorAll('.cell')[idx];
   cell.classList.add('wire', `wire-${dir}`);
   cell.dataset.type = 'WIRE';
-}
-
-function updateUsedCounts(blockCount, wireCount) {
-  document.getElementById('usedBlocksCount').textContent = blockCount;
-  document.getElementById('usedWiresCount').textContent = wireCount;
 }
 
 function attachInputClickHandlers(cell) {
@@ -3564,10 +3558,7 @@ function loadModule(moduleKey) {
     }));
   }
 
-  // 5) 사용량 카운트 업데이트
-  updateUsedCounts(data.usedBlocks, data.usedWires);
-
-  // 6) 사용된 INPUT/OUTPUT 아이콘 숨기기
+  // 5) 사용된 INPUT/OUTPUT 아이콘 숨기기
   const panel = document.getElementById('moduleBlockPanel');
   const usedNames = data.grid
     .filter(s => s.type === 'INPUT' || s.type === 'OUTPUT')
