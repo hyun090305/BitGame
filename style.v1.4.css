@@ -1835,6 +1835,12 @@ html, body {
   height: 100px;
   font-size: 1rem;
   margin: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#hintButtons .lock-icon {
+  margin-right: 0.25rem;
 }
 #hintButtons button.open {
   background-color: #87CEFA;
