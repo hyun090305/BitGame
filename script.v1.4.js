@@ -2588,6 +2588,15 @@ function handleGoogleLogin(user) {
       if (dbName) {
         localStorage.setItem(`googleNickname_${uid}`, dbName);
         applyGoogleNickname(dbName, oldName);
+      } else if (oldName) {
+        // 기존 게스트 닉네임을 구글 계정에 연결하고 병합 여부를 묻는다
+        localStorage.setItem(`googleNickname_${uid}`, oldName);
+        db.ref(`google/${uid}`).set({ uid, nickname: oldName });
+        document.getElementById('guestUsername').textContent = oldName;
+        loadClearedLevelsFromDb().then(() => {
+          showMergeModal(oldName, oldName);
+          maybeStartTutorial();
+        });
       } else {
         promptForGoogleNickname(oldName, uid);
       }
