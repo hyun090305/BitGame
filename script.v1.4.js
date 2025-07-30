@@ -1947,7 +1947,11 @@ document.getElementById("showIntroBtn").addEventListener("click", () => {
 
 document.getElementById('hintBtn').addEventListener('click', () => {
   if (currentLevel == null) {
-    alert('먼저 스테이지를 시작하세요.');
+    if (currentCustomProblem) {
+      alert('힌트가 없습니다.');
+    } else {
+      alert('먼저 스테이지를 시작하세요.');
+    }
     return;
   }
   openHintModal(currentLevel);
@@ -2722,6 +2726,8 @@ function loadCircuit(key) {
         //cell.textContent = `${state.name}(${state.value})`;
       else if (state.type === 'OUTPUT')
         cell.textContent = state.name;
+      else if (state.type === 'JUNCTION')
+        cell.textContent = 'JUNC';
       else
         cell.textContent = state.type;
       cell.draggable = true;
@@ -3539,6 +3545,8 @@ function loadModule(moduleKey) {
         //cell.textContent = `${state.name}(${state.value})`;
       else if (state.type === 'OUTPUT')
         cell.textContent = state.name;
+      else if (state.type === 'JUNCTION')
+        cell.textContent = 'JUNC';
       else
         cell.textContent = state.type;
       cell.draggable = true;
@@ -3956,6 +3964,7 @@ function loadProblem(key) {
         cell.classList.add('block');
         if (state.type === 'INPUT') cell.textContent = state.name;
         else if (state.type === 'OUTPUT') cell.textContent = state.name;
+        else if (state.type === 'JUNCTION') cell.textContent = 'JUNC';
         else cell.textContent = state.type;
         cell.draggable = true;
       }
