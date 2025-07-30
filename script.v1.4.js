@@ -3990,7 +3990,9 @@ function renderUserProblemList() {
     } else {
       snapshot.forEach(child => {
         const data = child.val();
-        const solved = data.ranking ? Object.keys(data.ranking).length : 0;
+        const solved = data.ranking
+          ? new Set(Object.values(data.ranking).map(r => r.nickname)).size
+          : 0;
         const likes = data.likes ? Object.keys(data.likes).length : 0;
         const isMine = data.creator === nickname;
         const solvedByMe = data.ranking && Object.values(data.ranking)
