@@ -4229,9 +4229,11 @@ function renderHintButtons(hints, progress, cooldownUntil) {
   const container = document.getElementById('hintButtons');
   container.innerHTML = '';
   const now = Date.now();
+  const hasAvailable = progress < hints.length && now >= cooldownUntil;
   hints.forEach((hint, i) => {
     const btn = document.createElement('button');
-    btn.textContent = `힌트 ${i + 1} (${hint.type})`;
+    const lock = i < progress ? '🔓' : '🔒';
+    btn.textContent = `${lock} 힌트 ${i + 1} (${hint.type})`;
     btn.onclick = () => showHint(i);
     if (i < progress) {
       btn.classList.add('open');
@@ -4246,6 +4248,8 @@ function renderHintButtons(hints, progress, cooldownUntil) {
     }
     container.appendChild(btn);
   });
+  const adBtn = document.getElementById('adHintBtn');
+  if (adBtn) adBtn.style.display = hasAvailable ? 'none' : 'inline-block';
 }
 
 function openHintModal(stage) {
@@ -4256,6 +4260,8 @@ function openHintModal(stage) {
   }
   currentHintStage = stage;
   document.getElementById('hintModal').style.display = 'flex';
+  const adBtn = document.getElementById('adHintBtn');
+  if (adBtn) adBtn.onclick = () => alert('준비중인 기능입니다.');
   loadHintProgress(stage, progress => {
     currentHintProgress = progress;
     checkHintCooldown(until => {
