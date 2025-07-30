@@ -2657,7 +2657,7 @@ function renderSavedList() {
     li.style.margin = '6px 0';
     const label = data.stageId != null
       ? `Stage ${String(data.stageId).padStart(2, '0')}`
-      : `Problem ${data.problemKey}`;
+      : `Problem ${data.problemTitle || data.problemKey}`;
     li.innerHTML = `
       <strong>${label}</strong>
       — ${new Date(data.timestamp).toLocaleString()}
@@ -2784,6 +2784,7 @@ function saveCircuit() {
   const data = {
     stageId: currentLevel,
     problemKey: currentCustomProblemKey,
+    problemTitle: currentCustomProblem ? currentCustomProblem.title : undefined,
     timestamp: new Date().toISOString(),
     grid: getGridData(),
     wires: getWireData(),
