@@ -2029,6 +2029,7 @@ const tutNext = document.getElementById("tutNextBtn");
 const tutClose = document.getElementById("tutCloseBtn");
 const tutBtn = document.getElementById("tutorialBtn");
 const tutImg = document.getElementById("tutImg");
+const tutFinish = document.getElementById("tutFinishBtn");
 
 // 3) 모달 표시 함수
 function showTutorial(idx) {
@@ -2046,7 +2047,8 @@ function showTutorial(idx) {
   }
 
   tutPrev.disabled = (idx === 0);
-  tutNext.disabled = (idx === tutorialSteps.length - 1);
+  tutNext.style.display = (idx === tutorialSteps.length - 1) ? 'none' : 'inline-block';
+  tutFinish.style.display = (idx === tutorialSteps.length - 1) ? 'inline-block' : 'none';
   tutModal.style.display = "flex";
 }
 
@@ -2054,9 +2056,38 @@ function showTutorial(idx) {
 tutBtn.addEventListener("click", () => showTutorial(0));
 tutPrev.addEventListener("click", () => showTutorial(tutIndex - 1));
 tutNext.addEventListener("click", () => showTutorial(tutIndex + 1));
+tutFinish.addEventListener("click", finishTutorial);
 tutClose.addEventListener("click", () => {
   tutModal.style.display = "none";
 });
+
+function getLowestUnclearedStage() {
+  const stages = Object.keys(levelTitles)
+    .map(n => parseInt(n, 10))
+    .sort((a, b) => a - b);
+  for (const s of stages) {
+    if (!clearedLevelsFromDb.includes(s)) return s;
+  }
+  return stages[0] || 1;
+}
+
+function finishTutorial() {
+  localStorage.setItem('tutorialCompleted', 'true');
+  tutModal.style.display = 'none';
+  lockOrientationLandscape();
+  startLevel(getLowestUnclearedStage());
+  document.body.classList.add('game-active');
+  document.getElementById('firstScreen').style.display = 'none';
+  document.getElementById('chapterScreen').style.display = 'none';
+  document.getElementById('levelScreen').style.display = 'none';
+  gameScreen.style.display = 'flex';
+}
+
+function maybeStartTutorial() {
+  if (!localStorage.getItem('tutorialCompleted')) {
+    showTutorial(0);
+  }
+}
 
 // 5) ESC 키로 닫기
 document.addEventListener("keydown", e => {
@@ -2187,7 +2218,7 @@ function onInitialUsernameSubmit() {
       localStorage.setItem("username", name);
       document.getElementById("usernameModal").style.display = "none";
       document.getElementById("guestUsername").textContent = name;
-      loadClearedLevelsFromDb();
+      loadClearedLevelsFromDb().then(maybeStartTutorial);
     }
   });
 }
@@ -2222,13 +2253,15 @@ function onGoogleUsernameSubmit(oldName, uid) {
       db.ref(`google/${uid}`).set({ uid, nickname: name });
       document.getElementById("usernameModal").style.display = "none";
       document.getElementById("guestUsername").textContent = name;
-      loadClearedLevelsFromDb();
-      if (oldName && oldName !== name) {
-        showMergeModal(oldName, name);
-      } else {
-        registerUsernameIfNeeded(name);
-        showOverallRanking();
-      }
+      loadClearedLevelsFromDb().then(() => {
+        if (oldName && oldName !== name) {
+          showMergeModal(oldName, name);
+        } else {
+          registerUsernameIfNeeded(name);
+          showOverallRanking();
+        }
+        maybeStartTutorial();
+      });
     }
   });
 }
@@ -2496,7 +2529,10 @@ document.addEventListener("DOMContentLoaded", () => {
   initialTasks.push(setupGoogleAuth());
 
   setupKeyToggles();
-  Promise.all(initialTasks).then(hideLoadingScreen);
+  Promise.all(initialTasks).then(() => {
+    hideLoadingScreen();
+    maybeStartTutorial();
+  });
 });
 
 function handleGoogleLogin(user) {
@@ -2522,15 +2558,17 @@ function applyGoogleNickname(name, oldName) {
   if (oldName !== name) {
     localStorage.setItem('username', name);
     document.getElementById('guestUsername').textContent = name;
-    loadClearedLevelsFromDb();
-    if (oldName) {
-      showMergeModal(oldName, name);
-    } else {
-      registerUsernameIfNeeded(name);
-    }
+    loadClearedLevelsFromDb().then(() => {
+      if (oldName) {
+        showMergeModal(oldName, name);
+      } else {
+        registerUsernameIfNeeded(name);
+      }
+      maybeStartTutorial();
+    });
   } else {
     registerUsernameIfNeeded(name);
-    loadClearedLevelsFromDb();
+    loadClearedLevelsFromDb().then(maybeStartTutorial);
   }
 }
 
