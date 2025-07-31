@@ -2255,6 +2255,22 @@ document.getElementById("gradeButton").addEventListener("click", () => {
   }
 });
 
+const modalGoogleLoginBtn = document.getElementById('modalGoogleLoginBtn');
+const usernameSubmitBtn = document.getElementById('usernameSubmit');
+const usernameModalHeading = document.querySelector('#usernameModal h2');
+const defaultModalGoogleLoginDisplay = modalGoogleLoginBtn ? modalGoogleLoginBtn.style.display : '';
+const defaultUsernameSubmitText = usernameSubmitBtn ? usernameSubmitBtn.textContent : '';
+const defaultUsernameModalHeading = usernameModalHeading ? usernameModalHeading.textContent : '';
+
+function restoreUsernameModalDefaults() {
+  if (modalGoogleLoginBtn) modalGoogleLoginBtn.style.display = defaultModalGoogleLoginDisplay;
+  if (usernameSubmitBtn) {
+    usernameSubmitBtn.textContent = defaultUsernameSubmitText;
+    usernameSubmitBtn.onclick = onInitialUsernameSubmit;
+  }
+  if (usernameModalHeading) usernameModalHeading.textContent = defaultUsernameModalHeading;
+}
+
 function promptForUsername() {
   const input = document.getElementById("usernameInput");
   const errorDiv = document.getElementById("usernameError");
@@ -2290,8 +2306,10 @@ function promptForGoogleNickname(oldName, uid) {
   const errorDiv = document.getElementById("usernameError");
   input.value = oldName || "";
   errorDiv.textContent = "";
-  document.getElementById("usernameSubmit").onclick = () =>
-    onGoogleUsernameSubmit(oldName, uid);
+  if (modalGoogleLoginBtn) modalGoogleLoginBtn.style.display = 'none';
+  if (usernameSubmitBtn) usernameSubmitBtn.textContent = '닉네임 등록';
+  if (usernameModalHeading) usernameModalHeading.textContent = 'Google 닉네임 등록';
+  usernameSubmitBtn.onclick = () => onGoogleUsernameSubmit(oldName, uid);
   document.getElementById("usernameModal").style.display = "flex";
 }
 
@@ -2310,6 +2328,7 @@ function onGoogleUsernameSubmit(oldName, uid) {
     db.ref('usernames').orderByValue().equalTo(name).once('value', snap => {
       if (snap.exists() && name !== oldName) {
         document.getElementById('usernameModal').style.display = 'none';
+        restoreUsernameModalDefaults();
         showAccountClaimModal(name, oldName, uid);
       } else {
         if (!snap.exists()) {
@@ -2320,6 +2339,7 @@ function onGoogleUsernameSubmit(oldName, uid) {
         localStorage.setItem(`googleNickname_${uid}`, name);
         db.ref(`google/${uid}`).set({ uid, nickname: name });
         document.getElementById('usernameModal').style.display = 'none';
+        restoreUsernameModalDefaults();
         document.getElementById('guestUsername').textContent = name;
         loadClearedLevelsFromDb().then(() => {
           if (oldName && oldName !== name) {
@@ -2569,8 +2589,11 @@ function setupGoogleAuth() {
       if (user) {
         handleGoogleLogin(user);
         document.getElementById('usernameModal').style.display = 'none';
-      } else if (!localStorage.getItem('username')) {
-        promptForUsername();
+      } else {
+        restoreUsernameModalDefaults();
+        if (!localStorage.getItem('username')) {
+          promptForUsername();
+        }
       }
       if (!done) { done = true; resolve(); }
     });
