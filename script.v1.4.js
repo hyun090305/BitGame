@@ -15,6 +15,7 @@ let GRID_COLS = 6;
 let wires = [];  // { path, start, end } 객체를 저장할 배열
 let problemOutputsValid = false;
 let problemScreenPrev = null;  // 문제 출제 화면 진입 이전 화면 기록
+let loginFromMainScreen = false;  // 메인 화면에서 로그인 여부 추적
 
 // 초기 로딩 관련
 const initialTasks = [];
@@ -2599,6 +2600,7 @@ function setupGoogleAuth() {
     });
 
     buttons.forEach(btn => btn.addEventListener('click', () => {
+      loginFromMainScreen = (btn.id === 'googleLoginBtn');
       const user = firebase.auth().currentUser;
       if (user) {
         firebase.auth().signOut();
@@ -2695,6 +2697,7 @@ function showMergeModal(oldName, newName) {
   details.innerHTML = '<p>현재 로컬 진행 상황을 Google 계정과 병합하시겠습니까?</p>';
   confirm.textContent = '네';
   cancel.textContent = '제 계정이 아닙니다';
+  cancel.style.display = loginFromMainScreen ? 'none' : '';
   modal.style.display = 'flex';
   confirm.onclick = () => {
     modal.style.display = 'none';
@@ -2705,9 +2708,13 @@ function showMergeModal(oldName, newName) {
   };
   cancel.onclick = () => {
     modal.style.display = 'none';
-    registerUsernameIfNeeded(newName);
-    loadClearedLevelsFromDb();
-    showOverallRanking();
+    if (!loginFromMainScreen && firebase.auth().currentUser) {
+      promptForGoogleNickname(oldName, firebase.auth().currentUser.uid);
+    } else {
+      registerUsernameIfNeeded(newName);
+      loadClearedLevelsFromDb();
+      showOverallRanking();
+    }
   };
 }
 
@@ -2728,6 +2735,7 @@ function showAccountClaimModal(targetName, oldName, uid) {
     `;
     confirm.textContent = '네';
     cancel.textContent = '제 계정이 아닙니다';
+    cancel.style.display = loginFromMainScreen ? 'none' : '';
     modal.style.display = 'flex';
     confirm.onclick = () => {
       modal.style.display = 'none';
@@ -2750,7 +2758,9 @@ function showAccountClaimModal(targetName, oldName, uid) {
     };
     cancel.onclick = () => {
       modal.style.display = 'none';
-      document.getElementById('usernameModal').style.display = 'flex';
+      if (!loginFromMainScreen) {
+        promptForGoogleNickname(oldName, uid);
+      }
     };
   });
 }
