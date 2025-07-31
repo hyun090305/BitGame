@@ -2637,35 +2637,36 @@ function handleGoogleLogin(user) {
   if (user.email) {
     localStorage.setItem(`googleEmail_${uid}`, user.email);
   }
-  const storedName = localStorage.getItem(`googleNickname_${uid}`);
   const oldName = localStorage.getItem('username');
-  if (storedName) {
-    applyGoogleNickname(storedName, oldName);
-  } else {
-    db.ref(`google/${uid}`).once('value').then(snap => {
-      const dbName = snap.exists() ? snap.val().nickname : null;
-      if (dbName) {
-        localStorage.setItem(`googleNickname_${uid}`, dbName);
-        applyGoogleNickname(dbName, oldName);
-      } else if (user.displayName) {
-        const name = user.displayName;
-        localStorage.setItem(`googleNickname_${uid}`, name);
-        db.ref(`google/${uid}`).set({ uid, nickname: name });
-        applyGoogleNickname(name, oldName);
-      } else if (oldName && !loginFromMainScreen) {
-        // 기존 게스트 닉네임을 구글 계정에 연결하고 병합 여부를 묻는다
-        localStorage.setItem(`googleNickname_${uid}`, oldName);
-        db.ref(`google/${uid}`).set({ uid, nickname: oldName });
-        document.getElementById('guestUsername').textContent = oldName;
-        loadClearedLevelsFromDb().then(() => {
-          showMergeModal(oldName, oldName);
-          maybeStartTutorial();
-        });
-      } else {
-        promptForGoogleNickname(oldName, uid);
-      }
-    });
-  }
+  db.ref(`google/${uid}`).once('value').then(snap => {
+    const dbName = snap.exists() ? snap.val().nickname : null;
+    const localGoogleName = localStorage.getItem(`googleNickname_${uid}`);
+    if (dbName) {
+      // 항상 DB의 최신 닉네임을 사용한다
+      localStorage.setItem(`googleNickname_${uid}`, dbName);
+      applyGoogleNickname(dbName, oldName);
+    } else if (localGoogleName) {
+      // DB에 없으면 로컬에 저장된 이름을 등록한다
+      db.ref(`google/${uid}`).set({ uid, nickname: localGoogleName });
+      applyGoogleNickname(localGoogleName, oldName);
+    } else if (user.displayName) {
+      const name = user.displayName;
+      localStorage.setItem(`googleNickname_${uid}`, name);
+      db.ref(`google/${uid}`).set({ uid, nickname: name });
+      applyGoogleNickname(name, oldName);
+    } else if (oldName && !loginFromMainScreen) {
+      // 기존 게스트 닉네임을 구글 계정에 연결하고 병합 여부를 묻는다
+      localStorage.setItem(`googleNickname_${uid}`, oldName);
+      db.ref(`google/${uid}`).set({ uid, nickname: oldName });
+      document.getElementById('guestUsername').textContent = oldName;
+      loadClearedLevelsFromDb().then(() => {
+        showMergeModal(oldName, oldName);
+        maybeStartTutorial();
+      });
+    } else {
+      promptForGoogleNickname(oldName, uid);
+    }
+  });
 }
 
 function applyGoogleNickname(name, oldName) {
