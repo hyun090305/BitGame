@@ -14,7 +14,8 @@
 
 html, body {
   overflow-y: auto;
-  overflow-x: hidden;
+  /* allow horizontal scrolling when content exceeds viewport width */
+  overflow-x: auto;
 }
   #controls, #blockPanel {
     margin: 15px;
