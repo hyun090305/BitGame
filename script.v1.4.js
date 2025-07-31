@@ -1334,6 +1334,26 @@ function fetchClearedLevels(nickname) {
   });
 }
 
+function fetchProgressSummary(nickname) {
+  return db.ref('rankings').once('value').then(snap => {
+    let cleared = 0;
+    let blocks = 0;
+    let wires = 0;
+    snap.forEach(levelSnap => {
+      levelSnap.forEach(recSnap => {
+        const v = recSnap.val();
+        if (v.nickname === nickname) {
+          cleared++;
+          blocks += Object.values(v.blockCounts || {}).reduce((s, x) => s + x, 0);
+          wires += v.usedWires || 0;
+          return true; // stop iterating this level
+        }
+      });
+    });
+    return { cleared, blocks, wires };
+  });
+}
+
 function refreshClearedUI() {
   document.querySelectorAll('.levelBtn').forEach(btn => {
     const level = parseInt(btn.dataset.level, 10);
@@ -2282,29 +2302,36 @@ function onGoogleUsernameSubmit(oldName, uid) {
     errorDiv.textContent = "닉네임을 입력해주세요.";
     return;
   }
-  db.ref("usernames").orderByValue().equalTo(name).once("value", snap => {
-    if (snap.exists() && name !== oldName) {
-      errorDiv.textContent = "이미 사용 중인 닉네임입니다.";
-    } else {
-      if (!snap.exists()) {
-        const id = db.ref("usernames").push().key;
-        db.ref(`usernames/${id}`).set(name);
-      }
-      localStorage.setItem("username", name);
-      localStorage.setItem(`googleNickname_${uid}`, name);
-      db.ref(`google/${uid}`).set({ uid, nickname: name });
-      document.getElementById("usernameModal").style.display = "none";
-      document.getElementById("guestUsername").textContent = name;
-      loadClearedLevelsFromDb().then(() => {
-        if (oldName && oldName !== name) {
-          showMergeModal(oldName, name);
-        } else {
-          registerUsernameIfNeeded(name);
-          showOverallRanking();
-        }
-        maybeStartTutorial();
-      });
+  db.ref('google').orderByChild('nickname').equalTo(name).once('value', gSnap => {
+    if (gSnap.exists()) {
+      errorDiv.textContent = "이미 있는 닉네임입니다.";
+      return;
     }
+    db.ref('usernames').orderByValue().equalTo(name).once('value', snap => {
+      if (snap.exists() && name !== oldName) {
+        document.getElementById('usernameModal').style.display = 'none';
+        showAccountClaimModal(name, oldName, uid);
+      } else {
+        if (!snap.exists()) {
+          const id = db.ref('usernames').push().key;
+          db.ref(`usernames/${id}`).set(name);
+        }
+        localStorage.setItem('username', name);
+        localStorage.setItem(`googleNickname_${uid}`, name);
+        db.ref(`google/${uid}`).set({ uid, nickname: name });
+        document.getElementById('usernameModal').style.display = 'none';
+        document.getElementById('guestUsername').textContent = name;
+        loadClearedLevelsFromDb().then(() => {
+          if (oldName && oldName !== name) {
+            showMergeModal(oldName, name);
+          } else {
+            registerUsernameIfNeeded(name);
+            showOverallRanking();
+          }
+          maybeStartTutorial();
+        });
+      }
+    });
   });
 }
 
@@ -2639,8 +2666,12 @@ function removeUsername(name) {
 
 function showMergeModal(oldName, newName) {
   const modal = document.getElementById('mergeModal');
+  const details = document.getElementById('mergeDetails');
   const confirm = document.getElementById('mergeConfirmBtn');
   const cancel = document.getElementById('mergeCancelBtn');
+  details.innerHTML = '<p>현재 로컬 진행 상황을 Google 계정과 병합하시겠습니까?</p>';
+  confirm.textContent = '네';
+  cancel.textContent = '제 계정이 아닙니다';
   modal.style.display = 'flex';
   confirm.onclick = () => {
     modal.style.display = 'none';
@@ -2655,6 +2686,50 @@ function showMergeModal(oldName, newName) {
     loadClearedLevelsFromDb();
     showOverallRanking();
   };
+}
+
+function showAccountClaimModal(targetName, oldName, uid) {
+  fetchProgressSummary(targetName).then(prog => {
+    const modal = document.getElementById('mergeModal');
+    const details = document.getElementById('mergeDetails');
+    const confirm = document.getElementById('mergeConfirmBtn');
+    const cancel = document.getElementById('mergeCancelBtn');
+    details.innerHTML = `
+      <p><b>${targetName}</b> 닉네임의 진행 상황</p>
+      <ul>
+        <li>클리어 레벨 수: ${prog.cleared}</li>
+        <li>사용 블록 수: ${prog.blocks}</li>
+        <li>사용 도선 수: ${prog.wires}</li>
+      </ul>
+      <p>이 계정과 진행 상황을 합치겠습니까?</p>
+    `;
+    confirm.textContent = '네';
+    cancel.textContent = '제 계정이 아닙니다';
+    modal.style.display = 'flex';
+    confirm.onclick = () => {
+      modal.style.display = 'none';
+      localStorage.setItem('username', targetName);
+      localStorage.setItem(`googleNickname_${uid}`, targetName);
+      db.ref(`google/${uid}`).set({ uid, nickname: targetName });
+      document.getElementById('guestUsername').textContent = targetName;
+      const after = () => {
+        loadClearedLevelsFromDb().then(() => {
+          showOverallRanking();
+          maybeStartTutorial();
+        });
+      };
+      if (oldName && oldName !== targetName) {
+        mergeProgress(oldName, targetName).then(after);
+      } else {
+        registerUsernameIfNeeded(targetName);
+        after();
+      }
+    };
+    cancel.onclick = () => {
+      modal.style.display = 'none';
+      document.getElementById('usernameModal').style.display = 'flex';
+    };
+  });
 }
 
 function isRecordBetter(a, b) {
