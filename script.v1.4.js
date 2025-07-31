@@ -2630,16 +2630,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function handleGoogleLogin(user) {
   const uid = user.uid;
-  const localName = localStorage.getItem(`googleNickname_${uid}`);
+  // 구글 계정의 기본 정보를 로컬에 저장해 둔다
+  if (user.displayName) {
+    localStorage.setItem(`googleDisplayName_${uid}`, user.displayName);
+  }
+  if (user.email) {
+    localStorage.setItem(`googleEmail_${uid}`, user.email);
+  }
+  const storedName = localStorage.getItem(`googleNickname_${uid}`);
   const oldName = localStorage.getItem('username');
-  if (localName) {
-    applyGoogleNickname(localName, oldName);
+  if (storedName) {
+    applyGoogleNickname(storedName, oldName);
   } else {
     db.ref(`google/${uid}`).once('value').then(snap => {
       const dbName = snap.exists() ? snap.val().nickname : null;
       if (dbName) {
         localStorage.setItem(`googleNickname_${uid}`, dbName);
         applyGoogleNickname(dbName, oldName);
+      } else if (user.displayName) {
+        const name = user.displayName;
+        localStorage.setItem(`googleNickname_${uid}`, name);
+        db.ref(`google/${uid}`).set({ uid, nickname: name });
+        applyGoogleNickname(name, oldName);
       } else if (oldName && !loginFromMainScreen) {
         // 기존 게스트 닉네임을 구글 계정에 연결하고 병합 여부를 묻는다
         localStorage.setItem(`googleNickname_${uid}`, oldName);
