@@ -966,6 +966,17 @@ html, body {
     border-radius: 4px;
   }
 
+/* Ensure stage-specific tutorial modal is scrollable on small screens */
+#stageTutorialModal {
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+#stageTutorialModal .modal-content {
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
   /* ── ① 공통: 페이지 전체 배경 (비게임·게임 모두) ── */
   html, body {
     height: 100%;
