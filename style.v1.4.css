@@ -935,7 +935,8 @@ html, body {
   flex-direction: column;
   justify-content: flex-start;
   align-items: stretch;
-  height: 100%;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
 }
 
 .tutorial-modal .tut-controls {
