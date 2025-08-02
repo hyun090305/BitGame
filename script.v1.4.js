@@ -2305,7 +2305,8 @@ function onInitialUsernameSubmit() {
 function promptForGoogleNickname(oldName, uid) {
   const input = document.getElementById("usernameInput");
   const errorDiv = document.getElementById("usernameError");
-  input.value = oldName || "";
+  const suggested = oldName || localStorage.getItem(`googleDisplayName_${uid}`) || "";
+  input.value = suggested;
   errorDiv.textContent = "";
   if (modalGoogleLoginBtn) modalGoogleLoginBtn.style.display = 'none';
   if (usernameSubmitBtn) usernameSubmitBtn.textContent = '닉네임 등록';
@@ -2649,11 +2650,6 @@ function handleGoogleLogin(user) {
       // DB에 없으면 로컬에 저장된 이름을 등록한다
       db.ref(`google/${uid}`).set({ uid, nickname: localGoogleName });
       applyGoogleNickname(localGoogleName, oldName);
-    } else if (user.displayName) {
-      const name = user.displayName;
-      localStorage.setItem(`googleNickname_${uid}`, name);
-      db.ref(`google/${uid}`).set({ uid, nickname: name });
-      applyGoogleNickname(name, oldName);
     } else if (oldName && !loginFromMainScreen) {
       // 기존 게스트 닉네임을 구글 계정에 연결하고 병합 여부를 묻는다
       localStorage.setItem(`googleNickname_${uid}`, oldName);
