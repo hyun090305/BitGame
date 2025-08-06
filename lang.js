@@ -17,6 +17,7 @@ const translations = {
     manageModulesBtn: {text: "모듈 관리"},
     copyStatusBtn: {text: "📋 공유하기"},
     googleLoginBtn: {text: "Google 로그인"},
+    languageBtn: {text: "English"},
     guestbookTitle: {text: "📝 개발자(이현준)한테 글 남기기"},
     guestNicknameLabel: {html: "닉네임: <b id='guestUsername'></b>"},
     guestMessage: {placeholder: "남기고 싶은 말..."},
@@ -66,6 +67,11 @@ const translations = {
     openProblemCreatorBtn: {text: "문제 만들기"},
     rankingTitle: {text: "🏆 랭킹"},
     hintTitle: {text: "💡 힌트"},
+    hintLabel: {text: "힌트"},
+    hintReady: {text: "다음 힌트를 바로 볼 수 있습니다."},
+    hintCountdown: {text: "다음 힌트까지 {time}"},
+    noHints: {text: "힌트가 없습니다."},
+    startStageFirst: {text: "먼저 스테이지를 시작하세요."},
     adHintBtn: {text: "광고 보고 힌트 얻기"},
     closeHintBtn: {text: "닫기"},
     closeHintMessageBtn: {text: "닫기"},
@@ -114,11 +120,12 @@ const translations = {
     manageModulesBtn: {text: "Manage Modules"},
     copyStatusBtn: {text: "📋 Share"},
     googleLoginBtn: {text: "Google Sign-In"},
-    guestbookTitle: {text: "📝 Leave a message for the developer (Hyunjoon Lee)"},
+    languageBtn: {text: "한국어"},
+    guestbookTitle: {text: "📝 Leave a message for the developer (Hyeonjun Lee)"},
     guestNicknameLabel: {html: "Nickname: <b id='guestUsername'></b>"},
     guestMessage: {placeholder: "Message..."},
     guestSubmitBtn: {text: "Submit"},
-    coffeeBtn: {text: "☕ Buy the developer (Hyunjoon Lee) a coffee"},
+    coffeeBtn: {text: "☕ Buy the developer (Hyeonjun Lee) a coffee"},
     shareTitle: {text: "🔗 Shareable content"},
     copyShareBtn: {text: "Copy"},
     closeShareBtn: {text: "Close"},
@@ -163,6 +170,11 @@ const translations = {
     openProblemCreatorBtn: {text: "Create Problem"},
     rankingTitle: {text: "🏆 Ranking"},
     hintTitle: {text: "💡 Hint"},
+    hintLabel: {text: "Hint"},
+    hintReady: {text: "You can view the next hint now."},
+    hintCountdown: {text: "Time until next hint {time}"},
+    noHints: {text: "No hints available."},
+    startStageFirst: {text: "Start a stage first."},
     adHintBtn: {text: "Watch ad to get hint"},
     closeHintBtn: {text: "Close"},
     closeHintMessageBtn: {text: "Close"},
@@ -195,7 +207,7 @@ const translations = {
   }
 };
 
-const currentLang = navigator.language && navigator.language.startsWith('ko') ? 'ko' : 'en';
+let currentLang = localStorage.getItem('lang') || (navigator.language && navigator.language.startsWith('ko') ? 'ko' : 'en');
 
 function applyTranslations() {
   const langMap = translations[currentLang];
@@ -210,10 +222,25 @@ function applyTranslations() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', applyTranslations);
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('lang', lang);
+  location.reload();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyTranslations();
+  const langBtn = document.getElementById('languageBtn');
+  if (langBtn) {
+    langBtn.addEventListener('click', () => {
+      setLanguage(currentLang === 'ko' ? 'en' : 'ko');
+    });
+  }
+});
 
 window.currentLang = currentLang;
 window.t = function(id) {
   const entry = translations[currentLang][id] || translations['en'][id];
   return entry && (entry.text || entry.html) || id;
 };
+window.setLanguage = setLanguage;

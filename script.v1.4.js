@@ -103,7 +103,8 @@ let levelDescriptions = {};
 let levelHints = {};
 
 function loadStageData() {
-  return fetch('levels.json')
+  const file = (typeof currentLang !== 'undefined' && currentLang === 'en') ? 'levels_en.json' : 'levels.json';
+  return fetch(file)
     .then(res => res.json())
     .then(data => {
       levelTitles = data.levelTitles;
@@ -1969,9 +1970,9 @@ document.getElementById("showIntroBtn").addEventListener("click", () => {
 document.getElementById('hintBtn').addEventListener('click', () => {
   if (currentLevel == null) {
     if (currentCustomProblem) {
-      alert('힌트가 없습니다.');
+      alert(t('noHints'));
     } else {
-      alert('먼저 스테이지를 시작하세요.');
+      alert(t('startStageFirst'));
     }
     return;
   }
@@ -2012,44 +2013,86 @@ function showIntroModal(level) {
 // script.v1.0.js 맨 아래, 기존 코드 뒤에 붙여 주세요.
 
 // 1) 튜토리얼 데이터 정의
-const tutorialSteps = [
-  {
-    title: "블록 배치하기",
-    desc: "왼쪽 패널에서 블록을 드래그하여 그리드 위에 배치해보세요.\n- AND, OR, NOT, IN/OUT 블록이 있어요.",
-    img: "assets/tutorial-place-blocks.gif"
-  },
-  {
-    title: "전선 그리기",
-    desc: "[Ctrl] 키를 누른 상태로 블록 간을 드래그하면 전선 모드가 활성화됩니다.\n드래그를 놓으면 두 블록이 연결돼요.",
-    img: "assets/tutorial-draw-wire.gif"
-  },
-  {
-    title: "전선 삭제하기",
-    desc: "[Shift] 키를 누른 상태에서 전선을 드래그하거나 블록을 드래그하여 전선을 삭제할 수 있어요.",
-    img: "assets/tutorial-delete-wire.gif"
-  },
-  {
-    title: "회로 채점하기",
-    desc: "오른쪽 ‘채점하기’ 버튼을 누르면 테스트 케이스별 결과가 표시됩니다.\n정확한 회로를 설계해 보세요!",
-    img: "assets/tutorial-evaluate.gif"
-  },
-  {
-    title: "스테이지 안내 보기",
-    desc: "하단 메뉴의 ℹ️ 버튼을 눌러 스테이지별 진리표와 설명을 확인할 수 있습니다.",
-    img: "assets/tutorial-see-info.gif"
-  }
-];
-
-// 레벨별 튜토리얼 이미지와 문구
-const stageTutorials = {
-  1: [{ img: 'assets/not-gate-tutorial.gif', desc: 'NOT 게이트는 입력 신호와 반대되는 신호를 전달합니다.' }],
-  2: [{ img: 'assets/or-gate-tutorial.gif', desc: 'OR 게이트는 여러 개의 입력 신호 중 하나라도 1이 있으면 1을 전달하고, 모두 0이면 0을 전달합니다.' }],
-  3: [{ img: 'assets/and-gate-tutorial.gif', desc: 'AND 게이트는 여러 개의 입력 신호가 모두 1이면 1을 전달하고, 모두 0이면 0을 전달합니다.' }],
-  7: [
-    { img: 'assets/junction-tutorial.gif', desc: 'JUNC 블록은 하나의 입력 신호를 그대로 전달합니다.' },
-    { img: 'assets/multi-input-tutorial.gif', desc: 'OR, AND 게이트는 최대 3개의 입력 신호를 받을 수 있습니다.' }
+const tutorialStepsData = {
+  ko: [
+    {
+      title: "블록 배치하기",
+      desc: "왼쪽 패널에서 블록을 드래그하여 그리드 위에 배치해보세요.\n- AND, OR, NOT, IN/OUT 블록이 있어요.",
+      img: "assets/tutorial-place-blocks.gif"
+    },
+    {
+      title: "전선 그리기",
+      desc: "[Ctrl] 키를 누른 상태로 블록 간을 드래그하면 전선 모드가 활성화됩니다.\n드래그를 놓으면 두 블록이 연결돼요.",
+      img: "assets/tutorial-draw-wire.gif"
+    },
+    {
+      title: "전선 삭제하기",
+      desc: "[Shift] 키를 누른 상태에서 전선을 드래그하거나 블록을 드래그하여 전선을 삭제할 수 있어요.",
+      img: "assets/tutorial-delete-wire.gif"
+    },
+    {
+      title: "회로 채점하기",
+      desc: "오른쪽 ‘채점하기’ 버튼을 누르면 테스트 케이스별 결과가 표시됩니다.\n정확한 회로를 설계해 보세요!",
+      img: "assets/tutorial-evaluate.gif"
+    },
+    {
+      title: "스테이지 안내 보기",
+      desc: "하단 메뉴의 ℹ️ 버튼을 눌러 스테이지별 진리표와 설명을 확인할 수 있습니다.",
+      img: "assets/tutorial-see-info.gif"
+    }
+  ],
+  en: [
+    {
+      title: "Placing Blocks",
+      desc: "Drag blocks from the left panel onto the grid.\n- Includes AND, OR, NOT, and IN/OUT blocks.",
+      img: "assets/tutorial-place-blocks.gif"
+    },
+    {
+      title: "Drawing Wires",
+      desc: "Hold [Ctrl] and drag between blocks to enter wire mode.\nRelease to connect the blocks.",
+      img: "assets/tutorial-draw-wire.gif"
+    },
+    {
+      title: "Deleting Wires",
+      desc: "Hold [Shift] and drag a wire or block to remove wires.",
+      img: "assets/tutorial-delete-wire.gif"
+    },
+    {
+      title: "Grading Circuits",
+      desc: "Press the 'Grade' button on the right to see results for each test case.\nDesign the correct circuit!",
+      img: "assets/tutorial-evaluate.gif"
+    },
+    {
+      title: "Viewing Stage Info",
+      desc: "Use the ℹ️ button in the menu to see each stage's truth table and description.",
+      img: "assets/tutorial-see-info.gif"
+    }
   ]
 };
+const tutorialSteps = tutorialStepsData[currentLang];
+
+// 레벨별 튜토리얼 이미지와 문구
+const stageTutorialsData = {
+  ko: {
+    1: [{ img: 'assets/not-gate-tutorial.gif', desc: 'NOT 게이트는 입력 신호와 반대되는 신호를 전달합니다.' }],
+    2: [{ img: 'assets/or-gate-tutorial.gif', desc: 'OR 게이트는 여러 개의 입력 신호 중 하나라도 1이 있으면 1을 전달하고, 모두 0이면 0을 전달합니다.' }],
+    3: [{ img: 'assets/and-gate-tutorial.gif', desc: 'AND 게이트는 여러 개의 입력 신호가 모두 1이면 1을 전달하고, 모두 0이면 0을 전달합니다.' }],
+    7: [
+      { img: 'assets/junction-tutorial.gif', desc: 'JUNC 블록은 하나의 입력 신호를 그대로 전달합니다.' },
+      { img: 'assets/multi-input-tutorial.gif', desc: 'OR, AND 게이트는 최대 3개의 입력 신호를 받을 수 있습니다.' }
+    ]
+  },
+  en: {
+    1: [{ img: 'assets/not-gate-tutorial.gif', desc: 'The NOT gate outputs the opposite of its input.' }],
+    2: [{ img: 'assets/or-gate-tutorial.gif', desc: 'The OR gate outputs 1 if any input is 1, otherwise 0.' }],
+    3: [{ img: 'assets/and-gate-tutorial.gif', desc: 'The AND gate outputs 1 only when all inputs are 1.' }],
+    7: [
+      { img: 'assets/junction-tutorial.gif', desc: 'The JUNC block passes a single input signal unchanged.' },
+      { img: 'assets/multi-input-tutorial.gif', desc: 'OR and AND gates can accept up to three input signals.' }
+    ]
+  }
+};
+const stageTutorials = stageTutorialsData[currentLang];
 
 // 2) 모달 관련 변수
 let tutIndex = 0;
@@ -2137,7 +2180,7 @@ function showStageTutorial(level, done) {
     const step = steps[idx];
     img.src = step.img;
     desc.textContent = step.desc;
-    btn.textContent = (idx === steps.length - 1) ? '시작하기' : '다음';
+    btn.textContent = (idx === steps.length - 1) ? t('stageTutBtn') : t('tutNextBtn');
   };
   btn.onclick = () => {
     if (idx < steps.length - 1) {
@@ -4338,12 +4381,13 @@ function startHintTimer(until) {
   function update() {
     const diff = until - Date.now();
     if (diff <= 0) {
-      timerEl.textContent = '다음 힌트를 바로 볼 수 있습니다.';
+      timerEl.textContent = t('hintReady');
     } else {
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-      timerEl.textContent = `다음 힌트까지 ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      timerEl.textContent = t('hintCountdown').replace('{time}', timeStr);
     }
   }
   update();
@@ -4357,7 +4401,7 @@ function renderHintButtons(hints, progress, cooldownUntil) {
   const hasAvailable = progress < hints.length && now >= cooldownUntil;
   hints.forEach((hint, i) => {
     const btn = document.createElement('button');
-    btn.appendChild(document.createTextNode(`힌트 ${i + 1} (${hint.type})`));
+    btn.appendChild(document.createTextNode(`${t('hintLabel')} ${i + 1} (${hint.type})`));
     btn.appendChild(document.createElement('br'));
     const lockIcon = document.createElement('span');
     lockIcon.className = 'lock-icon';
@@ -4384,7 +4428,7 @@ function renderHintButtons(hints, progress, cooldownUntil) {
 function openHintModal(stage) {
   const hints = levelHints[`stage${stage}`]?.hints;
   if (!hints) {
-    alert('힌트가 없습니다.');
+    alert(t('noHints'));
     return;
   }
   currentHintStage = stage;
