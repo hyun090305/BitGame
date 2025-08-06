@@ -2113,10 +2113,15 @@ function showTutorial(idx) {
   tutTitle.textContent = step.title;
   tutDesc.textContent = step.desc;
 
-  // 이미지가 있으면 보이게, 없으면 숨기기
+  // 이미지(또는 영상)가 있으면 보이게, 없으면 숨기기
   if (step.img) {
     tutImg.src = step.img;
     tutImg.style.display = "block";
+    if (tutImg.tagName === 'VIDEO') {
+      tutImg.playbackRate = 2;
+      tutImg.currentTime = 0;
+      tutImg.play();
+    }
   } else {
     tutImg.style.display = "none";
   }
@@ -2180,6 +2185,11 @@ function showStageTutorial(level, done) {
     const step = steps[idx];
     img.src = step.img;
     desc.textContent = step.desc;
+    if (img.tagName === 'VIDEO') {
+      img.playbackRate = 2;
+      img.currentTime = 0;
+      img.play();
+    }
     btn.textContent = (idx === steps.length - 1) ? t('stageTutBtn') : t('tutNextBtn');
   };
   btn.onclick = () => {
