@@ -5,6 +5,7 @@ const urlsToCache = [
   '/style.v1.4.css',
   '/script.v1.4.js',
   '/levels.json',
+  '/levels_en.json',
   '/assets/icon-192.png',
   '/assets/icon-512.png',
   '/assets/background.png',
