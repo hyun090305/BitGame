@@ -21,13 +21,13 @@
   <body>
     <div id="loadingScreen">
       <div class="loader"></div>
-      <p>데이터 불러오는 중...</p>
+      <p id="loadingText">데이터 불러오는 중...</p>
     </div>
     <div id="usernameModal" class="modal" style="display:none;">
       <div class="modal-content">
-        <h2>로그인 또는 게스트 플레이</h2>
+        <h2 id="loginTitle">로그인 또는 게스트 플레이</h2>
         <button id="modalGoogleLoginBtn" class="btn-primary" style="margin-bottom:1rem;">Google 계정으로 로그인</button>
-        <p class="info-text">또는 닉네임을 입력하여 게스트로 플레이하세요.<br>닉네임은 랭킹에 표시되며 변경할 수 없습니다.</p>
+        <p class="info-text" id="loginInfo">또는 닉네임을 입력하여 게스트로 플레이하세요.<br>닉네임은 랭킹에 표시되며 변경할 수 없습니다.</p>
         <input type="text" id="usernameInput" placeholder="닉네임 입력" />
         <div id="usernameError" style="color:red; margin-top:0.5rem;"></div>
         <button id="usernameSubmit">게스트로 시작하기</button>
@@ -35,9 +35,9 @@
     </div>
     <div id="mergeModal" class="modal" style="display:none;">
       <div class="modal-content">
-        <h2>진행 상황 병합</h2>
+        <h2 id="mergeTitle">진행 상황 병합</h2>
         <div id="mergeDetails">
-          <p>현재 로컬 진행 상황을 Google 계정과 병합하시겠습니까?</p>
+          <p id="mergeMessage">현재 로컬 진행 상황을 Google 계정과 병합하시겠습니까?</p>
         </div>
         <div class="modal-buttons">
           <button id="mergeConfirmBtn">네</button>
@@ -48,7 +48,7 @@
     <!-- 메인 화면 -->
     <div class="container" id="firstScreen">
       <div id="overallRankingArea">
-        <h3>🏆 전체 랭킹</h3>
+        <h3 id="overallRankingTitle">🏆 전체 랭킹</h3>
         <div id="overallRankingList">로딩 중…</div>
       </div>
       <div id="mainScreen">
@@ -66,13 +66,13 @@
         <button id="googleLoginBtn">Google 로그인</button>
       </div>
       <div id="guestbookArea">
-        <h3>📝 개발자(이현준)한테 글 남기기</h3>
-        <p class="info-text">닉네임: <b id="guestUsername"></b></p>
+        <h3 id="guestbookTitle">📝 개발자(이현준)한테 글 남기기</h3>
+        <p class="info-text" id="guestNicknameLabel">닉네임: <b id="guestUsername"></b></p>
         <br>
         <textarea id="guestMessage" rows="4"
           placeholder="남기고 싶은 말..."></textarea>
         <br>
-        <button onclick="submitGuestEntry()">등록</button>
+        <button id="guestSubmitBtn" onclick="submitGuestEntry()">등록</button>
 
         <div id="guestbookList"></div>
         <button id="coffeeBtn" style="margin-top:16px;">
@@ -80,7 +80,7 @@
         </button>
         <div id="shareModal" class="modal" style="display:none;">
           <div class="modal-content">
-            <h3>🔗 공유할 내용</h3>
+            <h3 id="shareTitle">🔗 공유할 내용</h3>
             <textarea id="shareText" readonly rows="20"
               style="width:100%;"></textarea>
             <div style="margin-top:1rem; text-align:right;">
@@ -94,7 +94,7 @@
     <div id="module-management-screen" class="screen module-management-screen"
       style="display:none;">
       <button id="backToMainFromManagement" class="btn-back">← 메인으로</button>
-      <h1 class="screen-title">📦 모듈 관리</h1>
+      <h1 id="moduleManagementTitle" class="screen-title">📦 모듈 관리</h1>
 
       <ul id="moduleList" class="module-list">
         <!--
@@ -166,7 +166,7 @@
 
         <!-- (B2) 실제 다이얼로그 박스 -->
         <div class="modal-dialog">
-          <h3>모듈 정보 입력</h3>
+          <h3 id="moduleInfoTitle">모듈 정보 입력</h3>
 
           <!-- 이름 입력 -->
           <input
@@ -198,7 +198,7 @@
 
     <div id="problem-screen" class="screen" style="display:none; padding:2rem;">
       <button id="backToMainFromProblem" class="btn-back">← 메인으로</button>
-      <h1>📝 문제 출제</h1>
+      <h1 id="problemCreatorTitle">📝 문제 출제</h1>
       <div style="display:flex; gap:1rem; align-items:flex-start; justify-content:center;">
         <div id="problemBlockPanel" style="width:120px;"></div>
         <div id="problemGridContainer" class="grid" style="position:relative;">
@@ -207,11 +207,15 @@
         </div>
         <div class="rightPanel" style="display:flex; flex-direction:column; gap:0.5rem;">
           <div>
-            입력 <input id="inputCount" type="number" min="1" max="6" value="1" style="width:40px;">
-            출력 <input id="outputCount" type="number" min="1" max="6" value="1" style="width:40px;">
+            <label id="inputLabel" for="inputCount">입력</label>
+            <input id="inputCount" type="number" min="1" max="6" value="1" style="width:40px;">
+            <label id="outputLabel" for="outputCount">출력</label>
+            <input id="outputCount" type="number" min="1" max="6" value="1" style="width:40px;">
             <br>
-            행 <input id="gridRows" type="number" min="1" max="15" value="6" style="width:40px;">
-            열 <input id="gridCols" type="number" min="1" max="15" value="6" style="width:40px;">
+            <label id="rowLabel" for="gridRows">행</label>
+            <input id="gridRows" type="number" min="1" max="15" value="6" style="width:40px;">
+            <label id="colLabel" for="gridCols">열</label>
+            <input id="gridCols" type="number" min="1" max="15" value="6" style="width:40px;">
             <button id="updateIOBtn">적용</button>
           </div>
           <div id="testcaseContainer">
@@ -238,7 +242,7 @@
     <div id="problemSaveModal" class="modal" style="display:none;">
       <div class="modal-backdrop"></div>
       <div class="modal-dialog">
-        <h3>문제 정보 입력</h3>
+        <h3 id="problemInfoTitle">문제 정보 입력</h3>
         <input id="problemTitleInput" type="text" placeholder="문제 제목" class="modal-input" />
         <textarea id="problemDescInput" rows="3" placeholder="문제 설명" class="modal-textarea"></textarea>
         <div class="modal-buttons">
@@ -249,14 +253,14 @@
     </div>
 
     <div id="chapterScreen" style="display:none; padding: 2rem;">
-      <h1>📚 챕터 선택</h1>
+      <h1 id="chapterTitle">📚 챕터 선택</h1>
       <div id="chapterGrid"></div>
       <button id="backToMainFromChapter">← 메인으로</button>
     </div>
 
     <!-- 레벨 선택 화면 -->
     <div id="levelScreen" style="display:none">
-      <h2>스테이지를 선택하세요</h2>
+      <h2 id="selectStageTitle">스테이지를 선택하세요</h2>
       <div class="levelGrid">
         <button class="levelBtn" data-level="1"></button>
         <button class="levelBtn" data-level="2"></button>
@@ -270,19 +274,19 @@
     </div>
     <div id="user-problems-screen" class="screen" style="display:none;">
       <button id="backToChapterFromUserProblems" class="btn-back">← 챕터로</button>
-      <h1>📝 사용자 문제</h1>
+      <h1 id="userProblemsTitle">📝 사용자 문제</h1>
       <ul id="userProblemList" class="problem-list" style="margin:0 auto;"></ul>
       <button id="openProblemCreatorBtn" class="btn-primary">문제 만들기</button>
     </div>
     <div id="rankingModal" class="modal" style="display:none;">
       <div class="modal-content">
-        <h2>🏆 랭킹</h2>
+        <h2 id="rankingTitle">🏆 랭킹</h2>
         <div id="rankingList"></div>
       </div>
     </div>
     <div id="hintModal" class="modal" style="display:none;">
       <div class="modal-content">
-        <h2>💡 힌트</h2>
+        <h2 id="hintTitle">💡 힌트</h2>
         <div id="hintButtons" class="modal-buttons" style="flex-wrap:wrap; margin-bottom:1rem; justify-content:center;"></div>
         <div id="hintTimerContainer" class="modal-buttons" style="justify-content:center; margin-bottom:1rem;">
           <span id="nextHintTimer"></span>
@@ -376,7 +380,7 @@
     <!-- 저장된 회로 목록 모달 -->
     <div id="savedModal" class="modal" style="display:none;">
       <div class="modal-content">
-        <h2>💾 저장된 회로 목록</h2>
+        <h2 id="savedListTitle">💾 저장된 회로 목록</h2>
         <ul id="savedList"
           style="list-style:none; padding:0; max-height:300px; overflow-y:auto;">
           <!-- 여기에 JS로 <li>들이 채워집니다 -->
@@ -389,7 +393,7 @@
     <!-- 문제 목록 모달 -->
     <div id="problemListModal" class="modal" style="display:none;">
       <div class="modal-content">
-        <h2>📂 저장된 문제</h2>
+        <h2 id="problemListTitle">📂 저장된 문제</h2>
         <ul id="problemList" style="list-style:none; padding:0; max-height:300px; overflow-y:auto;"></ul>
         <div style="text-align:right; margin-top:1rem;">
           <button id="closeProblemListModal">닫기</button>
@@ -398,7 +402,7 @@
     </div>
     <div id="clearedModal" class="modal" style="display: none;">
       <div class="modal-content">
-        <h2>스테이지 <span id="clearedStageNumber"></span> 클리어!</h2>
+        <h2 id="clearedTitle">스테이지 <span id="clearedStageNumber"></span> 클리어!</h2>
         <div id="clearedRanking"></div>
         <div class="modal-buttons">
           <button id="prevStageBtn">이전 스테이지</button>
@@ -429,6 +433,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
   </script>
+    <script src="lang.js"></script>
     <script src="script.v1.4.js"></script>
 
     <div id="levelIntroModal" style="display:none" class="modal">
