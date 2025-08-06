@@ -1033,7 +1033,7 @@ document.addEventListener("keydown", (e) => {
     if (problemScreen.style.display !== "none" && gameScreen.style.display === "none") return;
     if (gameScreen.style.display === "none" && problemScreen.style.display === "none") return;
 
-    if (confirm("⚠️ 모든 블록과 배선을 삭제하시겠습니까?")) {
+    if (confirm(t('confirmDeleteAll'))) {
       clearGrid();
       if (problemScreen.style.display !== "none") {
         initProblemBlockPanel();
@@ -1145,7 +1145,7 @@ async function gradeLevelAnimated(level) {
   // 🔒 [2] 누락된 출력 블록이 있으면 채점 막기
   const missingOutputs = requiredOutputs.filter(name => !actualOutputNames.includes(name));
   if (missingOutputs.length > 0) {
-    alert(`❌ 다음 출력 블록이 배치되지 않았습니다: ${missingOutputs.join(", ")}`);
+    alert(t('outputMissingAlert').replace('{list}', missingOutputs.join(', ')));
     overlay.style.display = "none";
     isScoring = false;
     return;
@@ -1199,10 +1199,10 @@ async function gradeLevelAnimated(level) {
       <table id="gradingTable">
         <thead>
           <tr>
-            <th>입력</th>
-            <th>예상 출력</th>
-            <th>실제 출력</th>
-            <th>결과</th>
+            <th>${t('thInput')}</th>
+            <th>${t('thExpected')}</th>
+            <th>${t('thActual')}</th>
+            <th>${t('thResult')}</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -1231,7 +1231,7 @@ async function gradeLevelAnimated(level) {
 
   const returnBtn = document.createElement("button");
   returnBtn.id = "returnToEditBtn";
-  returnBtn.textContent = "🛠 편집으로 돌아가기";
+  returnBtn.textContent = t('returnToEditBtn');
   gradingArea.appendChild(returnBtn);
 
   document.getElementById("returnToEditBtn")?.addEventListener("click", returnToEditScreen);
@@ -2458,12 +2458,12 @@ function showProblemRanking(problemKey) {
       });
 
       const headerCols = [
-        '<th>순위</th>',
-        '<th>닉네임</th>',
+        `<th>${t('thRank')}</th>`,
+        `<th>${t('thNickname')}</th>`,
         ...allowedTypes.map(t=>`<th>${t}</th>`),
-        '<th>도선</th>',
-        '<th>힌트 사용</th>',
-        '<th>클리어 시각</th>'
+        `<th>${t('thWires')}</th>`,
+        `<th>${t('thHintUsed')}</th>`,
+        `<th>${t('thTime')}</th>`
       ].join('');
 
       const bodyRows = entries.map((e,i)=>{
@@ -2553,13 +2553,12 @@ function showRanking(levelId) {
 
       // ② 테이블 헤더 구성
       const headerCols = [
-        "<th>순위</th>",
-        "<th>닉네임</th>",
-        // 이전: <th>블록 사용</th>
+        `<th>${t('thRank')}</th>`,
+        `<th>${t('thNickname')}</th>`,
         ...allowedTypes.map(t => `<th>${t}</th>`),
-        "<th>도선</th>",
-        "<th>힌트 사용</th>",
-        "<th>클리어 시각</th>"
+        `<th>${t('thWires')}</th>`,
+        `<th>${t('thHintUsed')}</th>`,
+        `<th>${t('thTime')}</th>`
       ].join("");
 
       // ③ 각 row 구성
@@ -2630,7 +2629,7 @@ function setupGoogleAuth() {
   return new Promise(resolve => {
     let done = false;
     firebase.auth().onAuthStateChanged(user => {
-      buttons.forEach(btn => btn.textContent = user ? '로그아웃' : 'Google 로그인');
+      buttons.forEach(btn => btn.textContent = user ? t('logoutBtn') : t('googleLoginBtn'));
       if (user) {
         handleGoogleLogin(user);
         document.getElementById('usernameModal').style.display = 'none';
@@ -2651,7 +2650,7 @@ function setupGoogleAuth() {
       } else {
         const provider = new firebase.auth.GoogleAuthProvider();
         firebase.auth().signInWithPopup(provider).catch(err => {
-          alert(`로그인에 실패했습니다. 코드: ${err.code}, 메시지: ${err.message}`);
+          alert(t('loginFailed').replace('{code}', err.code).replace('{message}', err.message));
           console.error(err);
         });
       }
@@ -2900,7 +2899,7 @@ function renderSavedList() {
     return false;
   });
   if (!keys.length) {
-    savedList.innerHTML = '<li>저장된 회로가 없습니다.</li>';
+    savedList.innerHTML = `<li>${t('noCircuits')}</li>`;
     return;
   }
   keys.forEach(key => {
@@ -2913,8 +2912,8 @@ function renderSavedList() {
     li.innerHTML = `
       <strong>${label}</strong>
       — ${new Date(data.timestamp).toLocaleString()}
-      <button data-key="${key}" class="loadBtn">불러오기</button>
-      <button data-key="${key}" class="deleteBtn">삭제</button>
+      <button data-key="${key}" class="loadBtn">${t('loadBtn')}</button>
+      <button data-key="${key}" class="deleteBtn">${t('deleteBtn')}</button>
     `;
     savedList.appendChild(li);
   });
@@ -2946,7 +2945,7 @@ document.getElementById('closeSavedModal')
 // 5) 회로 불러오는 함수
 function loadCircuit(key) {
   const data = JSON.parse(localStorage.getItem(key));
-  if (!data) return alert('불러오기 실패: 데이터가 없습니다');
+  if (!data) return alert(t('loadFailedNoData'));
 
   clearGrid();
   clearWires();
@@ -3208,7 +3207,7 @@ function showOverallRanking() {
     // HTML 테이블 생성
     let html = `<table>
   <thead><tr>
-    <th>순위</th><th>닉네임</th><th>스테이지</th><th>블럭</th><th>도선</th>
+    <th>${t('thRank')}</th><th>${t('thNickname')}</th><th>${t('thStage')}</th><th>${t('thBlocks')}</th><th>${t('thWires')}</th>
   </tr></thead><tbody>`;
 
     entries.forEach((e, i) => {
@@ -3275,7 +3274,7 @@ function showClearedModal(level) {
         // 3) 정렬된 entries로 테이블 생성
         let html = `
           <table class="rankingTable">
-            <tr><th>순위</th><th>닉네임</th><th>힌트 사용</th><th>시간</th></tr>
+            <tr><th>${t('thRank')}</th><th>${t('thNickname')}</th><th>${t('thHintUsed')}</th><th>${t('thTime')}</th></tr>
         `;
         entries.forEach((e, i) => {
           const timeStr = new Date(e.timestamp).toLocaleString();
@@ -3369,7 +3368,7 @@ function handleModuleKeyDown(e) {
       [resetToggle, moduleResetToggle, problemResetToggle].forEach(btn => btn && btn.classList.remove('active'));
       return;
     }
-    if (confirm('⚠️ 모든 블록과 배선을 삭제하시겠습니까?')) {
+    if (confirm(t('confirmDeleteAll'))) {
       clearGrid();
       initModuleBlockPanel();
     }
@@ -3410,7 +3409,7 @@ function handleProblemKeyDown(e) {
       [resetToggle, moduleResetToggle, problemResetToggle].forEach(btn => btn && btn.classList.remove('active'));
       return;
     }
-    if (confirm('⚠️ 모든 블록과 배선을 삭제하시겠습니까?')) {
+    if (confirm(t('confirmDeleteAll'))) {
       clearGrid();
       initProblemBlockPanel();
       initTestcaseTable();
@@ -3699,7 +3698,7 @@ function renderModuleList() {
   if (moduleKeys.length === 0) {
     const emptyMsg = document.createElement('div');
     emptyMsg.className = 'empty-message';
-    emptyMsg.textContent = '저장된 모듈이 없습니다.';
+    emptyMsg.textContent = t('noModules');
     moduleList.appendChild(emptyMsg);
     return;
   }
@@ -3722,7 +3721,7 @@ function renderModuleList() {
     // 4-2) 불러오기 버튼
     const loadBtn = document.createElement('button');
     loadBtn.className = 'btn-load';
-    loadBtn.textContent = '불러오기';
+    loadBtn.textContent = t('loadBtn');
     loadBtn.addEventListener('click', () => {
       // (a) 모듈 관리창 감추고, 모듈 제작창 보이기
       managementScreen.style.display = 'none';
@@ -3738,9 +3737,9 @@ function renderModuleList() {
     // 4-3) 삭제 버튼
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn-delete';
-    deleteBtn.textContent = '삭제';
+    deleteBtn.textContent = t('deleteBtn');
     deleteBtn.addEventListener('click', () => {
-      const confirmed = confirm(`정말 '${moduleName}' 모듈을 삭제하시겠습니까?`);
+      const confirmed = confirm(t('confirmDeleteModule').replace('{module}', moduleName));
       if (!confirmed) return;
 
       // localStorage에서 해당 키 제거
@@ -3764,7 +3763,7 @@ function renderModuleList() {
 function loadModule(moduleKey) {
   moduleKey = 'module_' + moduleKey
   const data = JSON.parse(localStorage.getItem(moduleKey));
-  if (!data) return alert('⚠️ 모듈 불러오기 실패: 데이터가 없습니다');
+  if (!data) return alert(t('moduleLoadFailed'));
 
   // 1) 그리드·전선 초기화
   clearGrid();   // 전역 grid 변수 대상 → moduleGrid
@@ -4121,14 +4120,14 @@ function collectProblemData() {
 
 function saveProblem() {
   if (!problemOutputsValid) {
-    alert('출력 계산을 먼저 실행하세요.');
+    alert(t('computeOutputsFirst'));
     return;
   }
   const data = collectProblemData();
   const key = db.ref('problems').push().key;
   db.ref('problems/' + key).set(data)
-    .then(() => alert('문제가 저장되었습니다.'))
-    .catch(err => alert('저장 실패: ' + err));
+    .then(() => alert(t('problemSaved')))
+    .catch(err => alert(t('saveFailed').replace('{error}', err)));
 }
 
 function showProblemList() {
@@ -4137,11 +4136,11 @@ function showProblemList() {
   db.ref('problems').once('value').then(snapshot => {
     list.innerHTML = '';
     const table = document.createElement('table');
-    table.innerHTML = `<thead><tr><th>제목</th><th>그리드</th><th>비고</th></tr></thead><tbody></tbody>`;
+    table.innerHTML = `<thead><tr><th>${t('thTitle')}</th><th>${t('thGrid')}</th><th>${t('thNotes')}</th></tr></thead><tbody></tbody>`;
     const tbody = table.querySelector('tbody');
     if (!snapshot.exists()) {
       const tr = document.createElement('tr');
-      tr.innerHTML = '<td colspan="3">저장된 문제가 없습니다.</td>';
+      tr.innerHTML = `<td colspan="3">${t('noProblems')}</td>`;
       tbody.appendChild(tr);
     } else {
       snapshot.forEach(child => {
@@ -4150,7 +4149,7 @@ function showProblemList() {
         tr.innerHTML = `
           <td>${d.title || child.key}</td>
           <td>${(d.gridRows || 6)}×${(d.gridCols || 6)}</td>
-          <td><button class="loadProbBtn" data-key="${child.key}">불러오기</button></td>`;
+          <td><button class="loadProbBtn" data-key="${child.key}">${t('loadBtn')}</button></td>`;
         tbody.appendChild(tr);
       });
       table.querySelectorAll('.loadProbBtn').forEach(btn => {
@@ -4168,7 +4167,7 @@ function showProblemList() {
 function loadProblem(key) {
   db.ref('problems/' + key).once('value').then(snapshot => {
     const data = snapshot.val();
-    if (!data) return alert('불러오기 실패');
+    if (!data) return alert(t('loadFailed'));
 
     document.getElementById('inputCount').value = data.inputCount || 1;
     document.getElementById('outputCount').value = data.outputCount || 1;
@@ -4238,11 +4237,11 @@ function renderUserProblemList() {
     userProblemList.innerHTML = '';
     const table = document.createElement('table');
     table.id = 'userProblemTable';
-    table.innerHTML = `<thead><tr><th>제목</th><th>그리드</th><th>제작자</th><th>제작일</th><th>해결 수</th><th>좋아요</th><th>비고</th></tr></thead><tbody></tbody>`;
+    table.innerHTML = `<thead><tr><th>${t('thTitle')}</th><th>${t('thGrid')}</th><th>${t('thCreator')}</th><th>${t('thCreatedAt')}</th><th>${t('thSolved')}</th><th>${t('thLikes')}</th><th>${t('thNotes')}</th></tr></thead><tbody></tbody>`;
     const tbody = table.querySelector('tbody');
     if (!snapshot.exists()) {
       const tr = document.createElement('tr');
-      tr.innerHTML = '<td colspan="7">등록된 문제가 없습니다.</td>';
+      tr.innerHTML = `<td colspan="7">${t('noUserProblems')}</td>`;
       tbody.appendChild(tr);
     } else {
       snapshot.forEach(child => {
@@ -4261,8 +4260,8 @@ function renderUserProblemList() {
           <td>${data.creator || '익명'}${isMine ? ' (나)' : ''}</td>
           <td>${new Date(data.timestamp).toLocaleDateString()}</td>
           <td>${solved}</td>
-          <td><span class="likeCount">${likes}</span> <button class="likeBtn" data-key="${child.key}" aria-label="좋아요">♥</button></td>
-          <td>${isMine ? `<button class="deleteProbBtn" data-key="${child.key}">삭제</button>` : ''}</td>`;
+          <td><span class="likeCount">${likes}</span> <button class="likeBtn" data-key="${child.key}" aria-label="${t('thLikes')}">♥</button></td>
+          <td>${isMine ? `<button class="deleteProbBtn" data-key="${child.key}">${t('deleteBtn')}</button>` : ''}</td>`;
         if (solvedByMe) tr.classList.add('solved');
         tr.addEventListener('click', e => {
           if(e.target.classList.contains('likeBtn') || e.target.classList.contains('deleteProbBtn')) return;
@@ -4281,7 +4280,7 @@ function renderUserProblemList() {
     userProblemList.querySelectorAll('.deleteProbBtn').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        const confirmed = confirm('정말 삭제하시겠습니까?');
+        const confirmed = confirm(t('confirmDelete'));
         if (confirmed) deleteUserProblem(btn.dataset.key);
       });
     });
@@ -4300,13 +4299,13 @@ function toggleLikeProblem(key){
 function deleteUserProblem(key){
   db.ref('problems/' + key).remove()
     .then(renderUserProblemList)
-    .catch(err => alert('삭제 실패: ' + err));
+    .catch(err => alert(t('deleteFailed').replace('{error}', err)));
 }
 
 function previewUserProblem(key) {
   db.ref('problems/' + key).once('value').then(snap => {
     const data = snap.val();
-    if (!data) return alert('불러오기 실패');
+    if (!data) return alert(t('loadFailed'));
     showProblemIntro(data, () => startCustomProblem(key, data));
   });
 }
@@ -4553,7 +4552,7 @@ async function gradeProblemAnimated(key, problem) {
   const actualOutputNames = actualOutputCells.map(c=>c.dataset.name);
   const missingOutputs = requiredOutputs.filter(n=>!actualOutputNames.includes(n));
   if(missingOutputs.length>0){
-    alert(`❌ 다음 출력 블록이 배치되지 않았습니다: ${missingOutputs.join(', ')}`);
+    alert(t('outputMissingAlert').replace('{list}', missingOutputs.join(', ')));
     overlay.style.display='none';
     isScoring=false;return;
   }
@@ -4593,7 +4592,7 @@ async function gradeProblemAnimated(key, problem) {
       gradingArea.innerHTML+=`
       <table id="gradingTable">
         <thead>
-          <tr><th>입력</th><th>예상 출력</th><th>실제 출력</th><th>결과</th></tr>
+          <tr><th>${t('thInput')}</th><th>${t('thExpected')}</th><th>${t('thActual')}</th><th>${t('thResult')}</th></tr>
         </thead>
         <tbody></tbody>
       </table>`;
@@ -4612,7 +4611,7 @@ async function gradeProblemAnimated(key, problem) {
 
   const returnBtn=document.createElement('button');
   returnBtn.id='returnToEditBtn';
-  returnBtn.textContent='🛠 편집으로 돌아가기';
+  returnBtn.textContent=t('returnToEditBtn');
   gradingArea.appendChild(returnBtn);
   document.getElementById('returnToEditBtn').addEventListener('click',returnToEditScreen);
 
