@@ -4664,7 +4664,7 @@ function getCircuitSnapshot() {
     row: b.row,
     col: b.col,
     type: b.dataset.type,
-    name: b.dataset.name,
+    name: b.dataset.name || b.dataset.type,
     active: values.get(b) || false
   }));
 
@@ -4676,7 +4676,7 @@ function getCircuitSnapshot() {
   const rows = Math.max(1, Math.floor(Number(GRID_ROWS)));
   const cols = Math.max(1, Math.floor(Number(GRID_COLS)));
 
-  return { blocks: blockSnap, wires: wireSnap, rows, cols, totalFrames: 20 };
+  return { blocks: blockSnap, wires: wireSnap, rows, cols, totalFrames: 40 };
 }
 
 function drawCaptureFrame(ctx, state, frame) {
@@ -4720,9 +4720,10 @@ function drawCaptureFrame(ctx, state, frame) {
     }
     ctx.stroke();
 
-    // 모든 도선에 교차하는 빨간색 흐름 표시
+    // 모든 도선에 교차하는 반투명 검은색 흐름 표시
     ctx.save();
-    ctx.strokeStyle = '#ff0000';
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.lineWidth = 2;
     ctx.setLineDash([8, 8]);
     ctx.lineDashOffset = -(frame * 4);
     ctx.beginPath();
@@ -4745,7 +4746,7 @@ function drawCaptureFrame(ctx, state, frame) {
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(b.name || '', x + cellSize / 2, y + cellSize / 2);
+    ctx.fillText(b.name || b.type || '', x + cellSize / 2, y + cellSize / 2);
   });
 
   ctx.lineWidth = border;
@@ -4769,7 +4770,7 @@ function captureGIF(state, onFinish) {
   for (let f = 0; f < state.totalFrames; f++) {
     drawCaptureFrame(ctx, state, f);
     const frame = ctx.getImageData(0, 0, width, height);
-    gif.addFrame(frame, { delay: 100 });
+    gif.addFrame(frame, { delay: 50 });
   }
 
   gif.on('finished', blob => {
