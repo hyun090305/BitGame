@@ -152,6 +152,7 @@ let levelTitles = {};
 let levelGridSizes = {};
 let levelBlockSets = {};
 let chapterData = [];
+let selectedChapterIndex = 0;
 let levelAnswers = {};
 let levelDescriptions = {};
 let levelHints = {};
@@ -920,8 +921,10 @@ function computeBlock(node, values) {
 
 
 const mainScreen = document.getElementById("firstScreen");
-const levelScreen = document.getElementById("levelScreen");
+const chapterStageScreen = document.getElementById("chapterStageScreen");
 const gameScreen = document.getElementById("gameScreen");
+const chapterListEl = document.getElementById("chapterList");
+const stageListEl = document.getElementById("stageList");
 
 function lockOrientationLandscape() {
   if (screen.orientation && screen.orientation.lock) {
@@ -933,20 +936,19 @@ function lockOrientationLandscape() {
 
 document.getElementById("startBtn").onclick = () => {
   lockOrientationLandscape();
-  renderChapterGrid();
+  renderChapterList();
+  if (chapterData.length > 0) selectChapter(0);
   document.getElementById("firstScreen").style.display = "none";
-  document.getElementById("chapterScreen").style.display = "block";
+  chapterStageScreen.style.display = "block";
 };
 
 document.getElementById("backToMainFromChapter").onclick = () => {
-  document.getElementById("chapterScreen").style.display = "none";
+  chapterStageScreen.style.display = "none";
   document.getElementById("firstScreen").style.display = "flex";
 };
 
-document.getElementById("backToMainBtn").onclick = () => {
-  renderChapterGrid();
-  document.getElementById("chapterScreen").style.display = "block";
-  levelScreen.style.display = "none";
+document.getElementById("toggleChapterList").onclick = () => {
+  chapterListEl.classList.toggle('hidden');
 };
 
 document.getElementById("backToLevelsBtn").onclick = () => {
@@ -956,21 +958,9 @@ document.getElementById("backToLevelsBtn").onclick = () => {
     currentCustomProblem = null;
     userProblemsScreen.style.display = 'block';
   } else {
-    levelScreen.style.display = "block";
+    chapterStageScreen.style.display = "block";
   }
 };
-
-document.querySelectorAll(".levelBtn").forEach(btn => {
-  btn.onclick = () => {
-    returnToEditScreen();  // 먼저 채점 영역 닫기 등 정리
-    const level = btn.dataset.level;
-    console.log(`레벨 ${level} 시작`);
-    startLevel(level);  // 그 다음 레벨 시작
-    document.body.classList.add('game-active');
-    levelScreen.style.display = "none";
-    gameScreen.style.display = "flex";
-  };
-});
 
 
 
@@ -1294,10 +1284,9 @@ async function gradeLevelAnimated(level) {
   document.getElementById("returnToEditBtn")?.addEventListener("click", returnToEditScreen);
 
   if (allCorrect) {
-    const clearedBtn = document.querySelector(`.levelBtn[data-level="${level}"]`);
-    if (clearedBtn && !clearedBtn.classList.contains("cleared")) {
-      clearedBtn.classList.add("cleared");
-      clearedBtn.textContent += `\n✅`;
+    const clearedCard = document.querySelector(`.stageCard[data-stage="${level}"]`);
+    if (clearedCard && !clearedCard.classList.contains("cleared")) {
+      clearedCard.classList.add("cleared");
       markLevelCleared(level);
     }
 
@@ -1430,13 +1419,11 @@ function fetchProgressSummary(nickname) {
 }
 
 function refreshClearedUI() {
-  document.querySelectorAll('.levelBtn').forEach(btn => {
-    const level = parseInt(btn.dataset.level, 10);
-    btn.classList.remove('cleared');
-    btn.textContent = levelTitles[level] ?? `Stage ${level}`;
+  document.querySelectorAll('.stageCard').forEach(card => {
+    const level = parseInt(card.dataset.stage, 10);
+    card.classList.remove('cleared');
     if (clearedLevelsFromDb.includes(level)) {
-      btn.classList.add('cleared');
-      btn.textContent += '\n ✅';
+      card.classList.add('cleared');
     }
   });
 }
@@ -1463,10 +1450,6 @@ window.addEventListener("DOMContentLoaded", () => {
       returnToEditScreen();
       startLevel(currentLevel + 1);   // 다음 스테이지 시작
     });
-    document.querySelectorAll(".levelBtn").forEach(btn => {
-      const level = btn.dataset.level;
-      btn.textContent = levelTitles[level] ?? `Stage ${level}`;
-    });
     enableTouchDrag();
     return loadClearedLevelsFromDb();
   });
@@ -1477,6 +1460,7 @@ function markLevelCleared(level) {
   if (!clearedLevelsFromDb.includes(level)) {
     clearedLevelsFromDb.push(level);
     refreshClearedUI();
+    renderChapterList();
   }
 }
 
@@ -1696,18 +1680,13 @@ function showLevelIntro(level, callback) {
 }
 
 
-function renderChapterGrid() {
-  const grid = document.getElementById("chapterGrid");
-  grid.innerHTML = "";
-
-  // 랭킹 데이터 기반 클리어 정보 사용
+function renderChapterList() {
+  chapterListEl.innerHTML = "";
   const cleared = clearedLevelsFromDb;
 
   chapterData.forEach((chapter, idx) => {
-    const card = document.createElement("div");
-    card.className = "chapterCard";
-
-    // 1단계 챕터(basic)는 항상 잠금 해제, 이후 챕터는 이전 챕터 스테이지 전부 클리어되어야 해제
+    const item = document.createElement("div");
+    item.className = "chapterItem";
     let unlocked = true;
     if (chapter.id === 'user') {
       unlocked = [1,2,3,4,5,6].every(s => cleared.includes(s));
@@ -1715,61 +1694,69 @@ function renderChapterGrid() {
       const prevStages = chapterData[idx - 1].stages;
       unlocked = prevStages.every(s => cleared.includes(s));
     }
-
     if (!unlocked) {
-      // 잠금 상태: 회색 처리 및 클릭 금지
-      card.classList.add("locked");
-      card.innerHTML = `
-        <h3>${chapter.name} 🔒</h3>
-        <p>챕터 ${idx}의 모든 스테이지를 완료해야 열립니다.</p>
-      `;
-      card.onclick = () => {
+      item.classList.add('locked');
+      item.textContent = `${chapter.name} 🔒`;
+      item.onclick = () => {
         alert(`챕터 ${idx}의 스테이지를 모두 완료해야 다음 챕터가 열립니다.`);
       };
     } else {
-      // 해제 상태: 기존 동작 유지
-      card.innerHTML = `
-        <h3>${chapter.name}</h3>
-        <p>${chapter.desc}</p>
-      `;
-      card.onclick = () => {
+      item.textContent = chapter.name;
+      item.onclick = () => {
         if (chapter.id === 'user') {
           renderUserProblemList();
-          document.getElementById('chapterScreen').style.display = 'none';
+          chapterStageScreen.style.display = 'none';
           userProblemsScreen.style.display = 'block';
         } else {
-          renderLevelGrid(chapter.stages);
-          document.getElementById("chapterScreen").style.display = "none";
-          document.getElementById("levelScreen").style.display = "block";
+          selectChapter(idx);
         }
       };
     }
-
-    grid.appendChild(card);
+    if (idx === selectedChapterIndex) item.classList.add('selected');
+    chapterListEl.appendChild(item);
   });
 }
 
-function renderLevelGrid(stageList) {
-  const levelGrid = document.querySelector(".levelGrid");
-  levelGrid.innerHTML = "";
+function selectChapter(idx) {
+  selectedChapterIndex = idx;
+  renderChapterList();
+  const chapter = chapterData[idx];
+  if (chapter.id !== 'user') {
+    renderStageList(chapter.stages);
+  }
+}
 
+function renderStageList(stageList) {
+  stageListEl.innerHTML = "";
   stageList.forEach(level => {
-    const btn = document.createElement("button");
-    btn.className = "levelBtn";
-    btn.dataset.level = level;
-    btn.textContent = levelTitles[level] ?? `Stage ${level}`;
-    if (clearedLevelsFromDb.includes(level)) {
-      btn.classList.add("cleared");
-      btn.textContent += "\n ✅";
+    const card = document.createElement('div');
+    card.className = 'stageCard';
+    card.dataset.stage = level;
+    const title = levelTitles[level] ?? `Stage ${level}`;
+    let name = title;
+    let desc = "";
+    const parts = title.split(':');
+    if (parts.length > 1) {
+      name = parts[0];
+      desc = parts.slice(1).join(':').trim();
     }
-    btn.onclick = () => {
-      returnToEditScreen();
-      startLevel(level);
-      document.getElementById("levelScreen").style.display = "none";
-      document.getElementById("gameScreen").style.display = "flex";
-      document.body.classList.add('game-active');
-    };
-    levelGrid.appendChild(btn);
+    card.innerHTML = `<h3>${name}</h3><p>${desc}</p>`;
+    const unlocked = isLevelUnlocked(level);
+    if (!unlocked) {
+      card.classList.add('locked');
+    } else {
+      if (clearedLevelsFromDb.includes(level)) {
+        card.classList.add('cleared');
+      }
+      card.onclick = () => {
+        returnToEditScreen();
+        startLevel(level);
+        chapterStageScreen.style.display = 'none';
+        gameScreen.style.display = 'flex';
+        document.body.classList.add('game-active');
+      };
+    }
+    stageListEl.appendChild(card);
   });
 }
 
@@ -2228,8 +2215,7 @@ function finishTutorial() {
   startLevel(getLowestUnclearedStage());
   document.body.classList.add('game-active');
   document.getElementById('firstScreen').style.display = 'none';
-  document.getElementById('chapterScreen').style.display = 'none';
-  document.getElementById('levelScreen').style.display = 'none';
+  document.getElementById('chapterStageScreen').style.display = 'none';
   gameScreen.style.display = 'flex';
 }
 
@@ -3756,7 +3742,7 @@ backToMainFromProblem.addEventListener('click', () => {
   } else if (problemScreenPrev === 'main') {
     firstScreen.style.display = 'flex';
   } else {
-    document.getElementById('levelScreen').style.display = 'block';
+    chapterStageScreen.style.display = 'block';
   }
   problemScreenPrev = null;
 });
@@ -3764,7 +3750,7 @@ backToMainFromProblem.addEventListener('click', () => {
 if (backToChapterFromUserProblems) {
   backToChapterFromUserProblems.addEventListener('click', () => {
     userProblemsScreen.style.display = 'none';
-    document.getElementById('chapterScreen').style.display = 'block';
+    chapterStageScreen.style.display = 'block';
   });
 }
 
