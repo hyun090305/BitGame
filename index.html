@@ -384,10 +384,10 @@
     <div id="savedModal" class="modal" style="display:none;">
       <div class="modal-content">
         <h2 id="savedListTitle">💾 저장된 회로 목록</h2>
-        <ul id="savedList"
-          style="list-style:none; padding:0; max-height:300px; overflow-y:auto;">
-          <!-- 여기에 JS로 <li>들이 채워집니다 -->
-        </ul>
+        <div id="savedList" class="saved-list"
+          style="display:flex; flex-wrap:wrap; gap:10px; max-height:300px; overflow-y:auto;">
+          <!-- 여기에 JS로 항목들이 채워집니다 -->
+        </div>
         <div style="text-align:right; margin-top:1rem;">
           <button id="closeSavedModal">닫기</button>
         </div>

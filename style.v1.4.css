@@ -1925,3 +1925,38 @@ html, body {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ----- Saved circuit thumbnails ----- */
+.saved-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+}
+
+.saved-item {
+  border: 2px solid #ccc;
+  padding: 4px;
+  width: 120px;
+  cursor: pointer;
+  position: relative;
+  text-align: center;
+  background: #fff;
+}
+
+.saved-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.saved-item .deleteBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+.saved-caption {
+  font-size: 12px;
+  margin-top: 4px;
+}
