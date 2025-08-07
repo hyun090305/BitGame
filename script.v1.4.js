@@ -4676,7 +4676,7 @@ function getCircuitSnapshot() {
   const rows = Math.max(1, Math.floor(Number(GRID_ROWS)));
   const cols = Math.max(1, Math.floor(Number(GRID_COLS)));
 
-  return { blocks: blockSnap, wires: wireSnap, rows, cols, totalFrames: 40 };
+  return { blocks: blockSnap, wires: wireSnap, rows, cols, totalFrames: 80 };
 }
 
 function drawCaptureFrame(ctx, state, frame) {
@@ -4720,12 +4720,12 @@ function drawCaptureFrame(ctx, state, frame) {
     }
     ctx.stroke();
 
-    // 모든 도선에 교차하는 반투명 검은색 흐름 표시
+    // 검정색과 배경색이 번갈아 흐르는 선 표시
     ctx.save();
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([8, 8]);
-    ctx.lineDashOffset = -(frame * 4);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([16, 16]);
+    ctx.lineDashOffset = -(frame * 2);
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for (let i = 1; i < pts.length; i++) {
