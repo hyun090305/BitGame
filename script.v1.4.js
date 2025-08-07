@@ -17,15 +17,53 @@ let problemOutputsValid = false;
 let problemScreenPrev = null;  // 문제 출제 화면 진입 이전 화면 기록
 let loginFromMainScreen = false;  // 메인 화면에서 로그인 여부 추적
 
-// GIF 미리보기 캔버스 (모달 내부에 존재)
+// GIF 생성 관련 요소들
 const captureCanvas = document.getElementById('captureCanvas');
 const gifModal = document.getElementById('gifModal');
 const closeGifModalBtn = document.getElementById('closeGifModal');
+const gifPreview = document.getElementById('gifPreview');
+const saveGifBtn = document.getElementById('saveGifBtn');
+const shareGifBtn = document.getElementById('shareGifBtn');
+const gifLoadingModal = document.getElementById('gifLoadingModal');
+let currentGifBlob = null;
+let currentGifUrl = null;
 // GIF 해상도를 키우기 위한 배율
 const GIF_SCALE = 2;
 if (closeGifModalBtn) {
   closeGifModalBtn.addEventListener('click', () => {
     if (gifModal) gifModal.style.display = 'none';
+    if (gifPreview && currentGifUrl) {
+      URL.revokeObjectURL(currentGifUrl);
+      gifPreview.src = '';
+      currentGifUrl = null;
+    }
+    currentGifBlob = null;
+  });
+}
+if (saveGifBtn) {
+  saveGifBtn.addEventListener('click', () => {
+    if (!currentGifBlob) return;
+    const url = URL.createObjectURL(currentGifBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'circuit.gif';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+if (shareGifBtn) {
+  shareGifBtn.addEventListener('click', async () => {
+    if (!currentGifBlob) return;
+    const file = new File([currentGifBlob], 'circuit.gif', { type: 'image/gif' });
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Bitwiser GIF' });
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      alert('이 브라우저에서는 공유하기를 지원하지 않습니다.');
+    }
   });
 }
 
@@ -4796,23 +4834,24 @@ function captureGIF(state, onFinish) {
   }
 
   gif.on('finished', blob => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'circuit.gif';
-    a.click();
-    URL.revokeObjectURL(url);
-    if (typeof onFinish === 'function') onFinish();
+    resetCaptureCanvas();
+    if (typeof onFinish === 'function') onFinish(blob);
   });
 
   gif.render();
 }
 
 function handleGIFExport() {
+  resetCaptureCanvas();
   const state = getCircuitSnapshot();
-  if (gifModal) gifModal.style.display = 'flex';
-  captureGIF(state, () => {
-    if (gifModal) gifModal.style.display = 'none';
+  if (gifLoadingModal) gifLoadingModal.style.display = 'flex';
+  captureGIF(state, blob => {
+    if (gifLoadingModal) gifLoadingModal.style.display = 'none';
+    currentGifBlob = blob;
+    if (currentGifUrl) URL.revokeObjectURL(currentGifUrl);
+    currentGifUrl = URL.createObjectURL(blob);
+    if (gifPreview) gifPreview.src = currentGifUrl;
+    if (gifModal) gifModal.style.display = 'flex';
   });
 }
 
