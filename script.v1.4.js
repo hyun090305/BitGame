@@ -42,13 +42,8 @@ if (closeGifModalBtn) {
 }
 if (saveGifBtn) {
   saveGifBtn.addEventListener('click', () => {
-    if (!currentGifBlob) return;
-    const url = URL.createObjectURL(currentGifBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'circuit.gif';
-    a.click();
-    URL.revokeObjectURL(url);
+    if (!currentGifUrl) return;
+    window.open(currentGifUrl, '_blank');
   });
 }
 if (shareGifBtn) {
