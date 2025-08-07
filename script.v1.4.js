@@ -17,10 +17,15 @@ let problemOutputsValid = false;
 let problemScreenPrev = null;  // 문제 출제 화면 진입 이전 화면 기록
 let loginFromMainScreen = false;  // 메인 화면에서 로그인 여부 추적
 
-// 캡처용 보이지 않는 캔버스
-const captureCanvas = document.createElement('canvas');
-captureCanvas.style.display = 'none';
-document.body.appendChild(captureCanvas);
+// GIF 미리보기 캔버스 (모달 내부에 존재)
+const captureCanvas = document.getElementById('captureCanvas');
+const gifModal = document.getElementById('gifModal');
+const closeGifModalBtn = document.getElementById('closeGifModal');
+if (closeGifModalBtn) {
+  closeGifModalBtn.addEventListener('click', () => {
+    if (gifModal) gifModal.style.display = 'none';
+  });
+}
 
 // 초기 로딩 관련
 const initialTasks = [];
@@ -4719,7 +4724,7 @@ function drawCaptureFrame(ctx, state, frame) {
   });
 }
 
-function captureGIF(state) {
+function captureGIF(state, onFinish) {
   const cols = Math.max(1, Math.floor(Number(GRID_COLS)));
   const rows = Math.max(1, Math.floor(Number(GRID_ROWS)));
   captureCanvas.width = cols * 50;
@@ -4742,6 +4747,7 @@ function captureGIF(state) {
     a.download = 'circuit.gif';
     a.click();
     URL.revokeObjectURL(url);
+    if (typeof onFinish === 'function') onFinish();
   });
 
   gif.render();
@@ -4749,7 +4755,10 @@ function captureGIF(state) {
 
 function handleGIFExport() {
   const state = getCircuitSnapshot();
-  captureGIF(state);
+  if (gifModal) gifModal.style.display = 'flex';
+  captureGIF(state, () => {
+    if (gifModal) gifModal.style.display = 'none';
+  });
 }
 
 const exportBtn = document.getElementById('exportGifBtn');
