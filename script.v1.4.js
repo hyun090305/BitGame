@@ -942,7 +942,6 @@ document.querySelectorAll(".levelBtn").forEach(btn => {
 
 function startLevel(level) {
   resetCaptureCanvas();
-  clearWirePreview();
   wireTrace = [];
   wires = [];
   const [rows, cols] = levelGridSizes[level] || [6, 6];
