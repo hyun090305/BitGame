@@ -4731,7 +4731,7 @@ function drawCaptureFrame(ctx, state, frame) {
 
     ctx.save();
     ctx.strokeStyle = '#000';
-    ctx.lineWidth = 4 * GIF_SCALE;
+    ctx.lineWidth = 2 * GIF_SCALE;
     ctx.setLineDash([16 * GIF_SCALE, 16 * GIF_SCALE]);
     ctx.lineDashOffset = -(frame * 2 * GIF_SCALE);
     ctx.beginPath();
@@ -4756,7 +4756,8 @@ function drawCaptureFrame(ctx, state, frame) {
     ctx.font = 'bold ' + (cellSize / 3) + 'px "Noto Sans KR"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(b.name || b.type || '', x + cellSize / 2, y + cellSize / 2);
+    const label = b.name || (b.type === 'JUNCTION' ? 'JUNC' : b.type) || '';
+    ctx.fillText(label, x + cellSize / 2, y + cellSize / 2);
   });
 
   ctx.lineWidth = border;
