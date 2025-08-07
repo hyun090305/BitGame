@@ -17,6 +17,11 @@ let problemOutputsValid = false;
 let problemScreenPrev = null;  // 문제 출제 화면 진입 이전 화면 기록
 let loginFromMainScreen = false;  // 메인 화면에서 로그인 여부 추적
 
+// 캡처용 보이지 않는 캔버스
+const captureCanvas = document.createElement('canvas');
+captureCanvas.style.display = 'none';
+document.body.appendChild(captureCanvas);
+
 // 초기 로딩 관련
 const initialTasks = [];
 function hideLoadingScreen() {
@@ -4626,5 +4631,129 @@ async function gradeProblemAnimated(key, problem) {
     const hintsUsed=parseInt(localStorage.getItem(`hintsUsed_${key}`)||'0');
     saveProblemRanking(key, blockCounts, usedWires, hintsUsed);
   }
+}
+
+// ----- GIF 캡처 기능 -----
+
+function getCircuitSnapshot() {
+  const blocks = Array.from(grid.querySelectorAll('.cell.block'));
+  const values = new Map();
+  blocks
+    .filter(b => b.dataset.type === 'INPUT')
+    .forEach(b => values.set(b, b.dataset.value === '1'));
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const node of blocks) {
+      const oldVal = values.get(node);
+      const newVal = computeBlock(node, values);
+      if (newVal !== undefined && newVal !== oldVal) {
+        values.set(node, newVal);
+        changed = true;
+      }
+    }
+  }
+
+  const blockSnap = blocks.map(b => ({
+    row: b.row,
+    col: b.col,
+    type: b.dataset.type,
+    name: b.dataset.name,
+    active: values.get(b) || false
+  }));
+
+  const wireSnap = wires.map(w => ({
+    path: w.path.map(c => ({ row: c.row, col: c.col })),
+    active: values.get(w.start) || false
+  }));
+
+  return { blocks: blockSnap, wires: wireSnap, totalFrames: 20 };
+}
+
+function drawCaptureFrame(ctx, state, frame) {
+  const cellSize = 50;
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+  ctx.lineWidth = 4;
+  state.wires.forEach(w => {
+    const pts = w.path.map(p => ({
+      x: p.col * cellSize + cellSize / 2,
+      y: p.row * cellSize + cellSize / 2
+    }));
+
+    ctx.strokeStyle = '#999';
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) {
+      ctx.lineTo(pts[i].x, pts[i].y);
+    }
+    ctx.stroke();
+
+    if (w.active) {
+      const progress = Math.floor((frame / state.totalFrames) * pts.length);
+      if (progress > 0) {
+        ctx.strokeStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < Math.min(progress + 1, pts.length); i++) {
+          ctx.lineTo(pts[i].x, pts[i].y);
+        }
+        ctx.stroke();
+      }
+    }
+  });
+
+  state.blocks.forEach(b => {
+    const x = b.col * cellSize;
+    const y = b.row * cellSize;
+    ctx.fillStyle = b.active ? '#ffeb3b' : '#e0e0ff';
+    ctx.fillRect(x, y, cellSize, cellSize);
+    ctx.strokeStyle = '#000';
+    ctx.strokeRect(x, y, cellSize, cellSize);
+    ctx.fillStyle = '#000';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(b.type || '', x + cellSize / 2, y + cellSize / 2);
+  });
+}
+
+function captureGIF(state) {
+  const cols = Math.max(1, Math.floor(Number(GRID_COLS)));
+  const rows = Math.max(1, Math.floor(Number(GRID_ROWS)));
+  captureCanvas.width = cols * 50;
+  captureCanvas.height = rows * 50;
+  const ctx = captureCanvas.getContext('2d');
+  const width = captureCanvas.width;
+  const height = captureCanvas.height;
+  const gif = new GIF({ workers: 2, quality: 10 });
+
+  for (let f = 0; f < state.totalFrames; f++) {
+    drawCaptureFrame(ctx, state, f);
+    const frame = ctx.getImageData(0, 0, width, height);
+    gif.addFrame(frame, { delay: 100 });
+  }
+
+  gif.on('finished', blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'circuit.gif';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  gif.render();
+}
+
+function handleGIFExport() {
+  const state = getCircuitSnapshot();
+  captureGIF(state);
+}
+
+const exportBtn = document.getElementById('exportGifBtn');
+if (exportBtn) {
+  exportBtn.addEventListener('click', handleGIFExport);
 }
 
