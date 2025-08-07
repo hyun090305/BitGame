@@ -2915,9 +2915,61 @@ const savedModal = document.getElementById('savedModal');
 const closeSavedModal = document.getElementById('closeSavedModal');
 const savedList = document.getElementById('savedList');
 
-saveCircuitBtn.addEventListener('click', () => {
+// IndexedDB helpers for storing GIFs
+const GIF_DB_NAME = 'bitwiser-gifs';
+const GIF_STORE = 'gifs';
+let gifDbPromise = null;
+
+function openGifDB() {
+  if (!gifDbPromise) {
+    gifDbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open(GIF_DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(GIF_STORE)) {
+          db.createObjectStore(GIF_STORE);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  return gifDbPromise;
+}
+
+async function saveGifToDB(key, blob) {
+  const db = await openGifDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(GIF_STORE, 'readwrite');
+    tx.objectStore(GIF_STORE).put(blob, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function loadGifFromDB(key) {
+  const db = await openGifDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(GIF_STORE, 'readonly');
+    const req = tx.objectStore(GIF_STORE).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deleteGifFromDB(key) {
+  const db = await openGifDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(GIF_STORE, 'readwrite');
+    tx.objectStore(GIF_STORE).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+saveCircuitBtn.addEventListener('click', async () => {
   try {
-    saveCircuit();
+    await saveCircuit();
     alert('회로가 저장되었습니다!');
   } catch (e) {
     alert('저장에 실패했습니다.');
@@ -2947,7 +2999,7 @@ function getSavedKeys() {
 }
 
 // 3) 리스트 그리기
-function renderSavedList() {
+async function renderSavedList() {
   const savedList = document.getElementById('savedList');
   savedList.innerHTML = '';
   const keys = getSavedKeys().filter(key => {
@@ -2957,36 +3009,46 @@ function renderSavedList() {
     return false;
   });
   if (!keys.length) {
-    savedList.innerHTML = `<li>${t('noCircuits')}</li>`;
+    savedList.innerHTML = `<p>${t('noCircuits')}</p>`;
     return;
   }
-  keys.forEach(key => {
+  for (const key of keys) {
     const data = JSON.parse(localStorage.getItem(key));
-    const li = document.createElement('li');
-    li.style.margin = '6px 0';
+    const item = document.createElement('div');
+    item.className = 'saved-item';
     const label = data.stageId != null
       ? `Stage ${String(data.stageId).padStart(2, '0')}`
       : `Problem ${data.problemTitle || data.problemKey}`;
-    li.innerHTML = `
-      <strong>${label}</strong>
-      — ${new Date(data.timestamp).toLocaleString()}
-      <button data-key="${key}" class="loadBtn">${t('loadBtn')}</button>
-      <button data-key="${key}" class="deleteBtn">${t('deleteBtn')}</button>
-    `;
-    savedList.appendChild(li);
-  });
-  document.querySelectorAll('.loadBtn').forEach(btn =>
-    btn.addEventListener('click', () => {
-      loadCircuit(btn.dataset.key);
+
+    const blob = await loadGifFromDB(key);
+    const img = document.createElement('img');
+    if (blob) img.src = URL.createObjectURL(blob);
+    img.alt = label;
+    item.appendChild(img);
+
+    const cap = document.createElement('div');
+    cap.className = 'saved-caption';
+    cap.textContent = `${label} — ${new Date(data.timestamp).toLocaleString()}`;
+    item.appendChild(cap);
+
+    item.addEventListener('click', () => {
+      loadCircuit(key);
       document.getElementById('savedModal').style.display = 'none';
-    })
-  );
-  document.querySelectorAll('.deleteBtn').forEach(btn =>
-    btn.addEventListener('click', () => {
-      localStorage.removeItem(btn.dataset.key);
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = t('deleteBtn');
+    delBtn.className = 'deleteBtn';
+    delBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      localStorage.removeItem(key);
+      deleteGifFromDB(key);
       renderSavedList();
-    })
-  );
+    });
+    item.appendChild(delBtn);
+
+    savedList.appendChild(item);
+  }
 }
 
 // 4) 모달 열기/닫기
@@ -3091,7 +3153,7 @@ function highlightOutputErrors() {
     });
 }
 
-function saveCircuit() {
+async function saveCircuit() {
   const data = {
     stageId: currentLevel,
     problemKey: currentCustomProblemKey,
@@ -3116,10 +3178,18 @@ function saveCircuit() {
   const key = `${getSavePrefix()}${timestampMs}`;
   try {
     localStorage.setItem(key, JSON.stringify(data));
+
+    // capture GIF and store in IndexedDB
+    resetCaptureCanvas();
+    const state = getCircuitSnapshot();
+    const blob = await new Promise(resolve => captureGIF(state, resolve));
+    await saveGifToDB(key, blob);
+
     console.log(`Circuit saved: ${key}`, data);
   } catch (e) {
     console.error('Circuit save failed:', e);
     alert('회로 저장 중 오류가 발생했습니다.');
+    throw e;
   }
 }
 
