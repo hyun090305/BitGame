@@ -4720,24 +4720,24 @@ function drawCaptureFrame(ctx, state, frame) {
     }
     ctx.stroke();
 
-    if (w.active) {
-      const progress = Math.floor((frame / state.totalFrames) * pts.length);
-      if (progress > 0) {
-        ctx.strokeStyle = '#ff0000';
-        ctx.beginPath();
-        ctx.moveTo(pts[0].x, pts[0].y);
-        for (let i = 1; i < Math.min(progress + 1, pts.length); i++) {
-          ctx.lineTo(pts[i].x, pts[i].y);
-        }
-        ctx.stroke();
-      }
+    // 모든 도선에 교차하는 빨간색 흐름 표시
+    ctx.save();
+    ctx.strokeStyle = '#ff0000';
+    ctx.setLineDash([8, 8]);
+    ctx.lineDashOffset = -(frame * 4);
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) {
+      ctx.lineTo(pts[i].x, pts[i].y);
     }
+    ctx.stroke();
+    ctx.restore();
   });
 
   state.blocks.forEach(b => {
     const x = border + b.col * (cellSize + gap);
     const y = border + b.row * (cellSize + gap);
-    ctx.fillStyle = b.active ? '#ffeb3b' : '#e0e0ff';
+    ctx.fillStyle = '#e0e0ff';
     ctx.fillRect(x, y, cellSize, cellSize);
     ctx.strokeStyle = '#000';
     ctx.strokeRect(x, y, cellSize, cellSize);
@@ -4745,7 +4745,7 @@ function drawCaptureFrame(ctx, state, frame) {
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(b.type || '', x + cellSize / 2, y + cellSize / 2);
+    ctx.fillText(b.name || '', x + cellSize / 2, y + cellSize / 2);
   });
 
   ctx.lineWidth = border;
