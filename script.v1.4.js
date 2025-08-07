@@ -4705,25 +4705,15 @@ function drawCaptureFrame(ctx, state, frame) {
     }
   }
 
-  ctx.lineWidth = 4;
   state.wires.forEach(w => {
     const pts = w.path.map(p => ({
       x: border + p.col * (cellSize + gap) + cellSize / 2,
       y: border + p.row * (cellSize + gap) + cellSize / 2
     }));
 
-    ctx.strokeStyle = '#000';
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) {
-      ctx.lineTo(pts[i].x, pts[i].y);
-    }
-    ctx.stroke();
-
-    // 검정색과 배경색이 번갈아 흐르는 선 표시
     ctx.save();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
     ctx.setLineDash([16, 16]);
     ctx.lineDashOffset = -(frame * 2);
     ctx.beginPath();
@@ -4743,7 +4733,7 @@ function drawCaptureFrame(ctx, state, frame) {
     ctx.strokeStyle = '#000';
     ctx.strokeRect(x, y, cellSize, cellSize);
     ctx.fillStyle = '#000';
-    ctx.font = '12px sans-serif';
+    ctx.font = (cellSize / 2) + 'px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(b.name || b.type || '', x + cellSize / 2, y + cellSize / 2);
