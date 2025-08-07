@@ -1300,6 +1300,22 @@ async function gradeLevelAnimated(level) {
       clearedBtn.textContent += `\n✅`;
       markLevelCleared(level);
     }
+
+    try {
+      if (gifLoadingModal) {
+        if (gifLoadingText) gifLoadingText.textContent = t('savingCircuit');
+        gifLoadingModal.style.display = 'flex';
+      }
+      await saveCircuit();
+      alert(t('circuitSaved'));
+    } catch (e) {
+      alert(t('saveFailed').replace('{error}', e));
+    } finally {
+      if (gifLoadingModal) {
+        gifLoadingModal.style.display = 'none';
+        if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
+      }
+    }
     const blocks = Array.from(grid.querySelectorAll(".cell.block"));
 
     // ② 타입별 개수 집계
@@ -2975,10 +2991,9 @@ saveCircuitBtn.addEventListener('click', async () => {
       gifLoadingModal.style.display = 'flex';
     }
     await saveCircuit();
-    alert('회로가 저장되었습니다!');
+    alert(t('circuitSaved'));
   } catch (e) {
-    alert('저장에 실패했습니다.');
-    alert(e);
+    alert(t('saveFailed').replace('{error}', e));
   } finally {
     if (gifLoadingModal) {
       gifLoadingModal.style.display = 'none';
@@ -4755,6 +4770,22 @@ async function gradeProblemAnimated(key, problem) {
   document.getElementById('returnToEditBtn').addEventListener('click',returnToEditScreen);
 
   if(allCorrect && key){
+    try {
+      if (gifLoadingModal) {
+        if (gifLoadingText) gifLoadingText.textContent = t('savingCircuit');
+        gifLoadingModal.style.display = 'flex';
+      }
+      await saveCircuit();
+      alert(t('circuitSaved'));
+    } catch (e) {
+      alert(t('saveFailed').replace('{error}', e));
+    } finally {
+      if (gifLoadingModal) {
+        gifLoadingModal.style.display = 'none';
+        if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
+      }
+    }
+
     const blocks=Array.from(grid.querySelectorAll('.cell.block'));
     const blockCounts=blocks.reduce((acc,c)=>{
       const t=c.dataset.type; acc[t]=(acc[t]||0)+1; return acc;
