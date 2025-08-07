@@ -4701,7 +4701,7 @@ function drawCaptureFrame(ctx, state, frame) {
   const border = 2 * GIF_SCALE;
   const rows = state.rows;
   const cols = state.cols;
-  const radius = 8 * GIF_SCALE;
+  const radius = 4 * GIF_SCALE;
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.fillStyle = '#fff';
@@ -4753,7 +4753,7 @@ function drawCaptureFrame(ctx, state, frame) {
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = '#000';
-    ctx.font = 'bold ' + (cellSize / 4) + 'px "Noto Sans KR"';
+    ctx.font = 'bold ' + (cellSize / 3) + 'px "Noto Sans KR"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(b.name || b.type || '', x + cellSize / 2, y + cellSize / 2);
