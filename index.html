@@ -403,15 +403,25 @@
         </div>
       </div>
     </div>
-    <!-- GIF 미리보기 모달 -->
+    <!-- GIF 결과 모달 -->
     <div id="gifModal" class="modal" style="display:none;">
       <div class="modal-content">
-        <canvas id="captureCanvas" style="max-width:100%; height:auto;"></canvas>
+        <img id="gifPreview" style="max-width:100%; height:auto;" />
         <div class="modal-buttons" style="margin-top:1rem;">
+          <button id="saveGifBtn">이미지 저장</button>
+          <button id="shareGifBtn">공유하기</button>
           <button id="closeGifModal">닫기</button>
         </div>
       </div>
     </div>
+    <!-- GIF 생성 중 로딩 화면 -->
+    <div id="gifLoadingModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <p>GIF 생성중...</p>
+      </div>
+    </div>
+    <!-- 캡처용 캔버스 (화면에 표시되지 않음) -->
+    <canvas id="captureCanvas" style="display:none;"></canvas>
     <div id="clearedModal" class="modal" style="display: none;">
       <div class="modal-content">
         <h2 id="clearedTitle">스테이지 <span id="clearedStageNumber"></span> 클리어!</h2>
