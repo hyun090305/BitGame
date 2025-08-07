@@ -4679,12 +4679,27 @@ function getCircuitSnapshot() {
   return { blocks: blockSnap, wires: wireSnap, rows, cols, totalFrames: 80 };
 }
 
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
 function drawCaptureFrame(ctx, state, frame) {
   const cellSize = 50;
   const gap = 2;
   const border = 2;
   const rows = state.rows;
   const cols = state.cols;
+  const radius = 8;
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.fillStyle = '#fff';
@@ -4698,10 +4713,11 @@ function drawCaptureFrame(ctx, state, frame) {
       const x = border + c * (cellSize + gap);
       const y = border + r * (cellSize + gap);
       ctx.fillStyle = wireCells.has(`${r},${c}`) ? '#ffe' : '#fff';
-      ctx.fillRect(x, y, cellSize, cellSize);
       ctx.strokeStyle = '#ccc';
       ctx.lineWidth = 1;
-      ctx.strokeRect(x, y, cellSize, cellSize);
+      drawRoundedRect(ctx, x, y, cellSize, cellSize, radius);
+      ctx.fill();
+      ctx.stroke();
     }
   }
 
@@ -4729,11 +4745,13 @@ function drawCaptureFrame(ctx, state, frame) {
     const x = border + b.col * (cellSize + gap);
     const y = border + b.row * (cellSize + gap);
     ctx.fillStyle = '#e0e0ff';
-    ctx.fillRect(x, y, cellSize, cellSize);
     ctx.strokeStyle = '#000';
-    ctx.strokeRect(x, y, cellSize, cellSize);
+    ctx.lineWidth = 1;
+    drawRoundedRect(ctx, x, y, cellSize, cellSize, radius);
+    ctx.fill();
+    ctx.stroke();
     ctx.fillStyle = '#000';
-    ctx.font = (cellSize / 4) + 'px sans-serif';
+    ctx.font = 'bold ' + (cellSize / 4) + 'px "Noto Sans KR"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(b.name || b.type || '', x + cellSize / 2, y + cellSize / 2);
