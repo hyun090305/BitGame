@@ -822,12 +822,18 @@ html, body {
 
   .stageCard {
     position: relative;
+    box-sizing: border-box;
+    width: 200px;
+    height: 125px;
     padding: 1rem;
     border: 1px solid #666;
     border-radius: 8px;
     background: #f5f5ff;
     cursor: pointer;
-    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
 
   .stageCard.cleared {
