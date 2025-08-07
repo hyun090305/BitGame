@@ -794,6 +794,10 @@ html, body {
     border-right: 1px solid #ccc;
   }
 
+  #stagePanel {
+    flex: 1;
+  }
+
   .chapterItem {
     padding: 0.5rem;
     cursor: pointer;
@@ -812,7 +816,7 @@ html, body {
   .stage-list {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
   }
 
