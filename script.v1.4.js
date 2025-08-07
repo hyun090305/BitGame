@@ -29,6 +29,14 @@ if (closeGifModalBtn) {
   });
 }
 
+function resetCaptureCanvas() {
+  if (!captureCanvas) return;
+  const ctx = captureCanvas.getContext('2d');
+  ctx.clearRect(0, 0, captureCanvas.width, captureCanvas.height);
+  captureCanvas.width = 0;
+  captureCanvas.height = 0;
+}
+
 // 초기 로딩 관련
 const initialTasks = [];
 function hideLoadingScreen() {
@@ -933,6 +941,7 @@ document.querySelectorAll(".levelBtn").forEach(btn => {
 
 
 function startLevel(level) {
+  resetCaptureCanvas();
   const [rows, cols] = levelGridSizes[level] || [6, 6];
   GRID_ROWS = rows;
   GRID_COLS = cols;
@@ -4756,7 +4765,7 @@ function drawCaptureFrame(ctx, state, frame) {
     ctx.font = 'bold ' + (cellSize / 3) + 'px "Noto Sans KR"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const label = b.name || (b.type === 'JUNCTION' ? 'JUNC' : b.type) || '';
+    const label = b.type === 'JUNCTION' ? 'JUNC' : (b.name || b.type || '');
     ctx.fillText(label, x + cellSize / 2, y + cellSize / 2);
   });
 
