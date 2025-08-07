@@ -25,6 +25,7 @@ const gifPreview = document.getElementById('gifPreview');
 const saveGifBtn = document.getElementById('saveGifBtn');
 const shareGifBtn = document.getElementById('shareGifBtn');
 const gifLoadingModal = document.getElementById('gifLoadingModal');
+const gifLoadingText = document.getElementById('gifLoadingText');
 let currentGifBlob = null;
 let currentGifUrl = null;
 // GIF 해상도를 키우기 위한 배율
@@ -2969,11 +2970,20 @@ async function deleteGifFromDB(key) {
 
 saveCircuitBtn.addEventListener('click', async () => {
   try {
+    if (gifLoadingModal) {
+      if (gifLoadingText) gifLoadingText.textContent = t('savingCircuit');
+      gifLoadingModal.style.display = 'flex';
+    }
     await saveCircuit();
     alert('회로가 저장되었습니다!');
   } catch (e) {
     alert('저장에 실패했습니다.');
     alert(e);
+  } finally {
+    if (gifLoadingModal) {
+      gifLoadingModal.style.display = 'none';
+      if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
+    }
   }
 });
 
@@ -3041,6 +3051,7 @@ async function renderSavedList() {
     delBtn.className = 'deleteBtn';
     delBtn.addEventListener('click', e => {
       e.stopPropagation();
+      if (!confirm(t('confirmDelete'))) return;
       localStorage.removeItem(key);
       deleteGifFromDB(key);
       renderSavedList();
@@ -4909,6 +4920,7 @@ function captureGIF(state, onFinish) {
 function handleGIFExport() {
   resetCaptureCanvas();
   const state = getCircuitSnapshot();
+  if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
   if (gifLoadingModal) gifLoadingModal.style.display = 'flex';
   captureGIF(state, blob => {
     if (gifLoadingModal) gifLoadingModal.style.display = 'none';
