@@ -21,6 +21,8 @@ let loginFromMainScreen = false;  // 메인 화면에서 로그인 여부 추적
 const captureCanvas = document.getElementById('captureCanvas');
 const gifModal = document.getElementById('gifModal');
 const closeGifModalBtn = document.getElementById('closeGifModal');
+// GIF 해상도를 키우기 위한 배율
+const GIF_SCALE = 2;
 if (closeGifModalBtn) {
   closeGifModalBtn.addEventListener('click', () => {
     if (gifModal) gifModal.style.display = 'none';
@@ -4694,12 +4696,12 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 }
 
 function drawCaptureFrame(ctx, state, frame) {
-  const cellSize = 50;
-  const gap = 2;
-  const border = 2;
+  const cellSize = 50 * GIF_SCALE;
+  const gap = 2 * GIF_SCALE;
+  const border = 2 * GIF_SCALE;
   const rows = state.rows;
   const cols = state.cols;
-  const radius = 8;
+  const radius = 8 * GIF_SCALE;
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.fillStyle = '#fff';
@@ -4714,7 +4716,7 @@ function drawCaptureFrame(ctx, state, frame) {
       const y = border + r * (cellSize + gap);
       ctx.fillStyle = wireCells.has(`${r},${c}`) ? '#ffe' : '#fff';
       ctx.strokeStyle = '#ccc';
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1 * GIF_SCALE;
       drawRoundedRect(ctx, x, y, cellSize, cellSize, radius);
       ctx.fill();
       ctx.stroke();
@@ -4729,9 +4731,9 @@ function drawCaptureFrame(ctx, state, frame) {
 
     ctx.save();
     ctx.strokeStyle = '#000';
-    ctx.lineWidth = 4;
-    ctx.setLineDash([16, 16]);
-    ctx.lineDashOffset = -(frame * 2);
+    ctx.lineWidth = 4 * GIF_SCALE;
+    ctx.setLineDash([16 * GIF_SCALE, 16 * GIF_SCALE]);
+    ctx.lineDashOffset = -(frame * 2 * GIF_SCALE);
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for (let i = 1; i < pts.length; i++) {
@@ -4746,7 +4748,7 @@ function drawCaptureFrame(ctx, state, frame) {
     const y = border + b.row * (cellSize + gap);
     ctx.fillStyle = '#e0e0ff';
     ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1 * GIF_SCALE;
     drawRoundedRect(ctx, x, y, cellSize, cellSize, radius);
     ctx.fill();
     ctx.stroke();
@@ -4763,9 +4765,9 @@ function drawCaptureFrame(ctx, state, frame) {
 }
 
 function captureGIF(state, onFinish) {
-  const cellSize = 50;
-  const gap = 2;
-  const border = 2;
+  const cellSize = 50 * GIF_SCALE;
+  const gap = 2 * GIF_SCALE;
+  const border = 2 * GIF_SCALE;
   const cols = Math.max(1, Math.floor(Number(state.cols)));
   const rows = Math.max(1, Math.floor(Number(state.rows)));
   captureCanvas.width = border * 2 + cols * cellSize + (cols - 1) * gap;
