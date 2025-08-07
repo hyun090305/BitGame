@@ -4673,21 +4673,46 @@ function getCircuitSnapshot() {
     active: values.get(w.start) || false
   }));
 
-  return { blocks: blockSnap, wires: wireSnap, totalFrames: 20 };
+  const rows = Math.max(1, Math.floor(Number(GRID_ROWS)));
+  const cols = Math.max(1, Math.floor(Number(GRID_COLS)));
+
+  return { blocks: blockSnap, wires: wireSnap, rows, cols, totalFrames: 20 };
 }
 
 function drawCaptureFrame(ctx, state, frame) {
   const cellSize = 50;
+  const gap = 2;
+  const border = 2;
+  const rows = state.rows;
+  const cols = state.cols;
+
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+  const wireCells = new Set();
+  state.wires.forEach(w => w.path.forEach(p => wireCells.add(`${p.row},${p.col}`)));
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = border + c * (cellSize + gap);
+      const y = border + r * (cellSize + gap);
+      ctx.fillStyle = wireCells.has(`${r},${c}`) ? '#ffe' : '#fff';
+      ctx.fillRect(x, y, cellSize, cellSize);
+      ctx.strokeStyle = '#ccc';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, cellSize, cellSize);
+    }
+  }
 
   ctx.lineWidth = 4;
   state.wires.forEach(w => {
     const pts = w.path.map(p => ({
-      x: p.col * cellSize + cellSize / 2,
-      y: p.row * cellSize + cellSize / 2
+      x: border + p.col * (cellSize + gap) + cellSize / 2,
+      y: border + p.row * (cellSize + gap) + cellSize / 2
     }));
 
-    ctx.strokeStyle = '#999';
+    ctx.strokeStyle = '#000';
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for (let i = 1; i < pts.length; i++) {
@@ -4710,8 +4735,8 @@ function drawCaptureFrame(ctx, state, frame) {
   });
 
   state.blocks.forEach(b => {
-    const x = b.col * cellSize;
-    const y = b.row * cellSize;
+    const x = border + b.col * (cellSize + gap);
+    const y = border + b.row * (cellSize + gap);
     ctx.fillStyle = b.active ? '#ffeb3b' : '#e0e0ff';
     ctx.fillRect(x, y, cellSize, cellSize);
     ctx.strokeStyle = '#000';
@@ -4722,13 +4747,20 @@ function drawCaptureFrame(ctx, state, frame) {
     ctx.textBaseline = 'middle';
     ctx.fillText(b.type || '', x + cellSize / 2, y + cellSize / 2);
   });
+
+  ctx.lineWidth = border;
+  ctx.strokeStyle = '#666';
+  ctx.strokeRect(border / 2, border / 2, ctx.canvas.width - border, ctx.canvas.height - border);
 }
 
 function captureGIF(state, onFinish) {
-  const cols = Math.max(1, Math.floor(Number(GRID_COLS)));
-  const rows = Math.max(1, Math.floor(Number(GRID_ROWS)));
-  captureCanvas.width = cols * 50;
-  captureCanvas.height = rows * 50;
+  const cellSize = 50;
+  const gap = 2;
+  const border = 2;
+  const cols = Math.max(1, Math.floor(Number(state.cols)));
+  const rows = Math.max(1, Math.floor(Number(state.rows)));
+  captureCanvas.width = border * 2 + cols * cellSize + (cols - 1) * gap;
+  captureCanvas.height = border * 2 + rows * cellSize + (rows - 1) * gap;
   const ctx = captureCanvas.getContext('2d');
   const width = captureCanvas.width;
   const height = captureCanvas.height;
