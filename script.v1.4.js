@@ -4651,6 +4651,8 @@ function setupCustomBlockPanel(problem) {
 }
 
 function startCustomProblem(key, problem) {
+  wireTrace = [];
+  wires = [];
   currentCustomProblem = problem;
   currentCustomProblemKey = key;
   currentLevel = null;
