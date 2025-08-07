@@ -4733,7 +4733,7 @@ function drawCaptureFrame(ctx, state, frame) {
     ctx.strokeStyle = '#000';
     ctx.strokeRect(x, y, cellSize, cellSize);
     ctx.fillStyle = '#000';
-    ctx.font = (cellSize / 2) + 'px sans-serif';
+    ctx.font = (cellSize / 4) + 'px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(b.name || b.type || '', x + cellSize / 2, y + cellSize / 2);
