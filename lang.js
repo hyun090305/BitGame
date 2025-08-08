@@ -97,7 +97,7 @@ const translations = {
     savingCircuit: {text: "회로 저장 중..."},
     circuitSaved: {text: "회로가 저장되었습니다!"},
     savedShareBtn: {text: "공유하기"},
-    savedNextBtn: {text: "다음"},
+    savedNextBtn: {text: "계속"},
     problemListTitle: {text: "📂 저장된 문제"},
     closeProblemListModal: {text: "닫기"},
     clearedTitle: {html: "스테이지 <span id='clearedStageNumber'></span> 클리어!"},

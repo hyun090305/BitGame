@@ -17,6 +17,9 @@ let problemOutputsValid = false;
 let problemScreenPrev = null;  // 문제 출제 화면 진입 이전 화면 기록
 let loginFromMainScreen = false;  // 메인 화면에서 로그인 여부 추적
 
+let lastSavedKey = null;
+let pendingClearedLevel = null;
+
 // GIF 생성 관련 요소들
 const captureCanvas = document.getElementById('captureCanvas');
 const gifModal = document.getElementById('gifModal');
@@ -1306,7 +1309,6 @@ async function gradeLevelAnimated(level) {
         if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
       }
     }
-    if (saveSuccess) showCircuitSavedModal();
     const blocks = Array.from(grid.querySelectorAll(".cell.block"));
 
     // ② 타입별 개수 집계
@@ -1322,47 +1324,50 @@ async function gradeLevelAnimated(level) {
     const nickname = localStorage.getItem("username") || "익명";
     const rankingsRef = db.ref(`rankings/${level}`);
 
+    pendingClearedLevel = null;
+
     // ① 내 기록 조회 (nickname 기준)
     rankingsRef.orderByChild("nickname").equalTo(nickname)
       .once("value", snapshot => {
         if (!snapshot.exists()) {
           // 내 기록이 없으면 새로 저장
           saveRanking(level, blockCounts, usedWires, hintsUsed);
-          showClearedModal(level);
-          return;
-        }
+          pendingClearedLevel = level;
+        } else {
+          let best = null;
+          snapshot.forEach(child => {
+            const e = child.val();
+            // 기존/새 블록 개수 합계
+            const oldBlocks = Object.values(e.blockCounts || {}).reduce((a, b) => a + b, 0);
+            const newBlocks = Object.values(blockCounts).reduce((a, b) => a + b, 0);
+            // 기존/새 도선 개수
+            const oldWires = e.usedWires;
+            const newWires = usedWires;
 
-        let best = null;
-        snapshot.forEach(child => {
-          const e = child.val();
-          // 기존/새 블록 개수 합계
-          const oldBlocks = Object.values(e.blockCounts || {}).reduce((a, b) => a + b, 0);
-          const newBlocks = Object.values(blockCounts).reduce((a, b) => a + b, 0);
-          // 기존/새 도선 개수
-          const oldWires = e.usedWires;
-          const newWires = usedWires;
-
-          // ✅ 수정: 오직 성능이 엄격히 개선된 경우에만 best 할당
-          if (
-            newBlocks < oldBlocks
-            || (newBlocks === oldBlocks && newWires < oldWires)
-          ) {
-            best = { key: child.key };
-            // nickname 당 보통 한 건만 있으므로, 더 돌 필요 없으면 false 리턴
-            return false;
-          }
-        });
-
-        // ③ 개선된 경우에만 업데이트 (동일 성능이라면 best가 null이므로 건너뜀)
-        if (best) {
-          rankingsRef.child(best.key).update({
-            blockCounts,
-            usedWires,
-            hintsUsed,
-            timestamp: new Date().toISOString()
+            // ✅ 수정: 오직 성능이 엄격히 개선된 경우에만 best 할당
+            if (
+              newBlocks < oldBlocks
+              || (newBlocks === oldBlocks && newWires < oldWires)
+            ) {
+              best = { key: child.key };
+              // nickname 당 보통 한 건만 있으므로, 더 돌 필요 없으면 false 리턴
+              return false;
+            }
           });
-          showClearedModal(level);
+
+          // ③ 개선된 경우에만 업데이트 (동일 성능이라면 best가 null이므로 건너뜀)
+          if (best) {
+            rankingsRef.child(best.key).update({
+              blockCounts,
+              usedWires,
+              hintsUsed,
+              timestamp: new Date().toISOString()
+            });
+            pendingClearedLevel = level;
+          }
         }
+
+        showCircuitSavedModal();
       });
 
 
@@ -2360,11 +2365,18 @@ function showCircuitSavedModal() {
 }
 
 if (savedShareBtn) {
-  savedShareBtn.addEventListener('click', () => {
-    if (shareModal && shareTextEl) {
-      shareTextEl.value = buildShareString();
-      shareModal.style.display = 'flex';
-      shareTextEl.select();
+  savedShareBtn.addEventListener('click', async () => {
+    if (!lastSavedKey) return;
+    try {
+      const blob = await loadGifFromDB(lastSavedKey);
+      const file = new File([blob], 'circuit.gif', { type: 'image/gif' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] });
+      } else {
+        alert('공유를 지원하지 않는 브라우저입니다.');
+      }
+    } catch (e) {
+      alert('공유에 실패했습니다: ' + e);
     }
     if (circuitSavedModal) circuitSavedModal.style.display = 'none';
   });
@@ -2373,6 +2385,10 @@ if (savedShareBtn) {
 if (savedNextBtn) {
   savedNextBtn.addEventListener('click', () => {
     if (circuitSavedModal) circuitSavedModal.style.display = 'none';
+    if (pendingClearedLevel !== null) {
+      showClearedModal(pendingClearedLevel);
+      pendingClearedLevel = null;
+    }
   });
 }
 
@@ -3019,7 +3035,7 @@ saveCircuitBtn.addEventListener('click', async () => {
       if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
     }
   }
-  if (saveSuccess) showCircuitSavedModal();
+  if (saveSuccess) alert(t('circuitSaved'));
 });
 
 // 2) 저장된 회로 키들 읽어오기
@@ -3232,6 +3248,8 @@ async function saveCircuit() {
     await saveGifToDB(key, blob);
 
     console.log(`Circuit saved: ${key}`, data);
+    lastSavedKey = key;
+    return key;
   } catch (e) {
     console.error('Circuit save failed:', e);
     alert('회로 저장 중 오류가 발생했습니다.');
