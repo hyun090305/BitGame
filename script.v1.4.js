@@ -1290,13 +1290,14 @@ async function gradeLevelAnimated(level) {
       markLevelCleared(level);
     }
 
+    let saveSuccess = false;
     try {
       if (gifLoadingModal) {
         if (gifLoadingText) gifLoadingText.textContent = t('savingCircuit');
         gifLoadingModal.style.display = 'flex';
       }
       await saveCircuit();
-      alert(t('circuitSaved'));
+      saveSuccess = true;
     } catch (e) {
       alert(t('saveFailed').replace('{error}', e));
     } finally {
@@ -1305,6 +1306,7 @@ async function gradeLevelAnimated(level) {
         if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
       }
     }
+    if (saveSuccess) showCircuitSavedModal();
     const blocks = Array.from(grid.querySelectorAll(".cell.block"));
 
     // ② 타입별 개수 집계
@@ -2344,6 +2346,36 @@ closeShareBtn.addEventListener('click', () => {
   shareModal.style.display = 'none';
 });
 
+// 회로 저장 완료 모달
+const circuitSavedModal = document.getElementById('circuitSavedModal');
+const savedShareBtn = document.getElementById('savedShareBtn');
+const savedNextBtn = document.getElementById('savedNextBtn');
+
+function showCircuitSavedModal() {
+  if (circuitSavedModal) {
+    circuitSavedModal.style.display = 'flex';
+  } else {
+    alert(t('circuitSaved'));
+  }
+}
+
+if (savedShareBtn) {
+  savedShareBtn.addEventListener('click', () => {
+    if (shareModal && shareTextEl) {
+      shareTextEl.value = buildShareString();
+      shareModal.style.display = 'flex';
+      shareTextEl.select();
+    }
+    if (circuitSavedModal) circuitSavedModal.style.display = 'none';
+  });
+}
+
+if (savedNextBtn) {
+  savedNextBtn.addEventListener('click', () => {
+    if (circuitSavedModal) circuitSavedModal.style.display = 'none';
+  });
+}
+
 // 채점 중 grid 조작 금지 기능
 const overlay = document.getElementById("gridOverlay");
 let isScoring = false;
@@ -2971,13 +3003,14 @@ async function deleteGifFromDB(key) {
 }
 
 saveCircuitBtn.addEventListener('click', async () => {
+  let saveSuccess = false;
   try {
     if (gifLoadingModal) {
       if (gifLoadingText) gifLoadingText.textContent = t('savingCircuit');
       gifLoadingModal.style.display = 'flex';
     }
     await saveCircuit();
-    alert(t('circuitSaved'));
+    saveSuccess = true;
   } catch (e) {
     alert(t('saveFailed').replace('{error}', e));
   } finally {
@@ -2986,6 +3019,7 @@ saveCircuitBtn.addEventListener('click', async () => {
       if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
     }
   }
+  if (saveSuccess) showCircuitSavedModal();
 });
 
 // 2) 저장된 회로 키들 읽어오기
@@ -4758,13 +4792,14 @@ async function gradeProblemAnimated(key, problem) {
   document.getElementById('returnToEditBtn').addEventListener('click',returnToEditScreen);
 
   if(allCorrect && key){
+    let saveSuccess=false;
     try {
       if (gifLoadingModal) {
         if (gifLoadingText) gifLoadingText.textContent = t('savingCircuit');
         gifLoadingModal.style.display = 'flex';
       }
       await saveCircuit();
-      alert(t('circuitSaved'));
+      saveSuccess=true;
     } catch (e) {
       alert(t('saveFailed').replace('{error}', e));
     } finally {
@@ -4773,6 +4808,7 @@ async function gradeProblemAnimated(key, problem) {
         if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
       }
     }
+    if(saveSuccess) showCircuitSavedModal();
 
     const blocks=Array.from(grid.querySelectorAll('.cell.block'));
     const blockCounts=blocks.reduce((acc,c)=>{
