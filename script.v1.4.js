@@ -2411,9 +2411,11 @@ document.getElementById("gradeButton").addEventListener("click", () => {
 const modalGoogleLoginBtn = document.getElementById('modalGoogleLoginBtn');
 const usernameSubmitBtn = document.getElementById('usernameSubmit');
 const usernameModalHeading = document.querySelector('#usernameModal h2');
+const loginInfo = document.getElementById('loginInfo');
 const defaultModalGoogleLoginDisplay = modalGoogleLoginBtn ? modalGoogleLoginBtn.style.display : '';
 const defaultUsernameSubmitText = usernameSubmitBtn ? usernameSubmitBtn.textContent : '';
 const defaultUsernameModalHeading = usernameModalHeading ? usernameModalHeading.textContent : '';
+const defaultLoginInfoHtml = loginInfo ? loginInfo.innerHTML : '';
 
 function restoreUsernameModalDefaults() {
   if (modalGoogleLoginBtn) modalGoogleLoginBtn.style.display = defaultModalGoogleLoginDisplay;
@@ -2422,6 +2424,7 @@ function restoreUsernameModalDefaults() {
     usernameSubmitBtn.onclick = onInitialUsernameSubmit;
   }
   if (usernameModalHeading) usernameModalHeading.textContent = defaultUsernameModalHeading;
+  if (loginInfo) loginInfo.innerHTML = defaultLoginInfoHtml;
 }
 
 function promptForUsername() {
@@ -2463,6 +2466,9 @@ function promptForGoogleNickname(oldName, uid) {
   if (modalGoogleLoginBtn) modalGoogleLoginBtn.style.display = 'none';
   if (usernameSubmitBtn) usernameSubmitBtn.textContent = '닉네임 등록';
   if (usernameModalHeading) usernameModalHeading.textContent = 'Google 닉네임 등록';
+  if (loginInfo) {
+    loginInfo.innerHTML = t('loginInfoGoogle');
+  }
   usernameSubmitBtn.onclick = () => onGoogleUsernameSubmit(oldName, uid);
   document.getElementById("usernameModal").style.display = "flex";
 }
