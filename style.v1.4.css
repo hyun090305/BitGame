@@ -90,11 +90,52 @@ html, body {
     width: max-content;
   }
 
-  #mainScreen button {
-    margin: 10px;
-    padding: 12px 20px;
-    font-size: 1.2rem;
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .main-button {
+      padding: 12px 20px;
+      font-size: 1.2rem;
+      border: 2px solid #1d4ed8;
+      border-radius: 8px;
+      background-color: #fff;
+      color: #1d4ed8;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.2s;
+      width: 120px;
+    }
+
+  #mainScreen #tutorialBtn,
+  #mainScreen #copyStatusBtn {
+    border: none;
+    background-color: #ccc;
+    color: #0F172A;
   }
+
+  #mainScreen #tutorialBtn:hover,
+  #mainScreen #copyStatusBtn:hover {
+    background-color: #bbb;
+  }
+
+  #mainScreen #startBtn {
+    background-color: #1d4ed8;
+    color: #fff;
+    width: 240px;
+  }
+
+  #mainScreen #startBtn:hover {
+    background-color: #1e3a8a;
+    transform: scale(1.05);
+  }
+
+    .main-button:not(#startBtn):hover {
+      background-color: #eff6ff;
+      transform: scale(1.02);
+    }
 
   /* 모듈 기능 보류에 따라 메인화면의 모듈 관리 버튼 숨김 */
   #manageModulesBtn {
@@ -753,6 +794,9 @@ html, body {
     border: 1px solid #ccc;
     border-radius: 12px;
     max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   #guestbookArea textarea,
@@ -761,6 +805,29 @@ html, body {
     margin: 4px 0;
     padding: 8px;
     box-sizing: border-box;
+  }
+
+  #guestbookForm {
+    width: 100%;
+    padding-right: 0;
+  }
+
+  #guestbookListArea {
+    width: 100%;
+    margin-top: 0;
+    border-top: 1px solid #ddd;
+    padding-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #guestbookList {
+    flex: 1 1 auto;
+  }
+
+  #coffeeBtn {
+    margin-top: 16px;
+    align-self: flex-start;
   }
 
   .modal {
@@ -1001,7 +1068,7 @@ html, body {
 
   /* ── ① 공통: 페이지 전체 배경 (비게임·게임 모두) ── */
   html, body {
-    height: 100%;
+    height: auto;
     margin: 0;
   }
 
@@ -1018,15 +1085,21 @@ html, body {
   /* ── ② 비게임 화면에만 “흰 배경 + 블러” 오버레이 적용 ── */
   /* ── 비게임 화면에만 오버레이 적용 ── */
   body:not(.game-active) #mainScreen,
-  body:not(.game-active) #chapterStageScreen {
+  body:not(.game-active) #chapterStageScreen,
+  body:not(.game-active) #loginArea{
     background-color: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(8px);
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-    margin: 2rem auto;
+    padding: 1rem 2rem;
+    margin: 1rem;
     box-sizing: border-box;
   }
+
+#mainScreen,
+#loginArea{
+  width: 320px;
+}
 
   /* ── 게임 화면에서는 오버레이 완전 해제 ── */
   body.game-active #gameScreen {
@@ -1042,6 +1115,47 @@ html, body {
   .container {
     display: flex;
     gap: 5rem;
+  }
+
+  #mainArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #loginArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #loginArea #rankTable {
+    margin: 10px;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  #loginArea #rankTable td {
+    text-align: center;
+    border: none;
+    padding: 0;
+  }
+
+  #loginArea #rankTable .rank-label {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin: 0;
+  }
+
+  #loginArea #rankTable .rank-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  #loginArea #loginPrompt {
+    font-size: 0.9rem;
+    color: #6b7280;
   }
 
   .item {
@@ -1288,6 +1402,7 @@ html, body {
 
   #overallRankingArea {
     width: 350px;
+    height: 80vh;
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -1298,6 +1413,7 @@ html, body {
     /* 원하는 최대 높이로 조정 */
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   #overallRankingArea h3 {
@@ -1310,6 +1426,8 @@ html, body {
     /* 남은 공간 전부 사용 */
     overflow-y: auto;
     /* 세로 스크롤 */
+    min-height: 0;
+    max-height: 100%;
   }
 
   #overallRankingList table {
@@ -1332,7 +1450,6 @@ html, body {
 
   #firstScreen {
     /* 이전: .container { display:flex; gap:5rem; } 에서만 정의되어 있었음 */
-    min-height: 100vh;
     justify-content: center;
     /* 가로 중앙 정렬 */
     align-items: flex-start;
@@ -1349,7 +1466,7 @@ html, body {
   }
 
   /* ② 메인 카드(#mainScreen) 가 가진 margin:auto 를 수직 여백만 남기도록 변경 */
-  #firstScreen>#mainScreen {
+  #mainArea > #mainScreen {
     /* 이전: body:not(.game-active) #mainScreen { margin: 2rem auto; } */
     margin: 2rem 0;
     /* 위아래 2rem, 좌우 0 */
@@ -1522,7 +1639,7 @@ html, body {
 /* 뒤로가기 버튼 */
 .btn-back {
   align-self: flex-start;
-  margin-bottom: 1rem;
+  margin-top: 1rem;
   padding: 0.5rem 1rem;
   border: 1px solid #999;
   background: #fafafa;
@@ -1948,4 +2065,98 @@ html, body {
 .saved-caption {
   font-size: 12px;
   margin-top: 4px;
+}
+
+/* 모바일 하단 내비게이션 및 firstScreen 전환 */
+#mobileNav {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  #firstScreen {
+    display: block;
+    padding-bottom: 60px;
+  }
+
+  #firstScreen > #overallRankingArea,
+  #firstScreen > #mainArea,
+  #firstScreen > #guestbookArea {
+    display: none;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  
+  #firstScreen > #mainArea {
+    display: flex;
+  }
+
+  #mainArea {
+    flex-direction: row;
+  }
+
+  #mainArea > #mainScreen,
+  #mainArea > #loginArea {
+    flex: 1;
+  }
+
+  #guestbookArea {
+    flex-direction: row;
+  }
+
+  #guestbookForm,
+  #guestbookListArea {
+    flex: 1 1 50%;
+    width: 50%;
+  }
+
+  #guestbookForm {
+    padding-right: 0.5rem;
+  }
+
+  #guestbookListArea {
+    border-left: 1px solid #ddd;
+    border-top: 0;
+    padding-left: 0.5rem;
+    padding-top: 0;
+  }
+
+  #mobileNav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #fff;
+  }
+
+  #mobileNav .nav-item {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  #mobileNav .nav-item .nav-text {
+    display: none;
+  }
+
+  #mobileNav .nav-item.active .nav-text {
+    display: inline;
+  }
+
+  #mobileNav .nav-item:hover {
+    background-color: #e0e0e0;
+  }
+
+  #mobileNav .nav-icon {
+    width: 24px;
+    height: 24px;
+  }
 }

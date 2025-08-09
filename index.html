@@ -45,42 +45,7 @@
         </div>
       </div>
     </div>
-    <!-- 메인 화면 -->
-    <div class="container" id="firstScreen">
-      <div id="overallRankingArea">
-        <h3 id="overallRankingTitle">🏆 전체 랭킹</h3>
-        <div id="overallRankingList">로딩 중…</div>
-      </div>
-      <div id="mainScreen">
-        <h1>🧠 Bitwiser</h1>
-        <p class="tagline">Play bitwise. Become bit wiser.</p>
-        <button id="startBtn">시작하기</button>
-        <button id="tutorialBtn">📖 튜토리얼</button>
-        <div></div>
-        <button id="manageModulesBtn">모듈 관리</button>
-        <div></div>
-        <!-- <button id="createProblemBtn">문제 출제</button> -->
-        <div></div>
-        <button id="copyStatusBtn">📋 공유하기</button>
-        <div></div>
-        <button id="googleLoginBtn">Google 로그인</button>
-        <div></div>
-        <button id="languageBtn">Language</button>
-      </div>
-      <div id="guestbookArea">
-        <h3 id="guestbookTitle">📝 개발자(이현준)한테 글 남기기</h3>
-        <p class="info-text" id="guestNicknameLabel">닉네임: <b id="guestUsername"></b></p>
-        <br>
-        <textarea id="guestMessage" rows="4"
-          placeholder="남기고 싶은 말..."></textarea>
-        <br>
-        <button id="guestSubmitBtn" onclick="submitGuestEntry()">등록</button>
-
-        <div id="guestbookList"></div>
-        <button id="coffeeBtn" style="margin-top:16px;">
-          ☕ 개발자(이현준)한테 커피 사주기
-        </button>
-        <div id="shareModal" class="modal" style="display:none;">
+    <div id="shareModal" class="modal" style="display:none;">
           <div class="modal-content">
             <h3 id="shareTitle">🔗 공유할 내용</h3>
             <textarea id="shareText" readonly rows="20"
@@ -90,6 +55,89 @@
               <button id="closeShareBtn">닫기</button>
             </div>
           </div>
+        </div>
+    <div id="orientationModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <p>⚠️Bitwiser는 가로 모드를 권장합니다</p>
+        <p>Tip: [홈 화면에 추가 -> 설치]를 통해 Bitwiser 앱을 설치할 수 있어요!</p>
+        <div class="modal-buttons">
+          <button id="closeOrientationBtn">닫기</button>
+        </div>
+      </div>
+    </div>
+    <!-- 메인 화면 -->
+    <div class="container" id="firstScreen">
+      <div id="overallRankingArea">
+        <h3 id="overallRankingTitle">🏆 전체 랭킹</h3>
+        <div id="overallRankingList">로딩 중…</div>
+      </div>
+      <div id="mainArea">
+        <div id="mainScreen">
+        <h1>🧠 Bitwiser</h1>
+        <p class="tagline">Play bitwise. Become bit wiser.</p>
+        <div class="button-row">
+          <button id="startBtn" class="main-button">시작하기</button>
+        </div>
+        <div class="button-row">
+          <button id="tutorialBtn" class="main-button">튜토리얼</button>
+          <button id="copyStatusBtn" class="main-button">공유하기</button>
+        </div>
+        <!-- <button id="createProblemBtn">문제 출제</button> -->
+        </div>
+        <div id="loginArea">
+          <h2 id="loginUsername"></h2>
+          <div id="rankSection" style="display:none;">
+            <table id="rankTable">
+              <tr>
+                <td class="rank-cell">
+                  <p id="loginRankOverallLabel" class="rank-label"></p>
+                  <p id="overallRank" class="rank-value">#-</p>
+                </td>
+                <td class="rank-cell">
+                  <p id="loginRankClearedLabel" class="rank-label"></p>
+                  <p id="clearedCount" class="rank-value">0</p>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="button-row">
+            <button id="googleLoginBtn" class="main-button"></button>
+          </div>
+          <p id="loginGuestPrompt" class="tagline"></p>
+          <div class="button-row">
+            <button id="languageBtn" class="main-button"></button>
+          </div>
+        </div>
+      </div>
+      <div id="guestbookArea">
+        <div id="guestbookForm">
+          <h3 id="guestbookTitle">📝 개발자(이현준)한테 글 남기기</h3>
+          <p class="info-text" id="guestNicknameLabel">닉네임: <b id="guestUsername"></b></p>
+          <br>
+          <textarea id="guestMessage" rows="4"
+            placeholder="남기고 싶은 말..."></textarea>
+          <br>
+          <button id="guestSubmitBtn" onclick="submitGuestEntry()">등록</button>
+        </div>
+        <div id="guestbookListArea">
+          <div id="guestbookList"></div>
+          <button id="coffeeBtn">
+            ☕ 개발자(이현준)한테 커피 사주기
+          </button>
+        </div>
+      </div>
+      <div id="mobileNav">
+        <div class="nav-item" data-target="overallRankingArea">
+          <img src="assets/trophy-icon.png" alt="랭킹" class="nav-icon">
+          <span class="nav-text">랭킹</span>
+        </div>
+        <div class="nav-item active" data-target="mainArea">
+          <img src="assets/home-icon.png" alt="메인" class="nav-icon">
+          <span class="nav-text">메인</span>
+        </div>
+        <div class="nav-item" data-target="guestbookArea">
+          <img src="assets/message-icon.png" alt="방명록" class="nav-icon">
+          <span class="nav-text">방명록</span>
         </div>
       </div>
     </div>
@@ -255,8 +303,6 @@
     </div>
 
     <div id="chapterStageScreen" style="display:none; padding: 2rem;">
-      <button id="backToMainFromChapter" class="btn-back">← 메인으로</button>
-      <button id="toggleChapterList" class="btn-toggle">☰</button>
       <h1 id="chapterTitle">📚 스테이지 선택</h1>
       <div id="chapterStageContainer">
         <div id="chapterList" class="chapter-list"></div>
@@ -264,6 +310,8 @@
           <div id="stageList" class="stage-list"></div>
         </div>
       </div>
+      <button id="backToMainFromChapter" class="btn-back">← 메인으로</button>
+      <button id="toggleChapterList" class="btn-toggle" style='display: none'>☰</button>
     </div>
     <div id="user-problems-screen" class="screen" style="display:none;">
       <button id="backToChapterFromUserProblems" class="btn-back">← 챕터로</button>

@@ -929,6 +929,47 @@ const gameScreen = document.getElementById("gameScreen");
 const chapterListEl = document.getElementById("chapterList");
 const stageListEl = document.getElementById("stageList");
 
+// 모바일 내비게이션을 통한 firstScreen 전환
+const overallRankingAreaEl = document.getElementById("overallRankingArea");
+const mainScreenSection = document.getElementById("mainArea");
+const guestbookAreaEl = document.getElementById("guestbookArea");
+const mobileNav = document.getElementById("mobileNav");
+
+if (mobileNav) {
+    function showFirstScreenSection(targetId) {
+      overallRankingAreaEl.style.display = "none";
+      mainScreenSection.style.display = "none";
+      guestbookAreaEl.style.display = "none";
+      mobileNav.querySelectorAll(".nav-item").forEach(nav => nav.classList.remove("active"));
+      const target = document.getElementById(targetId);
+      if (target) target.style.display = 'flex';
+      const activeNav = mobileNav.querySelector(`.nav-item[data-target="${targetId}"]`);
+      if (activeNav) activeNav.classList.add("active");
+  }
+
+    mobileNav.querySelectorAll(".nav-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const target = item.getAttribute("data-target");
+        showFirstScreenSection(target);
+      });
+    });
+
+    function handleFirstScreenResize() {
+      if (window.innerWidth >= 1024) {
+        overallRankingAreaEl.style.display = "";
+        mainScreenSection.style.display = "";
+        guestbookAreaEl.style.display = "";
+      } else {
+        const activeNav = mobileNav.querySelector(".nav-item.active");
+        const target = activeNav ? activeNav.getAttribute("data-target") : "mainArea";
+        showFirstScreenSection(target);
+      }
+    }
+
+  window.addEventListener("resize", handleFirstScreenResize);
+  handleFirstScreenResize();
+}
+
 function lockOrientationLandscape() {
   if (screen.orientation && screen.orientation.lock) {
     screen.orientation.lock('landscape').catch(err => {
@@ -947,7 +988,7 @@ document.getElementById("startBtn").onclick = () => {
 
 document.getElementById("backToMainFromChapter").onclick = () => {
   chapterStageScreen.style.display = "none";
-  document.getElementById("firstScreen").style.display = "flex";
+  document.getElementById("firstScreen").style.display = "";
 };
 
 document.getElementById("toggleChapterList").onclick = () => {
@@ -1422,6 +1463,48 @@ function fetchProgressSummary(nickname) {
       });
     });
     return { cleared, blocks, wires };
+  });
+}
+
+function fetchOverallStats(nickname) {
+  return db.ref('rankings').once('value').then(snap => {
+    const data = {};
+    snap.forEach(levelSnap => {
+      levelSnap.forEach(recSnap => {
+        const v = recSnap.val();
+        const name = v.nickname || '익명';
+        if (!data[name]) {
+          data[name] = {
+            stages: new Set(),
+            blocks: 0,
+            wires: 0,
+            lastTimestamp: v.timestamp
+          };
+        }
+        data[name].stages.add(levelSnap.key);
+        data[name].blocks += Object.values(v.blockCounts || {}).reduce((s, x) => s + x, 0);
+        data[name].wires += v.usedWires || 0;
+        if (new Date(v.timestamp) > new Date(data[name].lastTimestamp)) {
+          data[name].lastTimestamp = v.timestamp;
+        }
+      });
+    });
+    const entries = Object.entries(data).map(([nickname, v]) => ({
+      nickname,
+      cleared: v.stages.size,
+      blocks: v.blocks,
+      wires: v.wires,
+      timestamp: v.lastTimestamp
+    }));
+    entries.sort((a, b) => {
+      if (a.cleared !== b.cleared) return b.cleared - a.cleared;
+      if (a.blocks !== b.blocks) return a.blocks - b.blocks;
+      if (a.wires !== b.wires) return a.wires - b.wires;
+      return new Date(a.timestamp) - new Date(b.timestamp);
+    });
+    const idx = entries.findIndex(e => e.nickname === nickname);
+    if (idx === -1) return { rank: '-', cleared: 0 };
+    return { rank: idx + 1, cleared: entries[idx].cleared };
   });
 }
 
@@ -2468,6 +2551,8 @@ function assignGuestNickname() {
         db.ref(`usernames/${id}`).set(name);
         localStorage.setItem('username', name);
         document.getElementById('guestUsername').textContent = name;
+        const loginUsernameEl = document.getElementById('loginUsername');
+        if (loginUsernameEl) loginUsernameEl.textContent = name;
         loadClearedLevelsFromDb().then(maybeStartTutorial);
       }
     });
@@ -2756,6 +2841,11 @@ function setupGoogleAuth() {
   const buttons = ['googleLoginBtn', 'modalGoogleLoginBtn']
     .map(id => document.getElementById(id))
     .filter(Boolean);
+  const usernameEl = document.getElementById('loginUsername');
+  const rankSection = document.getElementById('rankSection');
+  const overallRankEl = document.getElementById('overallRank');
+  const clearedCountEl = document.getElementById('clearedCount');
+  const guestPromptEl = document.getElementById('loginGuestPrompt');
 
   if (!buttons.length) return Promise.resolve();
 
@@ -2763,11 +2853,21 @@ function setupGoogleAuth() {
     let done = false;
     firebase.auth().onAuthStateChanged(user => {
       buttons.forEach(btn => btn.textContent = user ? t('logoutBtn') : t('googleLoginBtn'));
+      const nickname = localStorage.getItem('username') || '';
+      if (usernameEl) usernameEl.textContent = nickname;
       if (user) {
         handleGoogleLogin(user);
         document.getElementById('usernameModal').style.display = 'none';
+        if (rankSection) rankSection.style.display = 'block';
+        if (guestPromptEl) guestPromptEl.style.display = 'none';
+        fetchOverallStats(nickname).then(res => {
+          if (overallRankEl) overallRankEl.textContent = `#${res.rank}`;
+          if (clearedCountEl) clearedCountEl.textContent = res.cleared;
+        });
       } else {
         restoreUsernameModalDefaults();
+        if (rankSection) rankSection.style.display = 'none';
+        if (guestPromptEl) guestPromptEl.style.display = 'block';
         if (!localStorage.getItem('username')) {
           assignGuestNickname();
         }
@@ -3780,17 +3880,19 @@ const cancelSaveProblemBtn     = document.getElementById('cancelSaveProblemBtn')
 const problemTitleInput        = document.getElementById('problemTitleInput');
 const problemDescInput         = document.getElementById('problemDescInput');
 
-//— ① 메인 → 모듈 관리  
-manageModulesBtn.addEventListener('click', () => {
-  firstScreen.style.display      = 'none';
-  managementScreen.style.display = 'flex';
-  renderModuleList();
-});
+//— ① 메인 → 모듈 관리
+if (manageModulesBtn) {
+  manageModulesBtn.addEventListener('click', () => {
+    firstScreen.style.display      = 'none';
+    managementScreen.style.display = 'flex';
+    renderModuleList();
+  });
+}
 
-//— ② 모듈 관리 → 메인  
+//— ② 모듈 관리 → 메인
 backToMainFromManagement.addEventListener('click', () => {
   managementScreen.style.display = 'none';
-  firstScreen.style.display      = 'flex';
+  firstScreen.style.display      = '';
 });
 
 //— ③ 모듈 관리 → 새 제작창  
@@ -3816,7 +3918,7 @@ backToMainFromProblem.addEventListener('click', () => {
   if (problemScreenPrev === 'userProblems') {
     userProblemsScreen.style.display = 'block';
   } else if (problemScreenPrev === 'main') {
-    firstScreen.style.display = 'flex';
+    firstScreen.style.display = '';
   } else {
     chapterStageScreen.style.display = 'block';
   }
@@ -5033,4 +5135,45 @@ const exportBtn = document.getElementById('exportGifBtn');
 if (exportBtn) {
   exportBtn.addEventListener('click', handleGIFExport);
 }
+
+// --- 모바일 세로 모드 안내 모달 ---
+const orientationModal = document.getElementById('orientationModal');
+const rotateLandscapeBtn = document.getElementById('rotateLandscapeBtn');
+const closeOrientationBtn = document.getElementById('closeOrientationBtn');
+
+function isMobileDevice() {
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function checkOrientation() {
+  if (!orientationModal) return;
+  const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+  if (isMobileDevice() && isPortrait) {
+    orientationModal.style.display = 'flex';
+  } else {
+    orientationModal.style.display = 'none';
+  }
+}
+
+if (rotateLandscapeBtn) {
+  rotateLandscapeBtn.addEventListener('click', () => {
+    lockOrientationLandscape();
+    if (orientationModal) orientationModal.style.display = 'none';
+  });
+}
+
+if (closeOrientationBtn) {
+  closeOrientationBtn.addEventListener('click', () => {
+    if (orientationModal) orientationModal.style.display = 'none';
+  });
+}
+
+window.addEventListener('resize', checkOrientation);
+const mqOrientation = window.matchMedia('(orientation: portrait)');
+if (mqOrientation.addEventListener) {
+  mqOrientation.addEventListener('change', checkOrientation);
+} else if (mqOrientation.addListener) {
+  mqOrientation.addListener(checkOrientation);
+}
+checkOrientation();
 
