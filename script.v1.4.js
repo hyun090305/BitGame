@@ -2457,6 +2457,24 @@ function onInitialUsernameSubmit() {
   });
 }
 
+function assignGuestNickname() {
+  const attempt = () => {
+    const name = `Player${Math.floor(1000 + Math.random() * 9000)}`;
+    db.ref('usernames').orderByValue().equalTo(name).once('value', snap => {
+      if (snap.exists()) {
+        attempt();
+      } else {
+        const id = db.ref('usernames').push().key;
+        db.ref(`usernames/${id}`).set(name);
+        localStorage.setItem('username', name);
+        document.getElementById('guestUsername').textContent = name;
+        loadClearedLevelsFromDb().then(maybeStartTutorial);
+      }
+    });
+  };
+  attempt();
+}
+
 function promptForGoogleNickname(oldName, uid) {
   const input = document.getElementById("usernameInput");
   const errorDiv = document.getElementById("usernameError");
@@ -2751,7 +2769,7 @@ function setupGoogleAuth() {
       } else {
         restoreUsernameModalDefaults();
         if (!localStorage.getItem('username')) {
-          promptForUsername();
+          assignGuestNickname();
         }
       }
       if (!done) { done = true; resolve(); }
@@ -2774,8 +2792,8 @@ function setupGoogleAuth() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const uname = localStorage.getItem("username") || "익명";
-  document.getElementById("guestUsername").textContent = uname;
+  const uname = localStorage.getItem("username");
+  if (uname) document.getElementById("guestUsername").textContent = uname;
 
   initialTasks.push(showOverallRanking());  // 전체 랭킹 표시
   initialTasks.push(setupGoogleAuth());
