@@ -2,8 +2,8 @@
 
 Play bitwise. Become bit wiser.
 
-웹 기반 조합 논리 회로 시뮬레이터 게임입니다. 6×6 그리드 위에 입력(Input), 출력(Output), 논리 게이트(AND, OR, NOT), 와이어를 끌어다 놓아 간단한 회로를 설계하고 시뮬레이션할 수 있습니다.
-
+웹 기반 조합 논리 회로 시뮬레이터 게임입니다. 6×6 그리드 위에 입력(Input), 출력(Output), 논리 게이트(AND, OR, NOT), 와이어를 끌어
+어다 놓아 간단한 회로를 설계하고 시뮬레이션할 수 있습니다. 레벨 기반 퍼즐, 모듈 제작, 랭킹 및 GIF 내보내기, 오프라인 실행(PWA) 등 다양한 기능을 지원합니다.
 ## 목차
 - [기능](#기능)
 - [데모](#데모)
@@ -24,7 +24,12 @@ Play bitwise. Become bit wiser.
 - **조합 논리 시뮬레이션**: BFS 기반 신호 전파 엔진으로 회로 실행
 - **자동 연결 해제**: 블록 이동 또는 삭제 시 연결된 와이어 자동 제거
 - **와이어 방향 및 흐름 애니메이션**: 업/다운/좌/우 방향 설정 및 간단한 흐름 표시
-
+- **레벨 기반 퍼즐 및 튜토리얼**: `levels.json`/`levels_en.json`에 정의된 스테이지와 힌트 제공
+- **모듈 관리**: 회로를 모듈로 저장하여 재사용하거나 편집할 수 있는 모듈 제작 모드
+- **회로 저장·공유**: 로컬 저장, 상태 복사, GIF 내보내기 기능 제공
+- **Google 로그인 및 랭킹**: 닉네임 또는 Google 계정으로 로그인하여 전역/레벨별 랭킹 기록
+- **다국어 지원**: `lang.js`를 통한 한국어/영어 UI 전환
+- **오프라인 실행(PWA)**: `manifest.json`, `service-worker.js`로 설치 및 오프라인 플레이 지원
 
 ## 데모
 *(스크린샷 또는 GIF 추가)*
@@ -37,8 +42,8 @@ Play bitwise. Become bit wiser.
 
 ### 설치
 ```bash
-git clone https://github.com/your-username/bitgame.git
-cd bitgame
+git clone https://github.com/your-username/Bitwiser.git
+cd Bitwiser
 ```
 
 ### 로컬 실행
@@ -68,11 +73,18 @@ serve . -l 5000
 
 ## 프로젝트 구조
 ```text
-bitgame/
-├─ index.html    # 메인 HTML (팔레트, 그리드)
-├─ style.css     # 스타일 (그리드, 블록, 와이어, 애니메이션)
-├─ script.js     # 핵심 로직 (드래그/드롭, 와이어, 시뮬레이션)
-└─ README.md     # 프로젝트 설명 문서
+Bitwiser/
+├─ index.html         # 메인 HTML
+├─ style.v1.4.css     # 스타일 (그리드, 블록, 와이어, 애니메이션)
+├─ script.v1.4.js     # 핵심 로직 (드래그/드롭, 와이어, 시뮬레이션)
+├─ lang.js            # 한국어/영어 UI 문자열
+├─ levels.json        # 스테이지 데이터 (한국어)
+├─ levels_en.json     # 스테이지 데이터 (영어)
+├─ gif.js / gif.worker.js # GIF 내보내기 라이브러리
+├─ manifest.json      # PWA 매니페스트
+├─ service-worker.js  # 오프라인 캐시
+├─ assets/            # 아이콘, 튜토리얼 이미지 등 리소스
+└─ README.md          # 프로젝트 설명 문서
 ```
 
 ## 개발 세부사항
@@ -98,7 +110,6 @@ bitgame/
   - Undo/Redo 기능  
   - 모바일 터치 제어 지원  
 - **애니메이션 향상**: 와이어 흐름 속도 제어, 다양한 애니메이션 효과  
-- **테마 및 접근성**: 다크 모드, 컬러블라인드 호환 테마  
-- **모듈화**: 서브회로(Subcircuit) 개념 도입, 계층적 설계 지원  
-- **협업 기능**: 온라인 실시간 공동 편집 및 주석(Annotation) 기능  
+- **테마 및 접근성**: 다크 모드, 컬러블라인드 호환 테마
+- **협업 기능**: 온라인 실시간 공동 편집 및 주석(Annotation) 기능
 
