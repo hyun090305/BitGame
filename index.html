@@ -65,6 +65,18 @@
         </div>
       </div>
     </div>
+    <div id="settingsModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <h3 id="settingsTitle"></h3>
+        <label>
+          <input type="checkbox" id="autoSaveCheckbox">
+          <span id="autoSaveLabel"></span>
+        </label>
+        <div class="modal-buttons">
+          <button id="settingsCloseBtn"></button>
+        </div>
+      </div>
+    </div>
     <!-- 메인 화면 -->
     <div class="container" id="firstScreen">
       <div id="overallRankingArea">
@@ -102,6 +114,7 @@
           </div>
           <div class="button-row">
             <button id="googleLoginBtn" class="main-button"></button>
+            <button id="settingsBtn" class="main-button"></button>
           </div>
           <p id="loginGuestPrompt" class="tagline"></p>
           <div class="button-row">
@@ -348,14 +361,13 @@
     </div>
     <!-- 게임 화면 -->
     <div id="gameScreen" style="display:none">
-      <h1 id="gameTitle">🧠 Bitwiser</h1>
-      <p class="tagline">Play bitwise. Become bit wiser.</p>
+      <div id="gameArea">
 
-      <!-- 전체 게임 영역: 좌측 메뉴 + 중앙 그리드 + 우측 안내 -->
-      <div id="gameLayout">
+        <!-- 전체 게임 영역: 좌측 메뉴 + 중앙 그리드 + 우측 안내 -->
+        <div id="gameLayout">
 
         <!-- 블록 패널 -->
-        <div id="blockPanel" style="width: 120px;">
+        <div id="blockPanel" style="margin: 0; width: auto; flex-direction: row;">
         </div>
 
         <!-- 회로 그리드 -->
@@ -367,7 +379,8 @@
         <!-- 우측: 시뮬레이트 + 안내 + 삭제 -->
         <div class="rightPanel" id="rightPanel"
           style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
-          <button id="gradeButton" class="green">채점하기</button>
+          <h1 id="gameTitle" title="ℹ️ 스테이지 안내">🧠 Bitwiser</h1>
+          <button id="gradeButton" class="main-button">채점하기</button>
           <div style="text-align: center; line-height: 1.6;">
             <button id="wireStatusInfo" class="toggle-key"
               style="color: darkgreen; font-weight: bold;">
@@ -391,17 +404,19 @@
           <button id="returnToEditBtn">🛠 편집으로 돌아가기</button>
         </div>
       </div>
+      </div>
       <!-- 메뉴바 -->
       <div id="menuBar">
-        <button id="prevStageBtnMenu">← 이전 스테이지</button>
+        <button id="menuToggleBtn">☰</button>
         <button id="saveCircuitBtn">💾 회로 저장</button>
-        <button id="viewSavedBtn">💾 저장된 회로 보기</button>
-        <button id="viewRankingBtn">🏆 랭킹 보기</button>
+        <button id="viewSavedBtn">💾 저장된 회로</button>
+        <button id="viewRankingBtn">🏆 랭킹</button>
         <button id="showIntroBtn">ℹ️ 스테이지 안내</button>
         <button id="hintBtn">💡 힌트</button>
-        <button id="exportGifBtn">📷 GIF 내보내기</button>
-        <button id="backToLevelsBtn">← 레벨 선택으로</button>
+        <button id="exportGifBtn">📷 회로 내보내기</button>
+        <button id="prevStageBtnMenu">← 이전 스테이지</button>
         <button id="nextStageBtnMenu">다음 스테이지 →</button>
+        <button id="backToLevelsBtn">← 레벨 선택으로</button>
       </div>
     </div>
     <div id="tutorialModal" class="modal tutorial-modal" style="display:none;">
@@ -445,7 +460,7 @@
     <!-- GIF 결과 모달 -->
     <div id="gifModal" class="modal" style="display:none;">
       <div class="modal-content">
-        <img id="gifPreview" style="max-width:100%; height:auto;" />
+        <img id="gifPreview" style="max-width:100%; height:60vh;" />
         <div class="modal-buttons" style="margin-top:1rem;">
           <button id="saveGifBtn">이미지 저장</button>
           <button id="shareGifBtn">공유하기</button>
@@ -519,8 +534,10 @@
     <div id="stageTutorialModal" class="modal" style="display:none;">
       <div class="modal-content">
         <img id="stageTutImg" class="tutorial-img" src="" alt="tutorial">
-        <p id="stageTutDesc"></p>
-        <button id="stageTutBtn">시작하기</button>
+        <div class="tutorial-text" style="font-size: 1.1rem">
+          <p id="stageTutDesc"></p>
+          <button id="stageTutBtn" class="main-button">시작하기</button>
+        </div>
       </div>
     </div>
     <script>

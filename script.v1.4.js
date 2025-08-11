@@ -1052,6 +1052,30 @@ function setupBlockPanel(level) {
   const panel = getBlockPanel();
   panel.innerHTML = "";
 
+  // 두 줄(IN/OUT, GATE) 컨테이너 생성
+  const inoutRow = document.createElement('div');
+  inoutRow.className = 'blockRow';
+  const inoutTitle = document.createElement('div');
+  inoutTitle.className = 'blockRowTitle';
+  inoutTitle.textContent = 'IN/OUT';
+  const inoutContainer = document.createElement('div');
+  inoutContainer.className = 'blockRowContent';
+  inoutRow.appendChild(inoutTitle);
+  inoutRow.appendChild(inoutContainer);
+
+  const gateRow = document.createElement('div');
+  gateRow.className = 'blockRow';
+  const gateTitle = document.createElement('div');
+  gateTitle.className = 'blockRowTitle';
+  gateTitle.textContent = 'GATE';
+  const gateContainer = document.createElement('div');
+  gateContainer.className = 'blockRowContent';
+  gateRow.appendChild(gateTitle);
+  gateRow.appendChild(gateContainer);
+
+  panel.appendChild(inoutRow);
+  panel.appendChild(gateRow);
+
   const blocks = levelBlockSets[level];
   if (!blocks) return;
 
@@ -1061,7 +1085,7 @@ function setupBlockPanel(level) {
     div.draggable = true;
     div.dataset.type = block.type;
     if (block.name) div.dataset.name = block.name;
-    div.textContent = block.name || block.type;
+    div.textContent = block.type === 'JUNCTION' ? 'JUNC' : (block.name || block.type);
 
     // ↓ 여기에 설명 추가
     div.dataset.tooltip = (() => {
@@ -1076,9 +1100,12 @@ function setupBlockPanel(level) {
       }
     })();
 
-    panel.appendChild(div);
+    if (block.type === 'INPUT' || block.type === 'OUTPUT') {
+      inoutContainer.appendChild(div);
+    } else {
+      gateContainer.appendChild(div);
+    }
   });
-
 
   // WIRE는 블록이 아니므로 패널에 추가하지 않음
 
@@ -1334,20 +1361,23 @@ async function gradeLevelAnimated(level) {
       markLevelCleared(level);
     }
 
+    const autoSave = localStorage.getItem('autoSaveCircuit') !== 'false';
     let saveSuccess = false;
-    try {
-      if (gifLoadingModal) {
-        if (gifLoadingText) gifLoadingText.textContent = t('savingCircuit');
-        gifLoadingModal.style.display = 'flex';
-      }
-      await saveCircuit();
-      saveSuccess = true;
-    } catch (e) {
-      alert(t('saveFailed').replace('{error}', e));
-    } finally {
-      if (gifLoadingModal) {
-        gifLoadingModal.style.display = 'none';
-        if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
+    if (autoSave) {
+      try {
+        if (gifLoadingModal) {
+          if (gifLoadingText) gifLoadingText.textContent = t('savingCircuit');
+          gifLoadingModal.style.display = 'flex';
+        }
+        await saveCircuit();
+        saveSuccess = true;
+      } catch (e) {
+        alert(t('saveFailed').replace('{error}', e));
+      } finally {
+        if (gifLoadingModal) {
+          gifLoadingModal.style.display = 'none';
+          if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
+        }
       }
     }
     const blocks = Array.from(grid.querySelectorAll(".cell.block"));
@@ -1408,7 +1438,7 @@ async function gradeLevelAnimated(level) {
           }
         }
 
-        showCircuitSavedModal();
+        if (saveSuccess) showCircuitSavedModal();
       });
 
 
@@ -1866,6 +1896,40 @@ function setGridDimensions(rows, cols) {
 }
 
 
+function adjustGridZoom() {
+  const gridContainer = document.getElementById('gridContainer');
+  if (!gridContainer) return;
+
+  const menuBar = document.getElementById('menuBar');
+  const margin = 20;
+
+  gridContainer.style.zoom = 1;
+
+  let availableWidth = window.innerWidth - margin * 2;
+  let availableHeight = window.innerHeight - margin * 2;
+
+  if (menuBar) {
+    const menuRect = menuBar.getBoundingClientRect();
+    const isVertical = menuRect.height > menuRect.width;
+    if (isVertical) {
+      availableWidth -= menuRect.width;
+    } else {
+      availableHeight -= menuRect.height;
+    }
+  }
+
+  const gcRect = gridContainer.getBoundingClientRect();
+  const scale = Math.min(
+    availableWidth / gcRect.width,
+    availableHeight / gcRect.height,
+    1
+  );
+
+  if (scale < 1) {
+    gridContainer.style.zoom = scale;
+  }
+}
+
 /**
  * @param {string} containerId 그리드 컨테이너의 id
  * @param {number} rows
@@ -2095,6 +2159,7 @@ function setupGrid(containerId, rows, cols) {
   // ——— 그리드 밖 마우스 탈출 시 취소 ———
   grid.addEventListener('mouseleave', cancelWireDrawing);
   grid.addEventListener('touchcancel', cancelWireDrawing);
+  adjustGridZoom();
 }
 
 function resetCell(cell) {
@@ -2110,6 +2175,14 @@ function resetCell(cell) {
 }
 
 document.getElementById("showIntroBtn").addEventListener("click", () => {
+  if (currentLevel != null) {
+    showIntroModal(currentLevel);
+  } else if (currentCustomProblem) {
+    showProblemIntro(currentCustomProblem);
+  }
+});
+
+document.getElementById("gameTitle").addEventListener("click", () => {
   if (currentLevel != null) {
     showIntroModal(currentLevel);
   } else if (currentCustomProblem) {
@@ -2891,6 +2964,59 @@ function setupGoogleAuth() {
   });
 }
 
+function setupMenuToggle() {
+  const menuBar = document.getElementById('menuBar');
+  const gameArea = document.getElementById('gameArea');
+  const toggleBtn = document.getElementById('menuToggleBtn');
+  if (!menuBar || !gameArea || !toggleBtn) return;
+  toggleBtn.addEventListener('click', () => {
+    menuBar.classList.toggle('collapsed');
+    gameArea.classList.toggle('menu-collapsed');
+    adjustGridZoom();
+  });
+}
+
+function setupSettings() {
+  const btn = document.getElementById('settingsBtn');
+  const modal = document.getElementById('settingsModal');
+  const closeBtn = document.getElementById('settingsCloseBtn');
+  const checkbox = document.getElementById('autoSaveCheckbox');
+  if (!btn || !modal || !closeBtn || !checkbox) return;
+
+  const enabled = localStorage.getItem('autoSaveCircuit') !== 'false';
+  checkbox.checked = enabled;
+  checkbox.addEventListener('change', () => {
+    localStorage.setItem('autoSaveCircuit', checkbox.checked);
+  });
+
+  btn.addEventListener('click', () => {
+    modal.style.display = 'flex';
+  });
+  closeBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+  modal.addEventListener('click', e => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+}
+
+function setupGameAreaPadding() {
+  const menuBar = document.getElementById('menuBar');
+  const gameArea = document.getElementById('gameArea');
+  if (!menuBar || !gameArea) return;
+
+  function updatePadding() {
+    if (window.matchMedia('(max-width: 1024px)').matches) {
+      gameArea.style.paddingBottom = '';
+    } else {
+      gameArea.style.paddingBottom = menuBar.offsetHeight + 'px';
+    }
+  }
+
+  updatePadding();
+  window.addEventListener('resize', updatePadding);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const uname = localStorage.getItem("username");
   if (uname) document.getElementById("guestUsername").textContent = uname;
@@ -2899,6 +3025,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initialTasks.push(setupGoogleAuth());
 
   setupKeyToggles();
+  setupMenuToggle();
+  setupSettings();
+  setupGameAreaPadding();
   Promise.all(initialTasks).then(() => {
     hideLoadingScreen();
   });
@@ -4936,20 +5065,23 @@ async function gradeProblemAnimated(key, problem) {
   document.getElementById('returnToEditBtn').addEventListener('click',returnToEditScreen);
 
   if(allCorrect && key){
+    const autoSave = localStorage.getItem('autoSaveCircuit') !== 'false';
     let saveSuccess=false;
-    try {
-      if (gifLoadingModal) {
-        if (gifLoadingText) gifLoadingText.textContent = t('savingCircuit');
-        gifLoadingModal.style.display = 'flex';
-      }
-      await saveCircuit();
-      saveSuccess=true;
-    } catch (e) {
-      alert(t('saveFailed').replace('{error}', e));
-    } finally {
-      if (gifLoadingModal) {
-        gifLoadingModal.style.display = 'none';
-        if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
+    if (autoSave) {
+      try {
+        if (gifLoadingModal) {
+          if (gifLoadingText) gifLoadingText.textContent = t('savingCircuit');
+          gifLoadingModal.style.display = 'flex';
+        }
+        await saveCircuit();
+        saveSuccess=true;
+      } catch (e) {
+        alert(t('saveFailed').replace('{error}', e));
+      } finally {
+        if (gifLoadingModal) {
+          gifLoadingModal.style.display = 'none';
+          if (gifLoadingText) gifLoadingText.textContent = t('gifLoadingText');
+        }
       }
     }
     if(saveSuccess) showCircuitSavedModal();
@@ -5002,7 +5134,7 @@ function getCircuitSnapshot() {
   const rows = Math.max(1, Math.floor(Number(GRID_ROWS)));
   const cols = Math.max(1, Math.floor(Number(GRID_COLS)));
 
-  return { blocks: blockSnap, wires: wireSnap, rows, cols, totalFrames: 80 };
+  return { blocks: blockSnap, wires: wireSnap, rows, cols, totalFrames: 16 };
 }
 
 function drawRoundedRect(ctx, x, y, width, height, radius) {
@@ -5169,6 +5301,7 @@ if (closeOrientationBtn) {
 }
 
 window.addEventListener('resize', checkOrientation);
+window.addEventListener('resize', adjustGridZoom);
 const mqOrientation = window.matchMedia('(orientation: portrait)');
 if (mqOrientation.addEventListener) {
   mqOrientation.addEventListener('change', checkOrientation);
@@ -5176,4 +5309,5 @@ if (mqOrientation.addEventListener) {
   mqOrientation.addListener(checkOrientation);
 }
 checkOrientation();
+adjustGridZoom();
 

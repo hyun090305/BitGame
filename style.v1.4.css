@@ -6,7 +6,8 @@
     display: flex;
     /* 기존 space-between 제거 */
     align-items: center;
-    font-family: 'Noto Sans KR', sans-serif;
+    font-family: 'Noto Sans KR', 'Apple Color Emoji', 'Segoe UI Emoji',
+      'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
     background-color: #f0f0f0;
     color: #0F172A;
     text-align: center;
@@ -32,8 +33,31 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 1rem;
     flex-shrink: 0;
+    max-height: 80vh;
+    overflow: visible;
+  }
+
+  .blockRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    flex-direction: column;
+  }
+
+  .blockRowTitle {
+    font-weight: bold;
+  }
+
+  .blockRowContent {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   #gameScreen {
@@ -56,8 +80,6 @@ html, body {
     /* 상하 중앙 */
     gap: 2rem;
     margin: 0 auto;
-    /* inline style로 준 margin-top 제거 */
-    padding-bottom: 60px;
     /* 메뉴바 높이에 맞춰 조정 */
     box-sizing: border-box;
     width: max-content;
@@ -74,6 +96,15 @@ html, body {
     align-items: center;
     gap: 1rem;
     flex-shrink: 0;
+  }
+
+  #gameTitle {
+    cursor: pointer;
+    margin-bottom: 2rem;
+  }
+
+  #gameTitle:hover {
+    text-decoration: underline;
   }
 
   #problem-screen .rightPanel {
@@ -165,12 +196,29 @@ html, body {
     text-align: center;
     position: fixed;
     bottom: 0;
-    left: 0;
   }
 
-  #menuBar button {
+  #menuBar button:not(#menuToggleBtn) {
     margin: 0 5px;
     padding: 6px 10px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  #menuToggleBtn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: inherit;
+  }
+
+  #menuBar button:not(#menuToggleBtn):hover:not(:disabled) {
+    background-color: #eee;
+  }
+
+  #menuBar button:not(#menuToggleBtn):disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
 
@@ -189,12 +237,16 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 60px;
     /* 메뉴바 높이에 맞춰 조정 */
     box-sizing: border-box;
   }
 
-
+#gameArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
   .toggle-key {
     display: block;
     margin: 6px 0;
@@ -212,6 +264,8 @@ html, body {
   }
 
   .toggle-key {
+    font-size: 15px;
+    width: 100%;
     display: block;
     margin: 6px 0;
     text-align: center;
@@ -227,6 +281,10 @@ html, body {
     color: #fff;
   }
 
+  #gradeButton {
+    padding: 5px 20px;
+    width: 100%;
+  }
   .cell {
     border: 1px solid #ccc;
     box-sizing: border-box;
@@ -310,8 +368,8 @@ html, body {
 
   /* ── 블록 아이콘 스타일 ── */
   .blockIcon {
-    width: 60px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     background-color: #e0e0ff;
     border: 1px solid #666;
     display: inline-flex;
@@ -1054,7 +1112,22 @@ html, body {
 #stageTutorialModal .modal-content {
   max-height: calc(100vh - 2rem);
   overflow-y: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
+
+#stageTutorialModal .tutorial-img {
+  max-height: 400px;
+  margin: 0;
+}
+
+#stageTutorialModal .tutorial-text {
+  display: block;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 
 #gifModal {
   overflow-y: auto;
@@ -1607,15 +1680,18 @@ html, body {
   display: flex;               /* 세로 정렬을 위해 flex 사용 */
   flex-direction: column;      /* 수직 방향으로 블록 나열 */
   align-items: stretch;        /* 폭을 부모에 맞춤 */
-  gap: 0.75rem;                /* 블록 간격: 원하시는 px/em 단위로 조정 가능 */
+  gap: 1rem;                   /* 블록 간격: 원하시는 px/em 단위로 조정 가능 */
   padding: 0.5rem 0;           /* 상하 여백(옵션) */
+  max-height: 80vh;            /* 최대 높이 제한 */
+  overflow: visible;           /* tooltip이 밖으로 보이도록 */
 }
 
 /* 블록 아이콘 크기·정렬 (필요시 조정) */
 #blockPanel .blockIcon,
 #moduleBlockPanel .blockIcon,
 #problemBlockPanel .blockIcon {
-  width: 100%;                 /* 패널 폭에 꽉 차도록 */
+  width: 50px;
+  height: 30px;
   text-align: center;          /* 텍스트 중앙 정렬 */
 }
 
@@ -2160,3 +2236,208 @@ html, body {
     height: 24px;
   }
 }
+
+
+@media (max-width: 1024px) {
+  #firstScreen {
+    display: block;
+    padding-bottom: 60px;
+  }
+
+  #firstScreen > #overallRankingArea,
+  #firstScreen > #mainArea,
+  #firstScreen > #guestbookArea {
+    display: none;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  
+  #firstScreen > #mainArea {
+    display: flex;
+  }
+
+  #mainArea {
+    flex-direction: row;
+  }
+
+  #mainArea > #mainScreen,
+  #mainArea > #loginArea {
+    flex: 1;
+  }
+
+  #guestbookArea {
+    flex-direction: row;
+  }
+
+  #guestbookForm,
+  #guestbookListArea {
+    flex: 1 1 50%;
+    width: 50%;
+  }
+
+  #guestbookForm {
+    padding-right: 0.5rem;
+  }
+
+  #guestbookListArea {
+    border-left: 1px solid #ddd;
+    border-top: 0;
+    padding-left: 0.5rem;
+    padding-top: 0;
+  }
+
+  #mobileNav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #fff;
+  }
+
+  #mobileNav .nav-item {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  #mobileNav .nav-item .nav-text {
+    display: none;
+  }
+
+  #mobileNav .nav-item.active .nav-text {
+    display: inline;
+  }
+
+  #mobileNav .nav-item:hover {
+    background-color: #e0e0e0;
+  }
+
+  #mobileNav .nav-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+
+@media (max-width: 1024px) {
+  :root {
+    --menuBarWidth: 34vh;
+  }
+
+  #menuBar {
+    margin-top: 0.5rem;
+    position: fixed;
+    top: 0;
+    right: 0;
+    /* margin-right: 0.5rem; */
+    /* transform: translateY(-50%); */
+    width: var(--menuBarWidth);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 5px;
+    /* border: 2px solid #1d4ed8; */
+    /* border-radius: 10px; */
+    background-color: transparent;
+    overflow: hidden;
+    transition: width 0.3s ease;
+  }
+
+  #menuBar button:not(#menuToggleBtn) {
+    width: 100%;
+    word-break: keep-all;
+    font-size: 1.6vw;
+    height: 4vw;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #fff;
+    border: 2px solid #1d4ed8;
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    color: #1d4ed8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-align: center;
+    transition: height 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+    opacity: 1;
+  }
+
+  #menuToggleBtn {
+    text-align: right;
+    display: block;
+    height: 6vh;
+    font-size: 4vh;
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  #menuBar button:not(#menuToggleBtn):hover:not(:disabled) {
+    background-color: #1d4ed8;
+    color: #fff;
+  }
+
+  #menuBar button:not(#menuToggleBtn):disabled {
+    background-color: #ccc;
+    border-color: #aaa;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  #menuBar.collapsed {
+    width: 6vh;
+    height: auto;
+    padding: 5px;
+  }
+
+  #menuBar.collapsed button:not(#menuToggleBtn) {
+    color: transparent;
+    /* position: fixed; */
+    /* right: -10px; */
+    /* height: 0; */
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    pointer-events: none;
+  }
+
+  #menuBar.collapsed #menuToggleBtn {
+    width: 100%;
+    /* height: 100%; */
+  }
+
+  #gameArea.menu-collapsed {
+    /* margin-left: 1rem; */
+  }
+
+  #backToLevelsBtn {
+    width: 100%;
+  }
+
+  #gameArea {
+    /* margin-left: calc(var(--menuBarWidth) + 1rem); */
+    padding-bottom: 0;
+  }
+
+  #gridContainer {
+    margin-bottom: 0;
+  }
+}
+
