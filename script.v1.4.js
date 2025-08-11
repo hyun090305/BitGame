@@ -1029,6 +1029,7 @@ function startLevel(level) {
     prevMenuBtn.disabled = !(levelTitles[level - 1] && isLevelUnlocked(level - 1));
     nextMenuBtn.disabled = !(levelTitles[level + 1] && isLevelUnlocked(level + 1));
 
+    collapseMenuBarForMobile();
   });
 }
 
@@ -3010,6 +3011,22 @@ function setupMenuToggle() {
     gameArea.classList.toggle('menu-collapsed');
     adjustGridZoom();
   });
+}
+
+function collapseMenuBarForMobile() {
+  const menuBar = document.getElementById('menuBar');
+  const gameArea = document.getElementById('gameArea');
+  if (!menuBar || !gameArea) return;
+
+  if (window.matchMedia('(max-width: 1024px)').matches) {
+    menuBar.classList.add('collapsed');
+    gameArea.classList.add('menu-collapsed');
+  } else {
+    menuBar.classList.remove('collapsed');
+    gameArea.classList.remove('menu-collapsed');
+  }
+
+  adjustGridZoom();
 }
 
 function setupSettings() {
@@ -4999,6 +5016,7 @@ function startCustomProblem(key, problem) {
   userProblemsScreen.style.display = 'none';
   document.getElementById('gameScreen').style.display = 'flex';
   document.body.classList.add('game-active');
+  collapseMenuBarForMobile();
 }
 
 async function gradeProblemAnimated(key, problem) {
