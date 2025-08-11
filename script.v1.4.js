@@ -3065,7 +3065,7 @@ function setupGameAreaPadding() {
       gameArea.style.paddingBottom = menuBar.offsetHeight + 'px';
     }
   }
-
+  window.addEventListener('load', updatePadding);
   updatePadding();
   window.addEventListener('resize', updatePadding);
 }
