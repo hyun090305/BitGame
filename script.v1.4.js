@@ -1792,12 +1792,27 @@ function showLevelIntro(level, callback) {
 
   // 진리표 렌더링
   const keys = Object.keys(data.table[0]);
-  table.innerHTML = `
-    <tr>${keys.map(k => `<th>${k}</th>`).join('')}</tr>
-    ${data.table.map(row =>
-    `<tr>${keys.map(k => `<td>${row[k]}</td>`).join('')}</tr>`
-  ).join('')}
-  `;
+  table.innerHTML = "";
+
+  // 헤더 행 생성
+  const headerRow = document.createElement("tr");
+  keys.forEach(k => {
+    const th = document.createElement("th");
+    th.textContent = k; // 특수문자 안전 처리
+    headerRow.appendChild(th);
+  });
+  table.appendChild(headerRow);
+
+  // 데이터 행 생성
+  data.table.forEach(row => {
+    const tr = document.createElement("tr");
+    keys.forEach(k => {
+      const td = document.createElement("td");
+      td.textContent = row[k];
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
 
   modal.style.display = "flex";
   modal.style.backgroundColor = "white";
