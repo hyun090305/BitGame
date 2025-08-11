@@ -1331,14 +1331,22 @@ async function gradeLevelAnimated(level) {
 
     const tr = document.createElement("tr");
     tr.className = correct ? "correct" : "wrong";
-    tr.innerHTML = `
-    <td>${inputText}</td>
-    <td>${expectedText}</td>
-    <td>${actualText}</td>
-    <td style="font-weight: bold; color: ${correct ? 'green' : 'red'};">
-      ${correct ? '✅ 정답' : '❌ 오답'}
-    </td>
-  `;
+
+    const tdInput = document.createElement("td");
+    tdInput.textContent = inputText;
+
+    const tdExpected = document.createElement("td");
+    tdExpected.textContent = expectedText;
+
+    const tdActual = document.createElement("td");
+    tdActual.textContent = actualText;
+
+    const tdResult = document.createElement("td");
+    tdResult.style.fontWeight = "bold";
+    tdResult.style.color = correct ? "green" : "red";
+    tdResult.textContent = correct ? "✅ 정답" : "❌ 오답";
+
+    tr.append(tdInput, tdExpected, tdActual, tdResult);
     tbody.appendChild(tr);
   }
 
@@ -2218,12 +2226,25 @@ function showIntroModal(level) {
 
   // 진리표 다시 렌더링
   const keys = Object.keys(data.table[0]);
-  table.innerHTML = `
-    <tr>${keys.map(k => `<th>${k}</th>`).join("")}</tr>
-    ${data.table.map(row =>
-    `<tr>${keys.map(k => `<td>${row[k]}</td>`).join("")}</tr>`
-  ).join("")}
-  `;
+  table.innerHTML = "";
+
+  const headerRow = document.createElement("tr");
+  keys.forEach(k => {
+    const th = document.createElement("th");
+    th.textContent = k;
+    headerRow.appendChild(th);
+  });
+  table.appendChild(headerRow);
+
+  data.table.forEach(row => {
+    const tr = document.createElement("tr");
+    keys.forEach(k => {
+      const td = document.createElement("td");
+      td.textContent = row[k];
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
 
   modal.style.display = "flex";
   modal.style.backgroundColor = "rgba(0, 0, 0, 0.4)";
@@ -5046,11 +5067,26 @@ async function gradeProblemAnimated(key, problem) {
         <tbody></tbody>
       </table>`;
     }
-    const tbody=document.querySelector('#gradingTable tbody');
-    const tr=document.createElement('tr');
-    tr.className=correct?'correct':'wrong';
-    tr.innerHTML=`<td>${inputText}</td><td>${expectedText}</td><td>${actualText}</td><td style="font-weight:bold;color:${correct?'green':'red'};">${correct?'✅ 정답':'❌ 오답'}</td>`;
-    tbody.appendChild(tr);
+      const tbody=document.querySelector('#gradingTable tbody');
+      const tr=document.createElement('tr');
+      tr.className=correct?'correct':'wrong';
+
+      const tdInput=document.createElement('td');
+      tdInput.textContent=inputText;
+
+      const tdExpected=document.createElement('td');
+      tdExpected.textContent=expectedText;
+
+      const tdActual=document.createElement('td');
+      tdActual.textContent=actualText;
+
+      const tdResult=document.createElement('td');
+      tdResult.style.fontWeight='bold';
+      tdResult.style.color=correct?'green':'red';
+      tdResult.textContent=correct?'✅ 정답':'❌ 오답';
+
+      tr.append(tdInput,tdExpected,tdActual,tdResult);
+      tbody.appendChild(tr);
   }
 
   const summary=document.createElement('div');
