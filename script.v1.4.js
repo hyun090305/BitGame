@@ -1001,8 +1001,14 @@ document.getElementById("backToLevelsBtn").onclick = () => {
   if (currentCustomProblem) {
     currentCustomProblem = null;
     userProblemsScreen.style.display = 'block';
+    renderUserProblemList();
   } else {
     chapterStageScreen.style.display = "block";
+    renderChapterList();
+    const chapter = chapterData[selectedChapterIndex];
+    if (chapter && chapter.id !== 'user') {
+      renderStageList(chapter.stages);
+    }
   }
 };
 
