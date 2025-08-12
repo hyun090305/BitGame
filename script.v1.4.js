@@ -3027,6 +3027,7 @@ function collapseMenuBarForMobile() {
   }
 
   adjustGridZoom();
+  updatePadding();
 }
 
 function setupSettings() {
@@ -3053,18 +3054,19 @@ function setupSettings() {
   });
 }
 
-function setupGameAreaPadding() {
+function updatePadding() {
   const menuBar = document.getElementById('menuBar');
   const gameArea = document.getElementById('gameArea');
   if (!menuBar || !gameArea) return;
 
-  function updatePadding() {
-    if (window.matchMedia('(max-width: 1024px)').matches) {
-      gameArea.style.paddingBottom = '';
-    } else {
-      gameArea.style.paddingBottom = menuBar.offsetHeight + 'px';
-    }
+  if (window.matchMedia('(max-width: 1024px)').matches) {
+    gameArea.style.paddingBottom = '';
+  } else {
+    gameArea.style.paddingBottom = menuBar.offsetHeight + 'px';
   }
+}
+
+function setupGameAreaPadding() {
   window.addEventListener('load', updatePadding);
   updatePadding();
   window.addEventListener('resize', updatePadding);
