@@ -85,6 +85,61 @@ html, body {
     width: max-content;
   }
 
+  #leftPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #moveButtonWrapper {
+    border: 2px solid #444;
+    padding: 0.5rem;
+    border-radius: 8px;
+    display: inline-block;
+  }
+
+  #moveButtons {
+    display: grid;
+    grid-template-areas:
+      '. up .'
+      'left down right';
+    grid-template-columns: repeat(3, 50px);
+    grid-template-rows: repeat(2, 50px);
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  #moveUpBtn {
+    grid-area: up;
+  }
+
+  #moveLeftBtn {
+    grid-area: left;
+  }
+
+  #moveDownBtn {
+    grid-area: down;
+  }
+
+  #moveRightBtn {
+    grid-area: right;
+  }
+
+  #moveButtons button {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    border: 1px solid #999;
+    border-radius: 6px;
+    background: #f7f7f7;
+    box-shadow: 0 2px 0 #ccc;
+  }
+
+  #moveButtons button:active {
+    box-shadow: none;
+    transform: translateY(2px);
+  }
+
   #mainScreen {
     padding: 50px;
   }
@@ -1235,6 +1290,30 @@ html, body {
   }
 
   #loginArea #rankTable .rank-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  #rightPanel #usageTable {
+    margin-top: 10px;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  #rightPanel #usageTable td {
+    text-align: center;
+    border: none;
+    padding: 0;
+  }
+
+  #rightPanel #usageTable .rank-label {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin: 0;
+  }
+
+  #rightPanel #usageTable .rank-value {
     font-size: 1.5rem;
     font-weight: 700;
     margin: 0;
