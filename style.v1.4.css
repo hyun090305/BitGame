@@ -85,6 +85,13 @@ html, body {
     width: max-content;
   }
 
+  #circuitError {
+    color: red;
+    text-align: center;
+    margin-top: 10px;
+    display: none;
+  }
+
   #leftPanel {
     display: flex;
     flex-direction: column;
@@ -2541,4 +2548,3 @@ html, body {
     margin-bottom: 0;
   }
 }
-
