@@ -2793,8 +2793,55 @@ function saveRanking(levelId, blockCounts, usedWires, hintsUsed /*, timeMs */) {
 
 function saveProblemRanking(problemKey, blockCounts, usedWires, hintsUsed) {
   const nickname = localStorage.getItem("username") || "익명";
-  const entry = { nickname, blockCounts, usedWires, hintsUsed, timestamp: new Date().toISOString() };
-  db.ref(`problems/${problemKey}/ranking`).push(entry);
+  const entry = {
+    nickname,
+    blockCounts,
+    usedWires,
+    hintsUsed,
+    timestamp: new Date().toISOString()
+  };
+  const rankingRef = db.ref(`problems/${problemKey}/ranking`);
+
+  const sumBlocks = e =>
+    Object.values(e.blockCounts || {}).reduce((s, x) => s + x, 0);
+
+  const isBetter = (a, b) => {
+    const aB = sumBlocks(a), bB = sumBlocks(b);
+    if (aB !== bB) return aB < bB;
+    if (a.usedWires !== b.usedWires) return a.usedWires < b.usedWires;
+    const aH = a.hintsUsed ?? 0, bH = b.hintsUsed ?? 0;
+    if (aH !== bH) return aH < bH;
+    return new Date(a.timestamp) < new Date(b.timestamp);
+  };
+
+  rankingRef.orderByChild("nickname").equalTo(nickname)
+    .once("value", snapshot => {
+      if (!snapshot.exists()) {
+        rankingRef.push(entry);
+        return;
+      }
+
+      let bestKey = null;
+      let bestVal = null;
+      const dupKeys = [];
+
+      snapshot.forEach(child => {
+        const val = child.val();
+        const key = child.key;
+        if (!bestVal || isBetter(val, bestVal)) {
+          if (bestKey) dupKeys.push(bestKey);
+          bestKey = key;
+          bestVal = val;
+        } else {
+          dupKeys.push(key);
+        }
+      });
+
+      if (isBetter(entry, bestVal)) {
+        rankingRef.child(bestKey).set(entry);
+      }
+      dupKeys.forEach(k => rankingRef.child(k).remove());
+    });
 }
 
 function showProblemRanking(problemKey) {
@@ -2830,7 +2877,23 @@ function showProblemRanking(problemKey) {
       }
 
       const sumBlocks = e => Object.values(e.blockCounts || {}).reduce((s,x)=>s+x,0);
-      entries.sort((a,b)=>{
+      const isBetter = (a,b)=>{
+        const aB=sumBlocks(a), bB=sumBlocks(b);
+        if(aB!==bB) return aB<bB;
+        if(a.usedWires!==b.usedWires) return a.usedWires<b.usedWires;
+        const aH=(a.hintsUsed??0), bH=(b.hintsUsed??0);
+        if(aH!==bH) return aH<bH;
+        return new Date(a.timestamp)<new Date(b.timestamp);
+      };
+
+      const bestByNickname = {};
+      entries.forEach(e => {
+        const cur = bestByNickname[e.nickname];
+        if (!cur || isBetter(e, cur)) bestByNickname[e.nickname] = e;
+      });
+      const uniqueEntries = Object.values(bestByNickname);
+
+      uniqueEntries.sort((a,b)=>{
         const aB=sumBlocks(a), bB=sumBlocks(b);
         if(aB!==bB) return aB-bB;
         if(a.usedWires!==b.usedWires) return a.usedWires-b.usedWires;
@@ -2848,7 +2911,7 @@ function showProblemRanking(problemKey) {
         `<th>${t('thTime')}</th>`
       ].join('');
 
-      const bodyRows = entries.map((e,i)=>{
+      const bodyRows = uniqueEntries.map((e,i)=>{
         const counts = allowedTypes.map(t=>e.blockCounts?.[t]??0).map(c=>`<td>${c}</td>`).join('');
         const timeStr = new Date(e.timestamp).toLocaleString();
         const nickname = e.nickname;
