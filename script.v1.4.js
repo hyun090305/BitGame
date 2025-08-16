@@ -2807,7 +2807,11 @@ function showProblemRanking(problemKey) {
     .orderByChild('timestamp')
     .once('value', snap => {
       const entries = [];
-      snap.forEach(ch => entries.push(ch.val()));
+      // snapshot.forEach의 콜백이 truthy 값을 반환하면 순회가 중단되므로
+      // return 값을 명시하지 않은 블록 형태로 작성하여 모든 랭킹을 수집합니다.
+      snap.forEach(ch => {
+        entries.push(ch.val());
+      });
 
       if (entries.length === 0) {
         listEl.innerHTML = `
@@ -4322,8 +4326,10 @@ if (saveProblemBtn) saveProblemBtn.addEventListener('click', () => {
   problemTitleInput.focus();
 });
 if (confirmSaveProblemBtn) confirmSaveProblemBtn.addEventListener('click', () => {
-  problemSaveModal.style.display = 'none';
-  saveProblem();
+  // saveProblem이 true를 반환할 때만 모달을 닫습니다.
+  if (saveProblem()) {
+    problemSaveModal.style.display = 'none';
+  }
 });
 if (cancelSaveProblemBtn) cancelSaveProblemBtn.addEventListener('click', () => {
   problemSaveModal.style.display = 'none';
@@ -4770,15 +4776,28 @@ function collectProblemData() {
 }
 
 function saveProblem() {
+  const title = problemTitleInput.value.trim();
+  const desc  = problemDescInput.value.trim();
+  if (!title) {
+    alert(t('problemTitleRequired'));
+    problemTitleInput.focus();
+    return false;
+  }
+  if (!desc) {
+    alert(t('problemDescRequired'));
+    problemDescInput.focus();
+    return false;
+  }
   if (!problemOutputsValid) {
     alert(t('computeOutputsFirst'));
-    return;
+    return false;
   }
   const data = collectProblemData();
   const key = db.ref('problems').push().key;
   db.ref('problems/' + key).set(data)
     .then(() => alert(t('problemSaved')))
     .catch(err => alert(t('saveFailed').replace('{error}', err)));
+  return true;
 }
 
 function showProblemList() {
